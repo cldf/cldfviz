@@ -51,19 +51,24 @@ as follows.
 1. Extract a [metadata-free CLDF StructureDataset](https://github.com/cldf/cldf#metadata-free-conformance)
    from the full WALS dataset via csvkit tools, using Glottocodes as `Language_ID`:
    ```shell
-   # First, we filter values for just the feature 24A:
+   # First, we filter values for just the feature 24A
+   # (note the "^" specifying that the pattern must match at the start of
+   # the string, thus excluding "124A"):
    csvgrep -c Parameter_ID -r "^24A" ../wals/wals/cldf/values.csv | \
-   # Replace the numeric values with code names, ...
+   # Replace the numeric values with code names 
+   # (note the "-" specifying STDIN as first input file), ...
    csvjoin -c Code_ID,ID - ../wals/wals/cldf/codes.csv | \
    # ... narrow down to only the required columns ...
    csvcut -c ID,Language_ID,Parameter_ID,Name | \
    # ... and make sure the columns have the correct names.
    sed 's/ID,Language_ID,Parameter_ID,Name/ID,Language_ID,Parameter_ID,Value/g' | \
-   # Then, replace language IDs with Glottocodes, ...
+   # Then, replace language IDs with Glottocodes 
+   # (note the -q '"' specifying the quote character explicitly, to
+   # make sure column content like "Kati (in West Papua, Indonesia)" is read correctly), ...
    csvjoin -q'"' -c Language_ID,ID - ../wals/wals/cldf/languages.csv | \
    # ... narrow down to only the required columns, ...
    csvcut -c ID,Glottocode,Parameter_ID,Value | \
-   # ... skip rows with no Glottocode ...
+   # ... skip rows with no (i.e. empty) Glottocode ...
    csvgrep -c Glottocode -r ".+" | \
    # ... and make sure the columns have the correct names.
    sed 's/ID,Glottocode,Parameter_ID,Value/ID,Language_ID,Parameter_ID,Value/g'
