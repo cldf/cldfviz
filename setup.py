@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='cldfviz',
-    version='0.1.0.dev0',
+    version='0.1.0',
     author='Robert Forkel',
     author_email='lingweb@shh.mpg.de',
     description='A cldfbench plugin to create vizualisations of CLDF datasets',
