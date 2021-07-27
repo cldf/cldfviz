@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>$title</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+          integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+          crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""></script>
+    <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css'
+          rel='stylesheet'/>
+    <style>
+        body {font-family: Verdana, Arial, Helvetica, sans-serif;}
+        #map {
+            width: 75%;
+            height: 700px;
+            float: left;
+            border: 1px dotted black;
+            padding: 10px;
+        }
+        #legend {
+            width: 20%;
+            padding-left: 1em;
+            float: left;
+            margin-bottom: 1em;
+        }
+        table.legend {
+            border: 1px dotted black;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        hr {color: #666;}
+    </style>
+</head>
+<body>
+<h1>$title</h1>
+<div id='map'></div>
+<div id="legend">
+    $legend
+</div>
+<script type="text/javascript">
+    var geojson = $geojson;
+    var options = $options;
+    var markers = [],
+        map = L.map('map', {fullscreenControl: true}).setView([5, 160], 2);
+    L.tileLayer($tile_url, $tile_options).addTo(map);
+
+    function onEachFeature(feature, layer) {
+        var html = "<h3>" + feature.properties.name + "</h3><dl>";
+        html += '<p>' + feature.properties.values + '</p>';
+        layer.bindPopup(html);
+        layer.bindTooltip(feature.properties.name);
+        markers.push(layer);
+    }
+
+    L.geoJSON([geojson], {
+        onEachFeature: onEachFeature,
+        pointToLayer: function (feature, latlng) {
+            return L.marker(
+                latlng,
+                {
+                    icon: L.icon({
+                        iconUrl: feature.properties.icon,
+                        iconSize: [feature.properties.markerSize, feature.properties.markerSize]
+                    })
+                })
+        }
+    }).addTo(map);
+
+    var group = new L.featureGroup(markers);
+    map.fitBounds(group.getBounds());
+
+    if (options.language_labels) {
+        for (var i = 0; i < markers.length; i++) {
+            markers[i].openTooltip();
+        }
+    }
+</script>
+</body>
+</html>

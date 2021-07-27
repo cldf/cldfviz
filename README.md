@@ -1,6 +1,10 @@
 # cldfviz
 
+[![Build Status](https://github.com/cldf/cldfviz/workflows/tests/badge.svg)](https://github.com/cldf/cldfviz/actions?query=workflow%3Atests)
+[![PyPI](https://img.shields.io/pypi/v/cldfviz.svg)](https://pypi.org/project/cldfviz)
+
 Python library providing tools to visualize [CLDF](https://cldf.clld.org) datasets.
+
 
 ## Install
 
@@ -35,7 +39,7 @@ repository,
   
 Then, running
 ```shell
-cldfbench cldfviz.htmlmap --glottolog PATH/TO/glottolog
+cldfbench cldfviz.map --glottolog PATH/TO/glottolog
 ```
 will create an HTML page `index.html`, and appropriate Javascript data,
 and open it in the browser, thus rendering an interactive [leaflet](https://leafletjs.com/)
@@ -75,5 +79,5 @@ as follows.
    ```
 2. Run
    ```shell
-   cldfbench cldfviz.htmlmap --glottolog PATH/TO/glottolog values.csv
+   cldfbench cldfviz.map --glottolog PATH/TO/glottolog values.csv
    ```

@@ -5,7 +5,7 @@ setup(
     name='cldfviz',
     version='0.1.0',
     author='Robert Forkel',
-    author_email='lingweb@shh.mpg.de',
+    author_email='dlce.rdm@eva.mpg.de',
     description='A cldfbench plugin to create vizualisations of CLDF datasets',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
@@ -24,11 +24,16 @@ setup(
     platforms='any',
     python_requires='>=3.6',
     install_requires=[
-        'cldfbench',
+        'cldfbench>=1.5.0',
         'pyglottolog',
         'tqdm',
+        'yattag',
+        'matplotlib',
     ],
     extras_require={
+        'cartopy': [
+            'cartopy',
+        ],
         'dev': ['flake8', 'wheel', 'twine'],
         'test': [
             'pytest>=5',
