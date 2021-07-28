@@ -131,7 +131,8 @@ cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --paramete
 #### Advanced dataset pre-processing
 
 Going one step further, we might visualize data that has been synthesized on the fly. E.g. we
-can visualize the AES endangerment information given in `glottolog-cldf` for the WALS languages:
+can visualize the AES endangerment information given in the [Glottolog CLDF data](https://github.com/glottolog/glottolog-cldf/releases/tag/v4.4)
+for the WALS languages:
 
 Since we will alter the WALS CLDF data, we make a copy of it first:
 ```shell
@@ -140,7 +141,7 @@ cp -r wals-2020.1 wals-copy
 
 Now we extract the AES data from Glottolog ...
 ```shell
-csvgrep -c Parameter_ID -m"aes" ~/projects/glottolog/glottolog-cldf/cldf/values.csv |\
+csvgrep -c Parameter_ID -m"aes" glottolog-cldf-4.4/cldf/values.csv |\
 csvgrep -c Value -m"NA" -i |\
 csvcut -c Language_ID,Parameter_ID,Code_ID  > aes1.csv
 ```
