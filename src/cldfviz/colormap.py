@@ -1,12 +1,12 @@
 from matplotlib import cm
 from matplotlib.colors import Normalize, to_hex
 import matplotlib.pyplot as plt
-from clldutils.color import qualitative_colors
+from clldutils.color import qualitative_colors, sequential_colors
 
 from cldfviz.multiparameter import CONTINUOUS, CATEGORICAL
 
 COLORMAPS = {
-    CATEGORICAL: ['boynton', 'tol', 'base'],
+    CATEGORICAL: ['boynton', 'tol', 'base', 'seq'],
     CONTINUOUS: [cm for cm in plt.colormaps() if not cm.endswith('_r')],
 }
 
@@ -22,7 +22,10 @@ class Colormap:
             norm = Normalize(domain[0], domain[1])
             self.cm = lambda v: to_hex(self._cm(norm(float(v))))
         else:
-            colors = qualitative_colors(len(domain), set=name)
+            if name == 'seq':
+                colors = sequential_colors(len(domain))
+            else:
+                colors = qualitative_colors(len(domain), set=name)
             self.cm = lambda v: dict(zip(domain, colors))[v]
 
     def scalar_mappable(self):

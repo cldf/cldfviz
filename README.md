@@ -126,3 +126,58 @@ cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --paramete
 --format jpg --width 20 --height 10 --dpi 300 --markersize 40
 ```
 ![WALS 129A and latitude](docs/wals_latitude_handandarm_2.jpg)
+
+
+#### Advanced dataset pre-processing
+
+Going one step further, we might visualize data that has been synthesized on the fly. E.g. we
+can visualize the AES endangerment information given in `glottolog-cldf` for the WALS languages:
+
+Since we will alter the WALS CLDF data, we make a copy of it first:
+```shell
+cp -r wals-2020.1 wals-copy
+```
+
+Now we extract the AES data from Glottolog ...
+```shell
+csvgrep -c Parameter_ID -m"aes" ~/projects/glottolog/glottolog-cldf/cldf/values.csv |\
+csvgrep -c Value -m"NA" -i |\
+csvcut -c Language_ID,Parameter_ID,Code_ID  > aes1.csv
+```
+
+... and massage it into a form that can be appended to the WALS `ValueTable`:
+```shell
+csvjoin -y 0 -c Glottocode,Language_ID wals-2020.1/cldf/languages.csv aes1.csv |\
+csvcut -c Parameter_ID,Code_ID,ID |\
+awk '{if(NR==1){print $0",ID"}else{print $0",aes-"NR}}' |\
+sed 's/Parameter_ID,Code_ID,ID,ID/Parameter_ID,Value,Language_ID,ID/g' |\
+csvcut -c ID,Language_ID,Parameter_ID,Value |\
+awk '{if(NR==1){print $0",Code_ID,Comment,Source,Example_ID"}else{print $0",,,,"}}' > aes2.csv
+```
+Notes: 
+- The first `awk` call adds a unique value `ID`. We cannot re-use the value `ID` from Glottolog,
+  because the mapping between WALS and Glottolog languages is many-to-many.
+- Using `awk` to manipulate CSV data is somewhat fragile, since it will break if the data contains 
+  multi-line cell content. To guard against that, you may compare the row count reported by 
+  `csvstat` with the line count from `wc -l`.
+
+Now we append the values and a row for the `ParameterTable` ...
+```shell
+csvstack aes2.csv wals-copy/cldf/values.csv > values.csv
+cp values.csv wals-copy/cldf
+echo "ID,Name,Description,Chapter_ID" > aes_param.csv
+echo "aes,AES,," >> aes_param.csv
+csvstack aes_param.csv wals-copy/cldf/parameters.csv > parameters.csv
+cp parameters.csv wals-copy/cldf
+```
+
+... and make sure the resulting dataset is valid:
+```shell
+cldf validate wals-copy/cldf/StructureDataset-metadata.json
+```
+
+Finally, we can plot the map:
+```shell
+cldfbench cldfviz.map wals-copy/cldf/StructureDataset-metadata.json --pacific-centered --colormaps seq --parameters aes
+```
+![WALS AES](docs/wals_aes.jpg)
