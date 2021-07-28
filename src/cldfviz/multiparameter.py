@@ -152,7 +152,7 @@ class MultiParameter:
                 p.domain = codes[p.id]
             else:
                 vals = [v for v in self.values if v.pid == p.id]
-                if all(v.float is not None for v in vals):
+                if all(v.float is not None for v in vals) and len(set(v.v for v in vals)) > 8:
                     p.type = CONTINUOUS
                     p.domain = (min(v.float for v in vals), max(v.float for v in vals))
                 else:
@@ -164,6 +164,7 @@ class MultiParameter:
     def iter_languages(self):
         for lid, values in itertools.groupby(sorted(self.values), lambda v: v.lid):
             values = {pid: list(vals) for pid, vals in itertools.groupby(values, lambda v: v.pid)}
-            values = collections.OrderedDict([(pid, values.get(pid, [])) for pid in self.parameters])
+            values = collections.OrderedDict(
+                [(pid, values.get(pid, [])) for pid in self.parameters])
             if self.include_missing or all(bool(v) for v in values.values()):
                 yield self.languages[lid], values

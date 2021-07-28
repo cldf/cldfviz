@@ -9,25 +9,7 @@ Usage examples:
 - plot values of a column in the dataset's LanguageTable:
   cldfbench cldfviz.map PATH/TO/DATASET --language-property Macroarea
 """
-
-"""
-Configuration: Plotting can be configured
-- via CLI options
-- via python code in an importable module (specified in dotted notation for the
-  "--config-module" option).
-  The following names are recognized in this module:
-
-  - A callable returning marker/label information a single value:
-    ```python
-    def plot_value(dataset, valuerow, value) -> typing.Union[dict, typing.Tuple[dict, str, dict]]:
-    ```
-  - A callable returning a pair (legend items, legend location):
-    ```python
-    def legend(dataset) -> typing.Tuple[typing.List[dict], str]:
-    ```
-"""
 import pathlib
-import importlib
 
 from pycldf.cli_util import get_dataset, add_dataset
 from clldutils.clilib import PathType
@@ -44,8 +26,8 @@ for cls in Map.__subclasses__():
         FORMATS[fmt] = cls
 
 
-def join_quoted(l):
-    return ', '.join(['"{}"'.format(i) for i in l])
+def join_quoted(items):
+    return ', '.join(['"{}"'.format(i) for i in items])
 
 
 def register(parser):
@@ -56,8 +38,8 @@ def register(parser):
         '--parameters',
         default=[],
         type=lambda s: s.split(','),
-        help="Comma-separated Parameter IDs, specifying the values to plot on the map. If not specified, all "
-             "languages in the dataset will be plotted.",
+        help="Comma-separated Parameter IDs, specifying the values to plot on the map. If not "
+             "specified, all languages in the dataset will be plotted.",
     )
     parser.add_argument(
         '--colormaps',
@@ -88,10 +70,6 @@ def register(parser):
         default='html',
         metavar='FORMAT',
         choices=list(FORMATS),
-    )
-    parser.add_argument(
-        '--config-module',
-        default=None,
     )
     parser.add_argument(
         '--markersize',
@@ -126,11 +104,7 @@ def run(args):
     else:
         assert args.output.suffix[1:] == args.format
 
-    cfg = None
-    if args.config_module:
-        cfg = importlib.import_module(args.config_module)
-
-    glottolog = {l.id: l for l in args.glottolog.api.languoids() if l.latitude is not None} \
+    glottolog = {lg.id: lg for lg in args.glottolog.api.languoids() if lg.latitude is not None} \
         if args.glottolog else {}
     data = MultiParameter(
         ds, args.parameters, glottolog=glottolog, language_property=args.language_property)
@@ -145,28 +119,9 @@ def run(args):
 
     with FORMATS[args.format](data.languages.values(), args) as fig:
         for lang, values in data.iter_languages():
-            if cfg:
-                #
-                # FIXME
-                #
-                config = cfg.plot_value(args, ds, v, v['value'])
-                if isinstance(config, dict):
-                    mkw, text, tkw = config, None, None
-                else:
-                    assert isinstance(config, tuple)
-                    mkw, text, tkw = config
-                fig.plot_language_marker(lang, text=text, marker_kw=mkw, text_kw=tkw)
-            else:
-                fig.add_language(lang, values, cms)
+            fig.add_language(lang, values, cms)
 
         fig.add_legend(data.parameters, cms)
-
-        if hasattr(cfg, 'legend'):
-            items, loc = cfg.legend(args, ds, fig.ax)
-            for item in items:
-                fig.ax.plot(1, 1, "o", **item)
-            if loc:
-                fig.ax.legend(loc=loc)
 
         args.log.info('Output written to: {}'.format(args.output))
         if not args.test:

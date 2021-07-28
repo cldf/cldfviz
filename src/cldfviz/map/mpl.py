@@ -153,7 +153,7 @@ class MapPlot(Map):
                 facecolor=colormaps[pid](vals[0].v),
                 edgecolor="black",
                 label=language.name,
-                ))
+            ))
             s += angle
         if self.args.language_labels:
             self.ax.text(
@@ -175,7 +175,7 @@ class MapPlot(Map):
                 facecolor="None",
                 edgecolor="black",
                 label=wrapped_label(parameter.name),
-                ))
+            ))
             if isinstance(parameter.domain, tuple):
                 cbar = plt.colorbar(
                     colormaps[pid].scalar_mappable(),
@@ -200,7 +200,7 @@ class MapPlot(Map):
                         facecolor=colormaps[pid](v),
                         edgecolor="black",
                         label=wrapped_label(label),
-                        ))
+                    ))
             s += angle
         self.ax.legend(
             bbox_to_anchor=(1, 1),

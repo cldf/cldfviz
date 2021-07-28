@@ -101,7 +101,7 @@ class MapLeaflet(Map):
                 [1] * len(parameters),
                 colors,
                 stroke_circle=True,
-                )), width="{}".format(min([20, self.args.markersize * 2])))
+            )), width="{}".format(min([20, self.args.markersize * 2])))
 
         with tag('table', klass="legend"):
             for i, (pid, parameter) in enumerate(parameters.items()):
@@ -115,28 +115,33 @@ class MapLeaflet(Map):
                     with tag('th', style="text-align: left;"):
                         text(parameter.name)
                 if isinstance(parameter.domain, tuple):
+                    min_, max_ = parameter.domain
                     with tag('tr'):
                         with tag('td', colspan=2):
                             with tag('table'):
                                 with tag('tr'):
                                     with tag('td'):
-                                        text(str(round(parameter.domain[0], 2)))
+                                        text(str(round(min_, 2)))
                                     for _ in range(9):
                                         with tag('td'):
                                             text(' ')
                                     with tag('td', style="text-align: right;"):
-                                        text(str(round(parameter.domain[1], 2)))
+                                        text(str(round(max_, 2)))
                                 with tag('tr'):
                                     for j in range(11):
-                                        with tag('td', style='height: 20px; width: 1em; background-color: {};'.format(colormaps[pid](
-                                                parameter.domain[0] + j * (parameter.domain[1] - parameter.domain[0]) / 10
-                                        ))):
+                                        with tag(
+                                            'td',
+                                            style='height: 20px; width: 1em; background-color: '
+                                                  '{};'.format(
+                                                colormaps[pid](min_ + j * (max_ - min_) / 10))
+                                        ):
                                             text(' ')
                 else:
                     for v, label in parameter.domain.items():
                         with tag('tr'):
                             with tag('td'):
-                                marker([colormaps[pid](v) if j == i else '#ffffff' for j in range(len(parameters))])
+                                marker([colormaps[pid](v) if j == i else '#ffffff'
+                                        for j in range(len(parameters))])
                             with tag('td'):
                                 text(str(label))
         self.legend = doc.getvalue()
