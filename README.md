@@ -12,6 +12,14 @@ Run
 ```shell
 pip install cldfviz
 ```
+If you want create maps in image formats (PNG, JPG, PDF), the `cartopy` package is needed,
+which will be installed with
+```shell
+pip install cldfviz[cartopy]
+```
+Note: Since `cartopy` has quite a few system-level requirements, installation may be somewhat trick. Should
+problems arise, https://scitools.org.uk/cartopy/docs/v0.15/installing.html may help.
+
 
 ## CLI
 
@@ -25,59 +33,96 @@ cldfbench -h
 ```
 
 
-### `cldfviz.htmlmap`
+### `cldfviz.map`
 
 A common way to visualize data from a CLDF StructureDataset is as "dots on a map",
 i.e. as [WALS](https://wals.info)-like geographic maps.
 
-This can be done using the `cldfviz.htmlmap` command. Since geo-coordinates
-for languages are looked up in Glottolog, this command needs 
-- access to a local clone of the [glottolog/glottolog](https://github.com/glottolog/glottolog)
+This can be done using the `cldfviz.map` command. If you need to look up geo-coordinates
+for languages in Glottolog (because the dataset you are interested in does not provide coordinates,
+but has Glottocodes), this command needs 
+- access to a local clone or export of the [glottolog/glottolog](https://github.com/glottolog/glottolog)
 repository,
 - Glottocodes for all languages in the set, either given as [`languageReference`](https://cldf.clld.org/v1.0/terms.rdf#languageReference)
   in the `ValueTable` or as [`glottocode`](https://cldf.clld.org/v1.0/terms.rdf#glottocode) in `LanguageTable`.
   
-Then, running
+We'll explain the usage of the command by using it with the [WALS CLDF data](https://github.com/cldf-datasets/wals/releases/tag/v2020.1).
+Running
 ```shell
-cldfbench cldfviz.map --glottolog PATH/TO/glottolog
+cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --base-layer Esri_WorldPhysical --pacific-centered
 ```
-will create an HTML page `index.html`, and appropriate Javascript data,
-and open it in the browser, thus rendering an interactive [leaflet](https://leafletjs.com/)
-map of the data.
+will create an HTML page `map.html` and open it in the browser, thus rendering an interactive [leaflet](https://leafletjs.com/)
+map of the languages in the dataset.
 
-#### Example
+![WALS languages](docs/wals_languages.jpg)
 
-`cldfviz.htmlmap` can be used in combination with tools from [`csvkit`](https://csvkit.readthedocs.io/en/latest/index.html)
-to map customized selections of data from an existing CLDF dataset. E.g. we
-can map single WALS features based on the CLDF data at https://github.com/cldf-datasets/wals
-as follows.
+For smaller language samples, it mae suitable to display the language names on the map, too. Here's [WALS' feature 10B](https://wals.info/feature/10B):
+```shell
+cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --parameters 10B --colormaps tol --markersize 20 --language-labels
+```
+![WALS 10B](docs/wals_10B.jpg)
 
-1. Extract a [metadata-free CLDF StructureDataset](https://github.com/cldf/cldf#metadata-free-conformance)
-   from the full WALS dataset via csvkit tools, using Glottocodes as `Language_ID`:
-   ```shell
-   # First, we filter values for just the feature 24A
-   # (note the "^" specifying that the pattern must match at the start of
-   # the string, thus excluding "124A"):
-   csvgrep -c Parameter_ID -r "^24A" ../wals/wals/cldf/values.csv | \
-   # Replace the numeric values with code names 
-   # (note the "-" specifying STDIN as first input file), ...
-   csvjoin -c Code_ID,ID - ../wals/wals/cldf/codes.csv | \
-   # ... narrow down to only the required columns ...
-   csvcut -c ID,Language_ID,Parameter_ID,Name | \
-   # ... and make sure the columns have the correct names.
-   sed 's/ID,Language_ID,Parameter_ID,Name/ID,Language_ID,Parameter_ID,Value/g' | \
-   # Then, replace language IDs with Glottocodes 
-   # (note the -q '"' specifying the quote character explicitly, to
-   # make sure column content like "Kati (in West Papua, Indonesia)" is read correctly), ...
-   csvjoin -q'"' -c Language_ID,ID - ../wals/wals/cldf/languages.csv | \
-   # ... narrow down to only the required columns, ...
-   csvcut -c ID,Glottocode,Parameter_ID,Value | \
-   # ... skip rows with no (i.e. empty) Glottocode ...
-   csvgrep -c Glottocode -r ".+" | \
-   # ... and make sure the columns have the correct names.
-   sed 's/ID,Glottocode,Parameter_ID,Value/ID,Language_ID,Parameter_ID,Value/g'
-   ```
-2. Run
-   ```shell
-   cldfbench cldfviz.map --glottolog PATH/TO/glottolog values.csv
-   ```
+`cldfviz.map` can detect and display continuous variables, too. There are no continuous features in WALS, but since
+`cldfviz.map` also works with 
+[metadata-free CLDF datasets](https://github.com/cldf/cldf/blob/master/README.md#metadata-free-conformance), let's
+quickly create one. Using the [UNIX shell](https://swcarpentry.github.io/shell-novice/) tools `sed` and `awk` and the 
+tools of the[csvkit](https://csvkit.readthedocs.io/en/latest/) toolbox, we
+can run
+```shell
+csvgrep -c Latitude,Glottocode -r".+" wals-2020.1/cldf/languages.csv | \
+csvcut -c ID,Glottocode,Latitude | \
+awk '{if(NR==1){print $0",Parameter_ID"}else{print $0",latitude"}}' | \
+sed 's/ID,Glottocode,Latitude,Parameter_ID/ID,Language_ID,Value,Parameter_ID/g' > values.csv
+```
+Let's break this down: The first line select all WALS languages for which latitude and Glottocode is given.
+The next line narrows the resulting CSV to just three columns - the future `ID`, `Language_ID` and `Value`
+columns of our metadata-free StructureDataset. The `awk` command adds a constant column `Parameter_ID`,
+and the `sed` command renames the columns appropriately.
+
+The resulting CSV looks as follows:
+```shell
+$ head -n 4 values.csv 
+ID,Language_ID,Value,Parameter_ID
+aar,aari1239,6,latitude
+aba,abau1245,-4,latitude
+abb,chad1249,13.8333333333,latitude
+```
+
+Now we can run
+```shell
+cldfbench cldfviz.map values.csv --parameters latitude --glottolog PATH/TO/glottolog
+```
+![WALS latitudes](docs/wals_latitude.jpg)
+
+Note that for metadata-free datasets, `cldfviz.map` needs to lookup coordinates in Glottolog. Thus, languages
+may be displayed at slightly different locations than above.
+
+Now we could have done this in a simpler way, too, because `cldfviz.map` has a special option to display language
+properties encoded as columns in the `LanguageTable` as if they were parameters of the dataset. We can use this
+option to visualize a claim from [WALS' chapter 129](https://wals.info/chapter/129) that there is a
+
+> strong correlation between values [for feature 129] and latitudinal location
+
+```shell
+cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --parameters 129A --colormaps tol \
+--markersize 20 --language-property Latitude --pacific-centered
+```
+![WALS 129A and latitude](docs/wals_latitude_handandarm.jpg)
+
+As seen above, `cldfviz.map` can visualize multiple parameters at once. E.g. we can explore the related WALS
+features 129A, 130A and 130B, selecting suitable colormaps for the two boolean parameters:
+```shell
+cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --parameters 129A,130A,130B \
+--colormaps base,base,tol --pacific-centered --markersize 30 
+```
+
+![WALS 129A, 130A and 130B](docs/wals_129A_130A_130B.jpg)
+
+Finally, if `cldfviz` is installed with `cartopy` similar maps to the ones shown above can also be created
+in various image formats:
+```shell
+cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --parameters 129A --colormaps tol \
+--language-property Latitude --pacific-centered \
+--format jpg --width 20 --height 10 --dpi 300 --markersize 40
+```
+![WALS 129A and latitude](docs/wals_latitude_handandarm_2.jpg)

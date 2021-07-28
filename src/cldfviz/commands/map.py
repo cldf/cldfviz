@@ -85,7 +85,7 @@ def register(parser):
         default=pathlib.Path('map'))
     parser.add_argument(
         '--format',
-        default='jpg',
+        default='html',
         metavar='FORMAT',
         choices=list(FORMATS),
     )
@@ -137,7 +137,7 @@ def run(args):
     if args.colormaps:
         if args.language_property:
             args.colormaps.append(args.language_property_colormap)
-        assert len(args.colormaps) == len(args.parameters)
+        assert len(args.colormaps) == len(data.parameters)
     else:
         args.colormaps = [None] * len(data.parameters)
     cms = {pid: Colormap(data.parameters[pid].domain, name=cm)

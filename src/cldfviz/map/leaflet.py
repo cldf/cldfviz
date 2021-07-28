@@ -96,6 +96,13 @@ class MapLeaflet(Map):
     def add_legend(self, parameters, colormaps):
         doc, tag, text = yattag.Doc().tagtext()
 
+        def marker(colors):
+            doc.stag('img', src=svg.data_url(svg.pie(
+                [1] * len(parameters),
+                colors,
+                stroke_circle=True,
+                )), width="{}".format(min([20, self.args.markersize * 2])))
+
         with tag('table', klass="legend"):
             for i, (pid, parameter) in enumerate(parameters.items()):
                 if i != 0:
@@ -104,11 +111,7 @@ class MapLeaflet(Map):
                             doc.stag('hr')
                 with tag('tr'):
                     with tag('th'):
-                        doc.stag('img', src=svg.data_url(svg.pie(
-                            [1] * len(parameters),
-                            ['#000000' if j == i else '#ffffff' for j in range(len(parameters))],
-                            stroke_circle=True,
-                            )), width="{}".format(self.args.markersize * 2))
+                        marker(['#000000' if j == i else '#ffffff' for j in range(len(parameters))])
                     with tag('th', style="text-align: left;"):
                         text(parameter.name)
                 if isinstance(parameter.domain, tuple):
@@ -133,13 +136,9 @@ class MapLeaflet(Map):
                     for v, label in parameter.domain.items():
                         with tag('tr'):
                             with tag('td'):
-                                doc.stag('img', src=svg.data_url(svg.pie(
-                                    [1] * len(parameters),
-                                    [colormaps[pid](v) if j == i else '#ffffff' for j in range(len(parameters))],
-                                    stroke_circle=True,
-                                    )), width="{}".format(self.args.markersize * 2))
+                                marker([colormaps[pid](v) if j == i else '#ffffff' for j in range(len(parameters))])
                             with tag('td'):
-                                text(label)
+                                text(str(label))
         self.legend = doc.getvalue()
 
     def __exit__(self, exc_type, exc_val, exc_tb):

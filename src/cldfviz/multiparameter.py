@@ -1,3 +1,4 @@
+import decimal
 import functools
 import itertools
 import collections
@@ -104,10 +105,16 @@ class MultiParameter:
             for row in ds.iter_rows('CodeTable', 'id', 'parameterReference', 'name'):
                 if row['parameterReference'] in self.parameters:
                     codes[row['parameterReference']][row['id']] = row['name']
+        language_rows = []
         if language_property:
-            codes[language_property] = collections.OrderedDict([
-                (p, p) for p in sorted(set(r[language_property] for r in ds['LanguageTable']))
-            ])
+            language_rows = list(ds.iter_rows('LanguageTable', 'id', 'name'))
+            if not all(isinstance(v[language_property], (int, float, decimal.Decimal))
+                       for v in language_rows if v[language_property] is not None):
+                codes[language_property] = collections.OrderedDict([
+                    (p, p) for p in sorted(
+                        set(r[language_property] for r in language_rows
+                            if r[language_property] is not None))
+                ])
         self.languages = collections.OrderedDict()
         self.values = []
         colmap = ['languageReference', 'parameterReference', 'value']
@@ -122,13 +129,14 @@ class MultiParameter:
                     self.languages[val['languageReference']] = lang
                     self.values.append(Value.from_row(val, codes))
         if language_property:
-            for lang in ds.iter_rows('LanguageTable', 'id', 'name'):
-                self.languages.setdefault(lang['id'], langs[lang['id']])
-                self.values.append(Value(
-                    v=lang[language_property],
-                    pid=language_property,
-                    lid=lang['id'],
-                    code=language_property))
+            for lang in language_rows:
+                if lang[language_property] is not None:
+                    self.languages.setdefault(lang['id'], langs[lang['id']])
+                    self.values.append(Value(
+                        v=lang[language_property],
+                        pid=language_property,
+                        lid=lang['id'],
+                        code=language_property))
         elif not pids:
             # No parameters and no language property specified: Just plot language locations.
             for lang in ds.iter_rows('LanguageTable', 'id', 'name'):

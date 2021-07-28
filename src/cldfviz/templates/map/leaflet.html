@@ -15,7 +15,10 @@
     <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css'
           rel='stylesheet'/>
     <style>
-        body {font-family: Verdana, Arial, Helvetica, sans-serif;}
+        body {
+            font-family: Verdana, Arial, Helvetica, sans-serif;
+        }
+
         #map {
             width: 75%;
             height: 700px;
@@ -23,18 +26,29 @@
             border: 1px dotted black;
             padding: 10px;
         }
+
         #legend {
             width: 20%;
             padding-left: 1em;
             float: left;
             margin-bottom: 1em;
         }
+
         table.legend {
             border: 1px dotted black;
             border-radius: 10px;
             padding: 10px;
         }
-        hr {color: #666;}
+
+        hr {
+            color: #666;
+        }
+
+        .leaflet-tooltip {
+            padding: 1px 3px 1px 3px;
+            opacity: 70% !important;
+        }
+
     </style>
 </head>
 <body>
