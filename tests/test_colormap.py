@@ -13,3 +13,10 @@ from cldfviz.colormap import Colormap
 def test_Colormap(vals, kw, val, expected):
     cm = Colormap(vals, **kw)
     assert cm(val) == expected
+    assert cm.scalar_mappable()
+
+
+def test_Colormap2():
+    cm = Colormap(dict(a=1, b=2, c=3), name='seq', novalue='x')
+    assert cm('b') == '#FEC44F'
+    assert cm(None) == 'x'

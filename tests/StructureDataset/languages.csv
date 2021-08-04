@@ -1,5 +1,5 @@
 ID,Name,Macroarea,Latitude,Longitude,Glottocode,ISO639P3code,Family_name
-Kharia_SM,Kharia,Eurasia,22.3571,84.3922,khar1287,khr,Austroasiatic
+Kharia_SM,Kharia,Eurasia,22.3571,-84.3922,khar1287,khr,Austroasiatic
 Santali_NM,Santali,Eurasia,25.0317,87.8185,sant1410,sat,Austroasiatic
 Mundari_NM,Mundari,Eurasia,23.03,85.85,mund1320,unr,Austroasiatic
 Ho_NM,Ho,Eurasia,23.9596,87.1188,hooo1248,hoc,Austroasiatic

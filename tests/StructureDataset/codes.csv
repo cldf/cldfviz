@@ -1,7 +1,4 @@
 ID,Parameter_ID,Name,Description
-B-1,B,1,"one noun class (i.e., no gender system with common nouns)"
-B-2,B,2,"two classes (M/F, F/NF, M/NM)"
-B-3,B,3,three classes (M/F/N)
 C-0,C,0,affixal plural
 C-1,C,1,enclitic plural marker (with a largely constant form) or free-standing phonological word
 C-2,C,2,basically enclitic but with considerable morphophonological variation which is not entirely due to phonotactic constraints

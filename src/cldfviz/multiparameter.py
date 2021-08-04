@@ -50,7 +50,7 @@ class Parameter:
 
 
 @functools.total_ordering
-@attr.s(order=False)
+@attr.s(order=False, eq=False)
 class Value:
     v = attr.ib()
     pid = attr.ib()

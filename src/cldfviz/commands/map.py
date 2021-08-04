@@ -51,13 +51,14 @@ def register(parser):
     )
     parser.add_argument(
         '--language-property',
+        help="Plot values of a language property, i.e. a column in the dataset's LanguageTable.",
         default=None,
     )
     parser.add_argument(
         '--language-property-colormap',
         default='tol',
-        choices=COLORMAPS[CATEGORICAL],
-        help="Name of colormap to use for the language property.",
+        help="Name of colormap to use for the language property. See help for --colormaps for "
+             "choices",
     )
     parser.add_argument(
         '--output',
@@ -73,23 +74,27 @@ def register(parser):
     )
     parser.add_argument(
         '--markersize',
-        help="Size of map marker in pixels",
+        help="Size of map markers in pixels",
         type=int,
         default=10,
     )
     parser.add_argument(
         '--title',
         default=None,
+        help="Title for the map plot",
     )
     parser.add_argument(
         '--pacific-centered',
         action='store_true',
         default=False,
+        help="Center maps of the whole world at the pacific, thus not cutting large language "
+             "families in half."
     )
     parser.add_argument(
         '--language-labels',
         action='store_true',
         default=False,
+        help="Display language names on the map",
     )
     for cls in Map.__subclasses__():
         cls.add_options(
@@ -125,4 +130,4 @@ def run(args):
 
         args.log.info('Output written to: {}'.format(args.output))
         if not args.test:
-            fig.open()
+            fig.open()  # pragma: no cover

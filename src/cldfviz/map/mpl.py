@@ -57,7 +57,7 @@ class MapPlot(Map):
         fig = plt.figure(figsize=(self.args.width, self.args.height), dpi=self.args.dpi)
         ax = fig.add_subplot(1, 1, 1, projection=self.proj)
         ax.set_extent(self.extent, crs=self.proj)
-        if not self.args.test:
+        if not self.args.test:  # pragma: no cover
             ax.coastlines(resolution='50m')
             ax.add_feature(cartopy.feature.LAND)
             ax.add_feature(cartopy.feature.OCEAN)
@@ -127,8 +127,12 @@ class MapPlot(Map):
                 lon += 360
         return lon, lat
 
-    def plot_language_marker(
-            self, language, text=None, marker_kw=None, text_kw=None, text_offset=(-0.075, -0.075)):
+    def plot_language_marker(self,
+                             language,
+                             text=None,
+                             marker_kw=None,
+                             text_kw=None,
+                             text_offset=(-0.075, -0.075)):  # pragma: no cover
         lon, lat = self._lonlat(language)
         kw = dict(color='red', markersize=self.args.markersize, zorder=4, marker='o')
         if marker_kw:

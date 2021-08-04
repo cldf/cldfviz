@@ -1,5 +1,5 @@
 ID,Language_ID,Parameter_ID,Value,Code_ID,Comment,Source
-Kharia_SM-1,Kharia_SM,B,1,B-1,,Peterson2017
+Kharia_SM-1,Kharia_SM,B,1,,,Peterson2017
 Kharia_SM-2,Kharia_SM,C,1,C-1,,Peterson2017
 Kharia_SM-3,Kharia_SM,D,0,D-0,,Peterson2017
 Kharia_SM-4,Kharia_SM,E,0,E-0,,Peterson2017
@@ -27,7 +27,7 @@ Kharia_SM-25,Kharia_SM,Z,2,Z-2,,Peterson2017
 Kharia_SM-26,Kharia_SM,AA,1,AA-1,,Peterson2017
 Kharia_SM-27,Kharia_SM,AB,2,AB-2,,Peterson2017
 Kharia_SM-28,Kharia_SM,AC,1,AC-1,,Peterson2017
-Santali_NM-1,Santali_NM,B,2,B-2,,Peterson2017
+Santali_NM-1,Santali_NM,B,2,,,Peterson2017
 Santali_NM-2,Santali_NM,C,1,C-1,,Peterson2017
 Santali_NM-3,Santali_NM,D,0,D-0,,Peterson2017
 Santali_NM-4,Santali_NM,E,0,E-0,,Peterson2017
@@ -55,7 +55,7 @@ Santali_NM-25,Santali_NM,Z,0,Z-0,,Peterson2017
 Santali_NM-26,Santali_NM,AA,0,AA-0,,Peterson2017
 Santali_NM-27,Santali_NM,AB,2,AB-2,,Peterson2017
 Santali_NM-28,Santali_NM,AC,1,AC-1,,Peterson2017
-Mundari_NM-1,Mundari_NM,B,2,B-2,,Peterson2017
+Mundari_NM-1,Mundari_NM,B,3,,,Peterson2017
 Mundari_NM-2,Mundari_NM,C,1,C-1,,Peterson2017
 Mundari_NM-3,Mundari_NM,D,0,D-0,,Peterson2017
 Mundari_NM-4,Mundari_NM,E,0,E-0,,Peterson2017
@@ -83,7 +83,7 @@ Mundari_NM-25,Mundari_NM,Z,2,Z-2,,Peterson2017
 Mundari_NM-26,Mundari_NM,AA,0,AA-0,,Peterson2017
 Mundari_NM-27,Mundari_NM,AB,2,AB-2,,Peterson2017
 Mundari_NM-28,Mundari_NM,AC,1,AC-1,,Peterson2017
-Ho_NM-1,Ho_NM,B,2,B-2,,Peterson2017
+Ho_NM-1,Ho_NM,B,4,,,Peterson2017
 Ho_NM-2,Ho_NM,C,1,C-1,,Peterson2017
 Ho_NM-3,Ho_NM,D,0,D-0,,Peterson2017
 Ho_NM-4,Ho_NM,E,0,E-0,,Peterson2017
@@ -111,7 +111,7 @@ Ho_NM-25,Ho_NM,Z,2,Z-2,,Peterson2017
 Ho_NM-26,Ho_NM,AA,0,AA-0,,Peterson2017
 Ho_NM-27,Ho_NM,AB,2,AB-2,,Peterson2017
 Ho_NM-28,Ho_NM,AC,?,,,Peterson2017
-Remo_SM-1,Remo_SM,B,1,B-1,,Peterson2017
+Remo_SM-1,Remo_SM,B,5,,,Peterson2017
 Remo_SM-2,Remo_SM,C,1,C-1,,Peterson2017
 Remo_SM-3,Remo_SM,D,0,D-0,,Peterson2017
 Remo_SM-4,Remo_SM,E,0,E-0,,Peterson2017
@@ -139,7 +139,7 @@ Remo_SM-25,Remo_SM,Z,2,Z-2,,Peterson2017
 Remo_SM-26,Remo_SM,AA,0,AA-0,,Peterson2017
 Remo_SM-27,Remo_SM,AB,1,AB-1,,Peterson2017
 Remo_SM-28,Remo_SM,AC,?,,,Peterson2017
-Juang_SM-1,Juang_SM,B,1,B-1,,Peterson2017
+Juang_SM-1,Juang_SM,B,6,,,Peterson2017
 Juang_SM-2,Juang_SM,C,1,C-1,,Peterson2017
 Juang_SM-3,Juang_SM,D,0,D-0,,Peterson2017
 Juang_SM-4,Juang_SM,E,0,E-0,,Peterson2017
@@ -167,7 +167,7 @@ Juang_SM-25,Juang_SM,Z,2,Z-2,,Peterson2017
 Juang_SM-26,Juang_SM,AA,1,AA-1,,Peterson2017
 Juang_SM-27,Juang_SM,AB,2,AB-2,,Peterson2017
 Juang_SM-28,Juang_SM,AC,?,,,Peterson2017
-Gorum_SM-1,Gorum_SM,B,1,B-1,,Peterson2017
+Gorum_SM-1,Gorum_SM,B,7,,,Peterson2017
 Gorum_SM-2,Gorum_SM,C,1,C-1,,Peterson2017
 Gorum_SM-3,Gorum_SM,D,0,D-0,,Peterson2017
 Gorum_SM-4,Gorum_SM,E,0,E-0,,Peterson2017
@@ -195,7 +195,7 @@ Gorum_SM-25,Gorum_SM,Z,2,Z-2,,Peterson2017
 Gorum_SM-26,Gorum_SM,AA,0,AA-0,,Peterson2017
 Gorum_SM-27,Gorum_SM,AB,1,AB-1,,Peterson2017
 Gorum_SM-28,Gorum_SM,AC,?,,,Peterson2017
-Gutob_SM-1,Gutob_SM,B,1,B-1,,Peterson2017
+Gutob_SM-1,Gutob_SM,B,8,,,Peterson2017
 Gutob_SM-2,Gutob_SM,C,1,C-1,,Peterson2017
 Gutob_SM-3,Gutob_SM,D,0,D-0,,Peterson2017
 Gutob_SM-4,Gutob_SM,E,0,E-0,,Peterson2017
@@ -223,7 +223,7 @@ Gutob_SM-25,Gutob_SM,Z,2,Z-2,,Peterson2017
 Gutob_SM-26,Gutob_SM,AA,0,AA-0,,Peterson2017
 Gutob_SM-27,Gutob_SM,AB,2,AB-2,,Peterson2017
 Gutob_SM-28,Gutob_SM,AC,1,AC-1,,Peterson2017
-Korku_NM-1,Korku_NM,B,1,B-1,,Peterson2017
+Korku_NM-1,Korku_NM,B,9,,,Peterson2017
 Korku_NM-2,Korku_NM,C,1,C-1,,Peterson2017
 Korku_NM-3,Korku_NM,D,0,D-0,,Peterson2017
 Korku_NM-4,Korku_NM,E,0,E-0,,Peterson2017
@@ -251,7 +251,7 @@ Korku_NM-25,Korku_NM,Z,0,Z-0,,Peterson2017
 Korku_NM-26,Korku_NM,AA,0,AA-0,,Peterson2017
 Korku_NM-27,Korku_NM,AB,2,AB-2,,Peterson2017
 Korku_NM-28,Korku_NM,AC,0,AC-0,,Peterson2017
-Sora_SM-1,Sora_SM,B,1,B-1,,Peterson2017
+Sora_SM-1,Sora_SM,B,10,,,Peterson2017
 Sora_SM-2,Sora_SM,C,1,C-1,,Peterson2017
 Sora_SM-3,Sora_SM,D,0,D-0,,Peterson2017
 Sora_SM-4,Sora_SM,E,0,E-0,,Peterson2017
@@ -279,7 +279,7 @@ Sora_SM-25,Sora_SM,Z,1,Z-1,,Peterson2017
 Sora_SM-26,Sora_SM,AA,0,AA-0,,Peterson2017
 Sora_SM-27,Sora_SM,AB,2,AB-2,,Peterson2017
 Sora_SM-28,Sora_SM,AC,0,AC-0,,Peterson2017
-Gta_SM-1,Gta_SM,B,1,B-1,,Peterson2017
+Gta_SM-1,Gta_SM,B,1,,,Peterson2017
 Gta_SM-2,Gta_SM,C,1,C-1,,Peterson2017
 Gta_SM-3,Gta_SM,D,0,D-0,,Peterson2017
 Gta_SM-4,Gta_SM,E,0,E-0,,Peterson2017
@@ -307,7 +307,7 @@ Gta_SM-25,Gta_SM,Z,1,Z-1,,Peterson2017
 Gta_SM-26,Gta_SM,AA,?,,,Peterson2017
 Gta_SM-27,Gta_SM,AB,1,AB-1,,Peterson2017
 Gta_SM-28,Gta_SM,AC,1,AC-1,,Peterson2017
-Sadri_IA-1,Sadri_IA,B,2,B-2,,Peterson2017
+Sadri_IA-1,Sadri_IA,B,2,,,Peterson2017
 Sadri_IA-2,Sadri_IA,C,1,C-1,,Peterson2017
 Sadri_IA-3,Sadri_IA,D,0,D-0,,Peterson2017
 Sadri_IA-4,Sadri_IA,E,0,E-0,,Peterson2017
@@ -335,7 +335,7 @@ Sadri_IA-25,Sadri_IA,Z,0,Z-0,,Peterson2017
 Sadri_IA-26,Sadri_IA,AA,1,AA-1,,Peterson2017
 Sadri_IA-27,Sadri_IA,AB,2,AB-2,,Peterson2017
 Sadri_IA-28,Sadri_IA,AC,1,AC-1,,Peterson2017
-Bengali_IA-1,Bengali_IA,B,1,B-1,,Peterson2017
+Bengali_IA-1,Bengali_IA,B,1,,,Peterson2017
 Bengali_IA-2,Bengali_IA,C,1,C-1,,Peterson2017
 Bengali_IA-3,Bengali_IA,D,0,D-0,,Peterson2017
 Bengali_IA-4,Bengali_IA,E,0,E-0,,Peterson2017
@@ -363,7 +363,7 @@ Bengali_IA-25,Bengali_IA,Z,0,Z-0,,Peterson2017
 Bengali_IA-26,Bengali_IA,AA,1,AA-1,,Peterson2017
 Bengali_IA-27,Bengali_IA,AB,1,AB-1,,Peterson2017
 Bengali_IA-28,Bengali_IA,AC,1,AC-1,,Peterson2017
-Maithili_IA-1,Maithili_IA,B,1,B-1,,Peterson2017
+Maithili_IA-1,Maithili_IA,B,1,,,Peterson2017
 Maithili_IA-2,Maithili_IA,C,1,C-1,,Peterson2017
 Maithili_IA-3,Maithili_IA,D,0,D-0,,Peterson2017
 Maithili_IA-4,Maithili_IA,E,0,E-0,,Peterson2017
@@ -391,7 +391,7 @@ Maithili_IA-25,Maithili_IA,Z,0,Z-0,,Peterson2017
 Maithili_IA-26,Maithili_IA,AA,1,AA-1,,Peterson2017
 Maithili_IA-27,Maithili_IA,AB,1,AB-1,,Peterson2017
 Maithili_IA-28,Maithili_IA,AC,?,,,Peterson2017
-Oriya_IA-1,Oriya_IA,B,1,B-1,,Peterson2017
+Oriya_IA-1,Oriya_IA,B,1,,,Peterson2017
 Oriya_IA-2,Oriya_IA,C,1,C-1,,Peterson2017
 Oriya_IA-3,Oriya_IA,D,0,D-0,,Peterson2017
 Oriya_IA-4,Oriya_IA,E,0,E-0,,Peterson2017
@@ -419,7 +419,7 @@ Oriya_IA-25,Oriya_IA,Z,0,Z-0,,Peterson2017
 Oriya_IA-26,Oriya_IA,AA,1,AA-1,,Peterson2017
 Oriya_IA-27,Oriya_IA,AB,2,AB-2,,Peterson2017
 Oriya_IA-28,Oriya_IA,AC,1,AC-1,,Peterson2017
-Bhojpuri_IA-1,Bhojpuri_IA,B,1,B-1,,Peterson2017
+Bhojpuri_IA-1,Bhojpuri_IA,B,1,,,Peterson2017
 Bhojpuri_IA-2,Bhojpuri_IA,C,1,C-1,,Peterson2017
 Bhojpuri_IA-3,Bhojpuri_IA,D,0,D-0,,Peterson2017
 Bhojpuri_IA-4,Bhojpuri_IA,E,0,E-0,,Peterson2017
@@ -447,7 +447,7 @@ Bhojpuri_IA-25,Bhojpuri_IA,Z,0,Z-0,,Peterson2017
 Bhojpuri_IA-26,Bhojpuri_IA,AA,1,AA-1,,Peterson2017
 Bhojpuri_IA-27,Bhojpuri_IA,AB,2,AB-2,,Peterson2017
 Bhojpuri_IA-28,Bhojpuri_IA,AC,1,AC-1,,Peterson2017
-Hindi_IA-1,Hindi_IA,B,2,B-2,,Peterson2017
+Hindi_IA-1,Hindi_IA,B,2,,,Peterson2017
 Hindi_IA-2,Hindi_IA,C,0,C-0,,Peterson2017
 Hindi_IA-3,Hindi_IA,D,1,D-1,,Peterson2017
 Hindi_IA-4,Hindi_IA,E,1,E-1,,Peterson2017
@@ -475,7 +475,7 @@ Hindi_IA-25,Hindi_IA,Z,0,Z-0,,Peterson2017
 Hindi_IA-26,Hindi_IA,AA,1,AA-1,,Peterson2017
 Hindi_IA-27,Hindi_IA,AB,0,AB-0,,Peterson2017
 Hindi_IA-28,Hindi_IA,AC,0,AC-0,,Peterson2017
-Nepali_IA-1,Nepali_IA,B,2,B-2,,Peterson2017
+Nepali_IA-1,Nepali_IA,B,2,,,Peterson2017
 Nepali_IA-2,Nepali_IA,C,1,C-1,,Peterson2017
 Nepali_IA-3,Nepali_IA,D,1,D-1,,Peterson2017
 Nepali_IA-4,Nepali_IA,E,1,E-1,,Peterson2017
@@ -503,7 +503,7 @@ Nepali_IA-25,Nepali_IA,Z,0,Z-0,,Peterson2017
 Nepali_IA-26,Nepali_IA,AA,?,,,Peterson2017
 Nepali_IA-27,Nepali_IA,AB,2,AB-2,,Peterson2017
 Nepali_IA-28,Nepali_IA,AC,1,AC-1,,Peterson2017
-Darai_IA-1,Darai_IA,B,1,B-1,,Peterson2017
+Darai_IA-1,Darai_IA,B,1,,,Peterson2017
 Darai_IA-2,Darai_IA,C,1,C-1,,Peterson2017
 Darai_IA-3,Darai_IA,D,1,D-1,,Peterson2017
 Darai_IA-4,Darai_IA,E,1,E-1,,Peterson2017
@@ -531,7 +531,7 @@ Darai_IA-25,Darai_IA,Z,?,,,Peterson2017
 Darai_IA-26,Darai_IA,AA,?,,,Peterson2017
 Darai_IA-27,Darai_IA,AB,2,AB-2,,Peterson2017
 Darai_IA-28,Darai_IA,AC,1,AC-1,,Peterson2017
-Konkani_IA-1,Konkani_IA,B,3,B-3,,Peterson2017
+Konkani_IA-1,Konkani_IA,B,3,,,Peterson2017
 Konkani_IA-2,Konkani_IA,C,0,C-0,,Peterson2017
 Konkani_IA-3,Konkani_IA,D,1,D-1,,Peterson2017
 Konkani_IA-4,Konkani_IA,E,1,E-1,,Peterson2017
@@ -559,7 +559,7 @@ Konkani_IA-25,Konkani_IA,Z,0,Z-0,,Peterson2017
 Konkani_IA-26,Konkani_IA,AA,0,AA-0,,Peterson2017
 Konkani_IA-27,Konkani_IA,AB,0,AB-0,,Peterson2017
 Konkani_IA-28,Konkani_IA,AC,?,,,Peterson2017
-Marathi_IA-1,Marathi_IA,B,3,B-3,,Peterson2017
+Marathi_IA-1,Marathi_IA,B,3,,,Peterson2017
 Marathi_IA-2,Marathi_IA,C,0,C-0,,Peterson2017
 Marathi_IA-3,Marathi_IA,D,1,D-1,,Peterson2017
 Marathi_IA-4,Marathi_IA,E,1,E-1,,Peterson2017
@@ -587,7 +587,7 @@ Marathi_IA-25,Marathi_IA,Z,0,Z-0,,Peterson2017
 Marathi_IA-26,Marathi_IA,AA,1,AA-1,,Peterson2017
 Marathi_IA-27,Marathi_IA,AB,0,AB-0,,Peterson2017
 Marathi_IA-28,Marathi_IA,AC,2,AC-2,,Peterson2017
-Braj_IA-1,Braj_IA,B,2,B-2,,Peterson2017
+Braj_IA-1,Braj_IA,B,2,,,Peterson2017
 Braj_IA-2,Braj_IA,C,0,C-0,,Peterson2017
 Braj_IA-3,Braj_IA,D,1,D-1,,Peterson2017
 Braj_IA-4,Braj_IA,E,1,E-1,,Peterson2017
@@ -615,7 +615,7 @@ Braj_IA-25,Braj_IA,Z,0,Z-0,,Peterson2017
 Braj_IA-26,Braj_IA,AA,1,AA-1,,Peterson2017
 Braj_IA-27,Braj_IA,AB,0,AB-0,,Peterson2017
 Braj_IA-28,Braj_IA,AC,?,,,Peterson2017
-Kurukh_DR-1,Kurukh_DR,B,2,B-2,,Peterson2017
+Kurukh_DR-1,Kurukh_DR,B,2,,,Peterson2017
 Kurukh_DR-2,Kurukh_DR,C,1,C-1,,Peterson2017
 Kurukh_DR-3,Kurukh_DR,D,0,D-0,,Peterson2017
 Kurukh_DR-4,Kurukh_DR,E,0,E-0,,Peterson2017
@@ -643,7 +643,7 @@ Kurukh_DR-25,Kurukh_DR,Z,0,Z-0,,Peterson2017
 Kurukh_DR-26,Kurukh_DR,AA,1,AA-1,,Peterson2017
 Kurukh_DR-27,Kurukh_DR,AB,1,AB-1,,Peterson2017
 Kurukh_DR-28,Kurukh_DR,AC,0,AC-0,,Peterson2017
-Malto_DR-1,Malto_DR,B,2,B-2,,Peterson2017
+Malto_DR-1,Malto_DR,B,2,,,Peterson2017
 Malto_DR-2,Malto_DR,C,1,C-1,,Peterson2017
 Malto_DR-3,Malto_DR,D,0,D-0,,Peterson2017
 Malto_DR-4,Malto_DR,E,0,E-0,,Peterson2017
@@ -671,7 +671,7 @@ Malto_DR-25,Malto_DR,Z,0,Z-0,,Peterson2017
 Malto_DR-26,Malto_DR,AA,1,AA-1,,Peterson2017
 Malto_DR-27,Malto_DR,AB,1,AB-1,,Peterson2017
 Malto_DR-28,Malto_DR,AC,0,AC-0,,Peterson2017
-Brahui_DR-1,Brahui_DR,B,1,B-1,,Peterson2017
+Brahui_DR-1,Brahui_DR,B,1,,,Peterson2017
 Brahui_DR-2,Brahui_DR,C,2,C-2,,Peterson2017
 Brahui_DR-3,Brahui_DR,D,0,D-0,,Peterson2017
 Brahui_DR-4,Brahui_DR,E,0,E-0,,Peterson2017
@@ -699,7 +699,7 @@ Brahui_DR-25,Brahui_DR,Z,0,Z-0,,Peterson2017
 Brahui_DR-26,Brahui_DR,AA,1,AA-1,,Peterson2017
 Brahui_DR-27,Brahui_DR,AB,0,AB-0,,Peterson2017
 Brahui_DR-28,Brahui_DR,AC,?,,,Peterson2017
-Kannada_DR-1,Kannada_DR,B,3,B-3,,Peterson2017
+Kannada_DR-1,Kannada_DR,B,3,,,Peterson2017
 Kannada_DR-2,Kannada_DR,C,2,C-2,,Peterson2017
 Kannada_DR-3,Kannada_DR,D,2,D-2,,Peterson2017
 Kannada_DR-4,Kannada_DR,E,0,E-0,,Peterson2017
@@ -727,7 +727,7 @@ Kannada_DR-25,Kannada_DR,Z,0,Z-0,,Peterson2017
 Kannada_DR-26,Kannada_DR,AA,1,AA-1,,Peterson2017
 Kannada_DR-27,Kannada_DR,AB,2,AB-2,,Peterson2017
 Kannada_DR-28,Kannada_DR,AC,2,AC-2,,Peterson2017
-Telugu_DR-1,Telugu_DR,B,2,B-2,,Peterson2017
+Telugu_DR-1,Telugu_DR,B,2,,,Peterson2017
 Telugu_DR-2,Telugu_DR,C,2,C-2,,Peterson2017
 Telugu_DR-3,Telugu_DR,D,2,D-2,,Peterson2017
 Telugu_DR-4,Telugu_DR,E,0,E-0,,Peterson2017
@@ -755,7 +755,7 @@ Telugu_DR-25,Telugu_DR,Z,0,Z-0,,Peterson2017
 Telugu_DR-26,Telugu_DR,AA,1,AA-1,,Peterson2017
 Telugu_DR-27,Telugu_DR,AB,0,AB-0,,Peterson2017
 Telugu_DR-28,Telugu_DR,AC,?,,,Peterson2017
-Kuvi_DR-1,Kuvi_DR,B,3,B-3,,Peterson2017
+Kuvi_DR-1,Kuvi_DR,B,3,,,Peterson2017
 Kuvi_DR-2,Kuvi_DR,C,0,C-0,,Peterson2017
 Kuvi_DR-3,Kuvi_DR,D,2,D-2,,Peterson2017
 Kuvi_DR-4,Kuvi_DR,E,0,E-0,,Peterson2017
@@ -783,7 +783,7 @@ Kuvi_DR-25,Kuvi_DR,Z,0,Z-0,,Peterson2017
 Kuvi_DR-26,Kuvi_DR,AA,0,AA-0,,Peterson2017
 Kuvi_DR-27,Kuvi_DR,AB,0,AB-0,,Peterson2017
 Kuvi_DR-28,Kuvi_DR,AC,2,AC-2,,Peterson2017
-Kui_DR-1,Kui_DR,B,2,B-2,,Peterson2017
+Kui_DR-1,Kui_DR,B,2,,,Peterson2017
 Kui_DR-2,Kui_DR,C,0,C-0,,Peterson2017
 Kui_DR-3,Kui_DR,D,2,D-2,,Peterson2017
 Kui_DR-4,Kui_DR,E,0,E-0,,Peterson2017

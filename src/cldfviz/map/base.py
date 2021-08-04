@@ -13,19 +13,19 @@ class Map:
     def __enter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb):  # pragma: no cover
         """write files"""
         raise NotImplementedError()
 
     @staticmethod
-    def add_options(parser, help_suffix):
+    def add_options(parser, help_suffix):  # pragma: no cover
         pass
 
-    def add_language(self, language, values, colormaps):
+    def add_language(self, language, values, colormaps):  # pragma: no cover
         raise NotImplementedError()
 
-    def add_legend(self, parameters, colormaps):
+    def add_legend(self, parameters, colormaps):  # pragma: no cover
         raise NotImplementedError()
 
-    def open(self):
+    def open(self):  # pragma: no cover
         webbrowser.open(self.args.output.resolve().as_uri())
