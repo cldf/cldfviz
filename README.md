@@ -17,7 +17,7 @@ which will be installed with
 ```shell
 pip install cldfviz[cartopy]
 ```
-Note: Since `cartopy` has quite a few system-level requirements, installation may be somewhat trick. Should
+Note: Since `cartopy` has quite a few system-level requirements, installation may be somewhat tricky. Should
 problems arise, https://scitools.org.uk/cartopy/docs/v0.15/installing.html may help.
 
 
@@ -47,6 +47,8 @@ repository,
   in the `ValueTable` or as [`glottocode`](https://cldf.clld.org/v1.0/terms.rdf#glottocode) in `LanguageTable`.
   
 We'll explain the usage of the command by using it with the [WALS CLDF data](https://github.com/cldf-datasets/wals/releases/tag/v2020.1).
+(Run `cldfbench cldfviz.map -h` to list all options of the command.)
+
 Running
 ```shell
 cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --base-layer Esri_WorldPhysical --pacific-centered
@@ -56,7 +58,8 @@ map of the languages in the dataset.
 
 ![WALS languages](docs/wals_languages.jpg)
 
-For smaller language samples, it mae suitable to display the language names on the map, too. Here's [WALS' feature 10B](https://wals.info/feature/10B):
+For smaller language samples, it may be suitable to display the language names on the map, too. 
+Here's [WALS' feature 10B](https://wals.info/feature/10B):
 ```shell
 cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --parameters 10B --colormaps tol --markersize 20 --language-labels
 ```
@@ -74,7 +77,7 @@ csvcut -c ID,Glottocode,Latitude | \
 awk '{if(NR==1){print $0",Parameter_ID"}else{print $0",latitude"}}' | \
 sed 's/ID,Glottocode,Latitude,Parameter_ID/ID,Language_ID,Value,Parameter_ID/g' > values.csv
 ```
-Let's break this down: The first line select all WALS languages for which latitude and Glottocode is given.
+Let's break this down: The first line selects all WALS languages for which latitude and Glottocode is given.
 The next line narrows the resulting CSV to just three columns - the future `ID`, `Language_ID` and `Value`
 columns of our metadata-free StructureDataset. The `awk` command adds a constant column `Parameter_ID`,
 and the `sed` command renames the columns appropriately.
@@ -95,7 +98,7 @@ cldfbench cldfviz.map values.csv --parameters latitude --glottolog PATH/TO/glott
 ![WALS latitudes](docs/wals_latitude.jpg)
 
 Note that for metadata-free datasets, `cldfviz.map` needs to lookup coordinates in Glottolog. Thus, languages
-may be displayed at slightly different locations than above.
+may be displayed at slightly different locations than above (when the coordinates in WALS differ).
 
 Now we could have done this in a simpler way, too, because `cldfviz.map` has a special option to display language
 properties encoded as columns in the `LanguageTable` as if they were parameters of the dataset. We can use this
@@ -157,10 +160,10 @@ awk '{if(NR==1){print $0",Code_ID,Comment,Source,Example_ID"}else{print $0",,,,"
 ```
 Notes: 
 - The first `awk` call adds a unique value `ID`. We cannot re-use the value `ID` from Glottolog,
-  because the mapping between WALS and Glottolog languages is many-to-many.
+  because the mapping between WALS and Glottolog languages is many-to-one.
 - Using `awk` to manipulate CSV data is somewhat fragile, since it will break if the data contains 
   multi-line cell content. To guard against that, you may compare the row count reported by 
-  `csvstat` with the line count from `wc -l`.
+  `csvstat` with the line count from `wc -l` before using `awk`.
 
 Now we append the values and a row for the `ParameterTable` ...
 ```shell
