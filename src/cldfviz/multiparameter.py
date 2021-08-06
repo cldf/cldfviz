@@ -82,21 +82,18 @@ class Value:
 
 
 class MultiParameter:
-    def __init__(self, ds, pids, include_missing=False, glottolog=None, language_property=None):
-        #
-        # FIXME: If no pids, look for language_col, if none either, make synthetic "has_language"
-        # parameter.
-        #
+    def __init__(self, ds, pids, include_missing=False, glottolog=None, language_properties=None):
+        language_properties = language_properties or []
         langs = {lg.id: Language.from_object(lg, glottolog=glottolog)
                  for lg in ds.objects('LanguageTable')} if 'LanguageTable' in ds else {}
         params = {p.id: Parameter.from_object(p)
                   for p in ds.objects('ParameterTable')} if 'ParameterTable' in ds else {}
         self.parameters = collections.OrderedDict(
             [(pid, params.get(pid, Parameter(id=pid, name=pid))) for pid in pids])
-        if language_property:
+        for language_property in language_properties:
             self.parameters[language_property] = Parameter(
                 id=language_property, name=language_property)
-        elif not pids:
+        if not self.parameters:
             # No parameters and no language property specified: Just plot language locations.
             self.parameters['language'] = Parameter(id='language', name='language')
 
@@ -106,8 +103,9 @@ class MultiParameter:
                 if row['parameterReference'] in self.parameters:
                     codes[row['parameterReference']][row['id']] = row['name']
         language_rows = []
-        if language_property:
-            language_rows = list(ds.iter_rows('LanguageTable', 'id', 'name'))
+        for i, language_property in enumerate(language_properties):
+            if i == 0:
+                language_rows = list(ds.iter_rows('LanguageTable', 'id', 'name'))
             if not all(isinstance(v[language_property], (int, float, decimal.Decimal))
                        for v in language_rows if v[language_property] is not None):
                 codes[language_property] = collections.OrderedDict([
@@ -128,7 +126,7 @@ class MultiParameter:
                 if lang:
                     self.languages[val['languageReference']] = lang
                     self.values.append(Value.from_row(val, codes))
-        if language_property:
+        for language_property in language_properties:
             for lang in language_rows:
                 if lang[language_property] is not None:
                     self.languages.setdefault(lang['id'], langs[lang['id']])
@@ -137,7 +135,7 @@ class MultiParameter:
                         pid=language_property,
                         lid=lang['id'],
                         code=language_property))
-        elif not pids:
+        if not self.values:
             # No parameters and no language property specified: Just plot language locations.
             for lang in ds.iter_rows('LanguageTable', 'id', 'name'):
                 self.languages.setdefault(lang['id'], langs[lang['id']])

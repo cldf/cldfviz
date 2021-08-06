@@ -26,7 +26,7 @@ ID,Language_ID,Parameter_ID,Value
         '--format', 'html',
         '--parameters', 'B,C',
         '--colormaps', 'viridis,tol',
-        '--language-property', 'Family_name',
+        '--language-properties', 'Family_name',
         '--pacific-centered',
         '--test',
         str(StructureDataset.directory / 'StructureDataset-metadata.json')])
@@ -51,7 +51,7 @@ ID,Language_ID,Parameter_ID,Value
             '--language-labels',
             '--parameters', 'B,C',
             '--colormaps', 'viridis,tol',
-            '--language-property', 'Family_name',
+            '--language-properties', 'Family_name',
             '--pacific-centered',
             '--test',
             str(StructureDataset.directory / 'StructureDataset-metadata.json')])

@@ -14,7 +14,7 @@ def test_MultiParameter(metadatafree_dataset, StructureDataset, glottolog, tmp_p
         assert values['C'][0].v == 'C-1'
         assert values['C'][0].code == '1'
         break
-    mp = MultiParameter(StructureDataset, ['B'], language_property='Family_name')
+    mp = MultiParameter(StructureDataset, ['B'], language_properties=['Family_name'])
     assert 'Family_name' in mp.parameters
     mp = MultiParameter(StructureDataset, [])
     assert 'language' in mp.parameters

@@ -18,7 +18,7 @@ from cldfbench.cli_util import add_catalog_spec
 from cldfviz.colormap import Colormap, COLORMAPS
 from cldfviz.multiparameter import MultiParameter, CONTINUOUS, CATEGORICAL
 from cldfviz.map import Map
-from cldfviz.cli_util import add_testable
+from cldfviz.cli_util import add_testable, add_listvalued
 
 FORMATS = {}
 for cls in Map.__subclasses__():
@@ -34,31 +34,30 @@ def register(parser):
     add_testable(parser)
     add_dataset(parser)
     add_catalog_spec(parser, 'glottolog')
-    parser.add_argument(
+    add_listvalued(
+        parser,
         '--parameters',
-        default=[],
-        type=lambda s: s.split(','),
         help="Comma-separated Parameter IDs, specifying the values to plot on the map. If not "
              "specified, all languages in the dataset will be plotted.",
     )
-    parser.add_argument(
+    add_listvalued(
+        parser,
         '--colormaps',
-        default=[],
-        type=lambda s: s.split(','),
         help="Comma-separated names of colormaps to use for the respective parameter. Choose from "
-             "{} for categorical and from {} for continuous parameters.".format(
-            join_quoted(COLORMAPS[CATEGORICAL]), join_quoted(COLORMAPS[CONTINUOUS])),
+             "{} for categorical and from {} for continuous parameters."
+             "".format(join_quoted(COLORMAPS[CATEGORICAL]), join_quoted(COLORMAPS[CONTINUOUS])),
     )
-    parser.add_argument(
-        '--language-property',
-        help="Plot values of a language property, i.e. a column in the dataset's LanguageTable.",
-        default=None,
+    add_listvalued(
+        parser,
+        '--language-properties',
+        help="Comma-separated language properties, i.e. columns in the dataset's LanguageTable "
+             "to plot on the map.",
     )
-    parser.add_argument(
-        '--language-property-colormap',
-        default='tol',
-        help="Name of colormap to use for the language property. See help for --colormaps for "
-             "choices",
+    add_listvalued(
+        parser,
+        '--language-properties-colormaps',
+        help="Comma-separated names of colormap to use for the respective language properties. "
+             "See help for --colormaps for choices",
     )
     parser.add_argument(
         '--output',
@@ -112,13 +111,14 @@ def run(args):
     glottolog = {lg.id: lg for lg in args.glottolog.api.languoids() if lg.latitude is not None} \
         if args.glottolog else {}
     data = MultiParameter(
-        ds, args.parameters, glottolog=glottolog, language_property=args.language_property)
-    if args.colormaps:
-        if args.language_property:
-            args.colormaps.append(args.language_property_colormap)
-        assert len(args.colormaps) == len(data.parameters)
-    else:
-        args.colormaps = [None] * len(data.parameters)
+        ds, args.parameters, glottolog=glottolog, language_properties=args.language_properties)
+    if args.parameters and not args.colormaps:
+        args.colormaps = [None] * len(args.parameters)
+    if args.language_properties and not args.language_properties_colormaps:
+        args.language_properties_colormaps = \
+            [None] * len(args.language_properties)
+    args.colormaps.extend(args.language_properties_colormaps)
+    assert len(args.colormaps) == len(data.parameters)
     cms = {pid: Colormap(data.parameters[pid].domain, name=cm)
            for pid, cm in zip(data.parameters, args.colormaps)}
 
