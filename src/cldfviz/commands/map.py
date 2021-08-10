@@ -95,6 +95,12 @@ def register(parser):
         default=False,
         help="Display language names on the map",
     )
+    parser.add_argument(
+        '--include-missing',
+        action='store_true',
+        default=False,
+        help="Include missing values.",
+    )
     for cls in Map.__subclasses__():
         cls.add_options(
             parser, help_suffix='(Only for FORMATs {})'.format(join_quoted(cls.__formats__)))
@@ -111,7 +117,8 @@ def run(args):
     glottolog = {lg.id: lg for lg in args.glottolog.api.languoids() if lg.latitude is not None} \
         if args.glottolog else {}
     data = MultiParameter(
-        ds, args.parameters, glottolog=glottolog, language_properties=args.language_properties)
+        ds, args.parameters, glottolog=glottolog, 
+        include_missing=args.include_missing, language_properties=args.language_properties)
     if args.parameters and not args.colormaps:
         args.colormaps = [None] * len(args.parameters)
     if args.language_properties and not args.language_properties_colormaps:

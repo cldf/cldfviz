@@ -82,7 +82,8 @@ class Value:
 
 
 class MultiParameter:
-    def __init__(self, ds, pids, include_missing=False, glottolog=None, language_properties=None):
+    def __init__(self, ds, pids, include_missing=True, glottolog=None, language_properties=None):
+        self.include_missing = include_missing
         language_properties = language_properties or []
         langs = {lg.id: Language.from_object(lg, glottolog=glottolog)
                  for lg in ds.objects('LanguageTable')} if 'LanguageTable' in ds else {}
@@ -119,7 +120,7 @@ class MultiParameter:
         if codes:
             colmap.append('codeReference')
         for val in ds.iter_rows('ValueTable', *colmap):
-            if (val['value'] is not None) and val['parameterReference'] in self.parameters:
+            if (val['value'] is not None or self.include_missing) and val['parameterReference'] in self.parameters:
                 lang = langs.get(val['languageReference'])
                 if not lang:
                     lang = Language.from_glottolog(val['languageReference'], glottolog)
@@ -157,7 +158,6 @@ class MultiParameter:
                     p.domain = collections.OrderedDict([
                         (v, v) for v in sorted(set(vv.v for vv in vals), key=lambda vv: str(vv))])
 
-        self.include_missing = include_missing
 
     def iter_languages(self):
         for lid, values in itertools.groupby(sorted(self.values), lambda v: v.lid):
