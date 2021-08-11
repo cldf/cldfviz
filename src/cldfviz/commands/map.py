@@ -101,6 +101,13 @@ def register(parser):
         default=False,
         help="Include missing values.",
     )
+    parser.add_argument(
+        '--missing-value-color',
+        action='store',
+        default=False,
+        help="Color of missing value.",
+    )
+
     for cls in Map.__subclasses__():
         cls.add_options(
             parser, help_suffix='(Only for FORMATs {})'.format(join_quoted(cls.__formats__)))
@@ -126,8 +133,12 @@ def run(args):
             [None] * len(args.language_properties)
     args.colormaps.extend(args.language_properties_colormaps)
     assert len(args.colormaps) == len(data.parameters)
-    cms = {pid: Colormap(data.parameters[pid].domain, name=cm)
+    cms = {pid: Colormap(data.parameters[pid].domain, name=cm,
+        novalue=args.missing_value_color)
            for pid, cm in zip(data.parameters, args.colormaps)}
+    print(data.parameters)
+    print(cms)
+    input()
 
     with FORMATS[args.format](data.languages.values(), args) as fig:
         for lang, values in data.iter_languages():

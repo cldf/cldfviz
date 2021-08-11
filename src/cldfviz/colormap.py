@@ -6,7 +6,7 @@ from clldutils.color import qualitative_colors, sequential_colors
 from cldfviz.multiparameter import CONTINUOUS, CATEGORICAL
 
 COLORMAPS = {
-    CATEGORICAL: ['boynton', 'tol', 'base', 'seq'],
+    CATEGORICAL: ['boynton', 'tol', 'base', 'seq', "lb1", "lb2"],
     CONTINUOUS: [cm for cm in plt.colormaps() if not cm.endswith('_r')],
 }
 
@@ -24,6 +24,10 @@ class Colormap:
         else:
             if name == 'seq':
                 colors = sequential_colors(len(domain))
+            elif name == "lb1":
+                colors = ["crimson", "white", "lightgray"]
+            elif name == "lb2":
+                colors = ["cornflowerblue", "white", "lightgray"]
             else:
                 colors = qualitative_colors(len(domain), set=name)
             self.cm = lambda v: dict(zip(domain, colors))[v]
