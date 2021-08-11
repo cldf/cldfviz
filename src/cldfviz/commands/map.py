@@ -128,7 +128,7 @@ def run(args):
     args.colormaps.extend(args.language_properties_colormaps)
     assert len(args.colormaps) == len(data.parameters)
     cms = {pid: Colormap(data.parameters[pid].domain, name=cm,
-        novalue=args.missing_value_color)
+        novalue=None)
            for pid, cm in zip(data.parameters, args.colormaps)}
 
     with FORMATS[args.format](data.languages.values(), args) as fig:

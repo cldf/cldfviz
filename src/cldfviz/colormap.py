@@ -25,9 +25,9 @@ class Colormap:
             if name == 'seq':
                 colors = sequential_colors(len(domain))
             elif name == "lb1":
-                colors = ["crimson", "white", "lightgray"]
+                colors = ["#DC143C", "#FFFFFF", "#D3D3D3"]
             elif name == "lb2":
-                colors = ["cornflowerblue", "white", "lightgray"]
+                colors = ["#6F90F4", "#FFFFFF", "#D3D3D3"]
             else:
                 colors = qualitative_colors(len(domain), set=name)
             self.cm = lambda v: dict(zip(domain, colors))[v]
