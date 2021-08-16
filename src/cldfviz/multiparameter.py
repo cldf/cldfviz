@@ -103,6 +103,17 @@ class MultiParameter:
             for row in ds.iter_rows('CodeTable', 'id', 'parameterReference', 'name'):
                 if row['parameterReference'] in self.parameters:
                     codes[row['parameterReference']][row['id']] = row['name']
+        # sort codes for boolean values
+        # we have a problem with the values being displayed in the order of the
+        # code table, not in the order which we would logically give them
+        # this is merely a workaround, but it illustrates the behavior we need
+        if codes:
+            for pid, cvals in codes.items():
+                keys = list(cvals)
+                if len(keys) == 3 and [x.endswith("-True") for x in keys]:
+                    codes[pid] = collections.OrderedDict(
+                            [(k, cvals[k]) for k in sorted(keys,
+                                key=lambda x: {"True": 1, "False": 2, "None": 3}.get(x.split('-')[-1]))])
         language_rows = []
         for i, language_property in enumerate(language_properties):
             if i == 0:
@@ -147,6 +158,7 @@ class MultiParameter:
                     code='language'))
 
         for p in self.parameters.values():
+
             if p.id in codes:
                 p.domain = codes[p.id]
             else:
@@ -157,7 +169,6 @@ class MultiParameter:
                 else:
                     p.domain = collections.OrderedDict([
                         (v, v) for v in sorted(set(vv.v for vv in vals), key=lambda vv: str(vv))])
-
 
     def iter_languages(self):
         for lid, values in itertools.groupby(sorted(self.values), lambda v: v.lid):
