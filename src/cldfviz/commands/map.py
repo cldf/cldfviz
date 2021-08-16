@@ -12,7 +12,7 @@ Usage examples:
 import pathlib
 
 from pycldf.cli_util import get_dataset, add_dataset
-from clldutils.clilib import PathType
+from clldutils.clilib import PathType, ParserError
 from cldfbench.cli_util import add_catalog_spec
 
 from cldfviz.colormap import Colormap, COLORMAPS
@@ -96,10 +96,10 @@ def register(parser):
         help="Display language names on the map",
     )
     parser.add_argument(
-        '--include-missing',
-        action='store_true',
-        default=False,
-        help="Include missing values.",
+        '--missing-value',
+        default=None,
+        help="A hex-triplet specifying a color used to indicate missing values. If not specified "
+             "missing values will be omitted.",
     )
 
     for cls in Map.__subclasses__():
@@ -118,8 +118,11 @@ def run(args):
     glottolog = {lg.id: lg for lg in args.glottolog.api.languoids() if lg.latitude is not None} \
         if args.glottolog else {}
     data = MultiParameter(
-        ds, args.parameters, glottolog=glottolog, 
-        include_missing=args.include_missing, language_properties=args.language_properties)
+        ds,
+        args.parameters,
+        glottolog=glottolog,
+        include_missing=args.missing_value is not None,
+        language_properties=args.language_properties)
     if args.parameters and not args.colormaps:
         args.colormaps = [None] * len(args.parameters)
     if args.language_properties and not args.language_properties_colormaps:
@@ -127,9 +130,15 @@ def run(args):
             [None] * len(args.language_properties)
     args.colormaps.extend(args.language_properties_colormaps)
     assert len(args.colormaps) == len(data.parameters)
-    cms = {pid: Colormap(data.parameters[pid].domain, name=cm,
-        novalue=None)
-           for pid, cm in zip(data.parameters, args.colormaps)}
+    try:
+        cms = {
+            pid: Colormap(
+                data.parameters[pid].domain,
+                name=cm,
+                novalue=args.missing_value)
+            for pid, cm in zip(data.parameters, args.colormaps)}
+    except ValueError as e:
+        raise ParserError(str(e))
 
     with FORMATS[args.format](data.languages.values(), args) as fig:
         for lang, values in data.iter_languages():

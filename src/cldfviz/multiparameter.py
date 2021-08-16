@@ -61,7 +61,7 @@ class Value:
     def __attrs_post_init__(self):
         try:
             self.float = float(self.v)
-        except ValueError:
+        except (ValueError, TypeError):
             self.float = None
 
     def __eq__(self, other):
@@ -77,12 +77,12 @@ class Value:
             lid=row['languageReference'],
             pid=row['parameterReference'],
             code=codes[row['parameterReference']][row['codeReference']]
-            if row['parameterReference'] in codes else None,
+            if row['parameterReference'] in codes and row['codeReference'] else None,
         )
 
 
 class MultiParameter:
-    def __init__(self, ds, pids, include_missing=True, glottolog=None, language_properties=None):
+    def __init__(self, ds, pids, include_missing=False, glottolog=None, language_properties=None):
         self.include_missing = include_missing
         language_properties = language_properties or []
         langs = {lg.id: Language.from_object(lg, glottolog=glottolog)
@@ -131,7 +131,8 @@ class MultiParameter:
         if codes:
             colmap.append('codeReference')
         for val in ds.iter_rows('ValueTable', *colmap):
-            if (val['value'] is not None or self.include_missing) and val['parameterReference'] in self.parameters:
+            if ((val['value'] is not None) or self.include_missing) and \
+                    val['parameterReference'] in self.parameters:
                 lang = langs.get(val['languageReference'])
                 if not lang:
                     lang = Language.from_glottolog(val['languageReference'], glottolog)
