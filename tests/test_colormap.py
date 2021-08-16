@@ -1,6 +1,7 @@
 import pytest
 
 from cldfviz.colormap import Colormap
+from cldfviz.multiparameter import Parameter
 
 
 @pytest.mark.parametrize(
@@ -11,12 +12,12 @@ from cldfviz.colormap import Colormap
     ]
 )
 def test_Colormap(vals, kw, val, expected):
-    cm = Colormap(vals, **kw)
+    cm = Colormap(Parameter(id='x', name='y', domain=vals), **kw)
     assert cm(val) == expected
     assert cm.scalar_mappable()
 
 
 def test_Colormap2():
-    cm = Colormap(dict(a=1, b=2, c=3), name='seq', novalue='x')
+    cm = Colormap(Parameter(id='x', name='y', domain=dict(a=1, b=2, c=3)), name='seq', novalue='x')
     assert cm('b') == '#FEC44F'
     assert cm(None) == 'x'

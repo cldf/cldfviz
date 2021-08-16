@@ -43,6 +43,7 @@ class Parameter:
     name = attr.ib()
     type = attr.ib(default=CATEGORICAL)
     domain = attr.ib(default=attr.Factory(dict))
+    value_to_code = attr.ib(default=attr.Factory(dict))
 
     @classmethod
     def from_object(cls, obj):
@@ -103,17 +104,6 @@ class MultiParameter:
             for row in ds.iter_rows('CodeTable', 'id', 'parameterReference', 'name'):
                 if row['parameterReference'] in self.parameters:
                     codes[row['parameterReference']][row['id']] = row['name']
-        # sort codes for boolean values
-        # we have a problem with the values being displayed in the order of the
-        # code table, not in the order which we would logically give them
-        # this is merely a workaround, but it illustrates the behavior we need
-        if codes:
-            for pid, cvals in codes.items():
-                keys = list(cvals)
-                if len(keys) == 3 and [x.endswith("-True") for x in keys]:
-                    codes[pid] = collections.OrderedDict(
-                            [(k, cvals[k]) for k in sorted(keys,
-                                key=lambda x: {"True": 1, "False": 2, "None": 3}.get(x.split('-')[-1]))])
         language_rows = []
         for i, language_property in enumerate(language_properties):
             if i == 0:
@@ -139,6 +129,8 @@ class MultiParameter:
                 if lang:
                     self.languages[val['languageReference']] = lang
                     self.values.append(Value.from_row(val, codes))
+                    self.parameters[val['parameterReference']].value_to_code[str(val['value'])] = \
+                        val.get('codeReference') or val['Value']
         for language_property in language_properties:
             for lang in language_rows:
                 if lang[language_property] is not None:
@@ -159,7 +151,6 @@ class MultiParameter:
                     code='language'))
 
         for p in self.parameters.values():
-
             if p.id in codes:
                 p.domain = codes[p.id]
             else:

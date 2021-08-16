@@ -23,6 +23,17 @@ ID,Language_ID,Parameter_ID,Value
         str(values)])
     assert tmp_path.joinpath('testmap.html').exists()
 
+    main([
+        'cldfviz.map',
+        '--glottolog', str(glottolog_dir),
+        '--output', str(tmp_path / 'testmap'),
+        '--format', 'html',
+        '--parameters', 'param1',
+        '--colormaps', '{"val1": "#a00", "val2": "#0a0", "val3": "#00a", "val4": "#000"}',
+        '--test',
+        str(values)])
+    assert tmp_path.joinpath('testmap.html').exists()
+
     with pytest.raises(SystemExit):
         main([
             'cldfviz.map',
@@ -30,7 +41,7 @@ ID,Language_ID,Parameter_ID,Value
             '--output', str(tmp_path / 'testmap'),
             '--format', 'html',
             '--parameters', 'param1',
-            '--colormaps', 'lb1',
+            '--colormaps', '{"x": "y"}',
             '--test',
             str(values)])
     out, _ = capsys.readouterr()

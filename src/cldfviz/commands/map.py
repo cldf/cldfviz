@@ -133,11 +133,11 @@ def run(args):
     try:
         cms = {
             pid: Colormap(
-                data.parameters[pid].domain,
+                data.parameters[pid],
                 name=cm,
                 novalue=args.missing_value)
             for pid, cm in zip(data.parameters, args.colormaps)}
-    except ValueError as e:
+    except (ValueError, KeyError) as e:
         raise ParserError(str(e))
 
     with FORMATS[args.format](data.languages.values(), args) as fig:
