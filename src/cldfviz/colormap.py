@@ -12,7 +12,6 @@ COLORMAPS = {
 
 
 class Colormap:
-
     def __init__(self, domain, name=None, novalue=None):
         self.novalue = novalue
         self._cm = getattr(cm, name or 'yyy', cm.jet)
@@ -22,14 +21,18 @@ class Colormap:
             norm = Normalize(domain[0], domain[1])
             self.cm = lambda v: to_hex(self._cm(norm(float(v))))
         else:
-            if name == 'seq':
-                colors = sequential_colors(len(domain))
-            elif name == "lb1":
-                colors = ["#DC143C", "#FFFFFF", "#D3D3D3"]
-            elif name == "lb2":
-                colors = ["#6F90F4", "#FFFFFF", "#D3D3D3"]
-            else:
-                colors = qualitative_colors(len(domain), set=name)
+            colors = {
+                'lb1': ["#DC143C", "#FFFFFF", "#D3D3D3"],
+                'lb2': ["#6F90F4", "#FFFFFF", "#D3D3D3"],
+            }.get(name)
+            if not colors:
+                if name == 'seq':
+                    colors = sequential_colors(len(domain))
+                else:
+                    colors = qualitative_colors(len(domain), set=name)
+            if len(domain) > len(colors):
+                raise ValueError('Colormap {} can only be used for parameters with at most '
+                                 '{} categories!'.format(name, len(colors)))
             self.cm = lambda v: dict(zip(domain, colors))[v]
 
     def scalar_mappable(self):
