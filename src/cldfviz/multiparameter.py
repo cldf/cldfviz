@@ -176,7 +176,7 @@ class MultiParameter:
                         (v, v) for v in sorted(set(vv.v for vv in vals), key=lambda vv: str(vv))])
 
     def iter_languages(self) \
-            -> typing.Iterator[typing.Tuple[Language, typing.OrderedDict[str, typing.List[Value]]]]:
+            -> typing.Iterator[typing.Tuple[Language, typing.Dict[str, typing.List[Value]]]]:
         for lid, values in itertools.groupby(sorted(self.values), lambda v: v.lid):
             values = {pid: list(vals) for pid, vals in itertools.groupby(values, lambda v: v.pid)}
             values = collections.OrderedDict(
