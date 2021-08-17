@@ -1,39 +1,61 @@
 import json
+import typing
 import collections
 
 from matplotlib import cm
-from matplotlib.colors import Normalize, to_hex
+from matplotlib.colors import Normalize, to_hex, CSS4_COLORS, BASE_COLORS
 import matplotlib.pyplot as plt
-from clldutils.color import qualitative_colors, sequential_colors
+from clldutils.color import qualitative_colors, sequential_colors, rgb_as_hex
 
-from cldfviz.multiparameter import CONTINUOUS, CATEGORICAL
+from cldfviz.multiparameter import CONTINUOUS, CATEGORICAL, Parameter
 
+__all__ = ['COLORMAPS', 'hextriplet', 'Colormap']
 COLORMAPS = {
-    CATEGORICAL: ['boynton', 'tol', 'base', 'seq', "lb1", "lb2"],
+    CATEGORICAL: ['boynton', 'tol', 'base', 'seq'],
     CONTINUOUS: [cm for cm in plt.colormaps() if not cm.endswith('_r')],
 }
 
 
+def hextriplet(s):
+    """
+    Wrap clldutils.color.rgb_as_hex to provide unified error handling.
+    """
+    if s in BASE_COLORS:
+        return rgb_as_hex([float(d) for d in BASE_COLORS[s]])
+    if s in CSS4_COLORS:
+        return CSS4_COLORS[s]
+    try:
+        return rgb_as_hex(s)
+    except (AssertionError, ValueError) as e:
+        raise ValueError('Invalid color spec: "{}" ({})'.format(s, str(e)))
+
+
 class Colormap:
-    def __init__(self, parameter, name=None, novalue=None):
+    def __init__(self, parameter: Parameter, name: typing.Optional[str] = None, novalue=None):
         domain = parameter.domain
         self.explicit_cm = None
         if name and name.startswith('{'):
-            self.explicit_cm = collections.OrderedDict(
-                (parameter.value_to_code[v], c)
-                for v, c in json.loads(name, object_pairs_hook=collections.OrderedDict).items())
-            if len(domain) > len(self.explicit_cm):  # pragma: no cover1G
-                raise ValueError('Explicit Colormap {} does not cover all categories {}!'.format(
-                    self.explicit_cm, list(domain.keys())
-                ))
+            self.explicit_cm = collections.OrderedDict()
+            raw = json.loads(name, object_pairs_hook=collections.OrderedDict)
+            if novalue:
+                raw.setdefault('None', novalue)
+            for v, c in raw.items():
+                if v not in parameter.value_to_code:
+                    raise ValueError('Colormap value "{}" not in domain {}'.format(
+                        v, list(parameter.value_to_code.keys())))
+                self.explicit_cm[parameter.value_to_code[v]] = hextriplet(c)
+            vals = list(parameter.value_to_code)
+            if len(vals) > len(self.explicit_cm):
+                raise ValueError('Colormap {} does not cover all values {}!'.format(
+                    dict(raw), vals))
             name = None
-            # reorder the domain of the parameter!
+            # reorder the domain of the parameter (and prune it to valid values):
             parameter.domain = collections.OrderedDict(
-                (v, l) for v, l in sorted(
-                    parameter.domain.items(),
+                (c, l) for c, l in sorted(
+                    [i for i in parameter.domain.items() if i[0] in self.explicit_cm],
                     key=lambda i: list(self.explicit_cm.keys()).index(i[0]))
             )
-        self.novalue = novalue
+        self.novalue = hextriplet(novalue) if novalue else None
         self._cm = getattr(cm, name or 'yyy', cm.jet)
 
         if isinstance(domain, tuple):

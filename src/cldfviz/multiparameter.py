@@ -1,9 +1,12 @@
+import typing
 import decimal
 import functools
 import itertools
 import collections
 
 import attr
+import pycldf
+from pyglottolog.languoids import Languoid
 
 CONTINUOUS = 1
 CATEGORICAL = 2
@@ -83,7 +86,17 @@ class Value:
 
 
 class MultiParameter:
-    def __init__(self, ds, pids, include_missing=False, glottolog=None, language_properties=None):
+    """
+    Extracts relevant data about a set of parameters from a CLDF dataset.
+
+    :ivar parameters: `OrderedDict` mapping parameter IDs to :class:`Parameter` instances.
+    """
+    def __init__(self,
+                 ds: pycldf.Dataset,
+                 pids: typing.Iterable[str],
+                 include_missing: bool = False,
+                 glottolog: typing.Optional[typing.Dict[str, Languoid]] = None,
+                 language_properties: typing.Optional[typing.Iterable[str]] = None):
         self.include_missing = include_missing
         language_properties = language_properties or []
         langs = {lg.id: Language.from_object(lg, glottolog=glottolog)
@@ -162,7 +175,8 @@ class MultiParameter:
                     p.domain = collections.OrderedDict([
                         (v, v) for v in sorted(set(vv.v for vv in vals), key=lambda vv: str(vv))])
 
-    def iter_languages(self):
+    def iter_languages(self) \
+            -> typing.Iterator[typing.Tuple[Language, typing.OrderedDict[str, typing.List[Value]]]]:
         for lid, values in itertools.groupby(sorted(self.values), lambda v: v.lid):
             values = {pid: list(vals) for pid, vals in itertools.groupby(values, lambda v: v.pid)}
             values = collections.OrderedDict(

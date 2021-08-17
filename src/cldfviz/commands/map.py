@@ -8,6 +8,14 @@ Usage examples:
   cldfbench cldfviz.map PATH/TO/DATASET --parameters PID
 - plot values of a column in the dataset's LanguageTable:
   cldfbench cldfviz.map PATH/TO/DATASET --language-property Macroarea
+
+Colormaps: Colormaps can be specified by name - chosing from the ones available - or explicitly,
+by providing a mapping from values (as found in the value column of ValueTable) to colors (see
+below), serialized as JSON object, e.g. `--colormaps '{"x": "#a00", "y": "#0a0"}'`.
+
+Colors: Colors can be specified as
+- hex-triplets ("#a00", "AA0000")
+- name (see https://www.w3.org/TR/css-color-4/#named-colors)
 """
 import pathlib
 
@@ -98,8 +106,8 @@ def register(parser):
     parser.add_argument(
         '--missing-value',
         default=None,
-        help="A hex-triplet specifying a color used to indicate missing values. If not specified "
-             "missing values will be omitted.",
+        help="A color used to indicate missing values. If not specified missing values will be "
+             "omitted.",
     )
 
     for cls in Map.__subclasses__():
