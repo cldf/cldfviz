@@ -48,12 +48,20 @@ repository,
   
 We'll explain the usage of the command by using it with the [WALS CLDF data](https://github.com/cldf-datasets/wals/releases/tag/v2020.1).
 (Run `cldfbench cldfviz.map -h` to list all options of the command.)
+You can download the WALS data - for example - using another `cldfbench` plugin: [cldfzenodo](https://github.com/cldf/cldfzenodo/#cli):
+```shell
+cldfbench zenodo.download 10.5281/zenodo.4683137 --directory wals-2020.1/
+```
+
+#### HTML maps
+
+With the [leaflet](https://leafletjs.com) library, we can create interactive maps which can be explored in a browser.
 
 Running
 ```shell
-cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --base-layer Esri_WorldPhysical --pacific-centered
+cldfbench cldfviz.map wals-2020.1/StructureDataset-metadata.json --base-layer Esri_WorldPhysical --pacific-centered
 ```
-will create an HTML page `map.html` and open it in the browser, thus rendering an interactive [leaflet](https://leafletjs.com/)
+will create an HTML page `map.html` and open it in the browser, thus rendering an interactive
 map of the languages in the dataset.
 
 ![WALS languages](docs/wals_languages.jpg)
@@ -61,7 +69,7 @@ map of the languages in the dataset.
 For smaller language samples, it may be suitable to display the language names on the map, too. 
 Here's [WALS' feature 10B](https://wals.info/feature/10B):
 ```shell
-cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --parameters 10B --colormaps tol --markersize 20 --language-labels
+cldfbench cldfviz.map wals-2020.1/StructureDataset-metadata.json --parameters 10B --colormaps tol --markersize 20 --language-labels
 ```
 ![WALS 10B](docs/wals_10B.jpg)
 
@@ -72,7 +80,7 @@ quickly create one. Using the [UNIX shell](https://swcarpentry.github.io/shell-n
 tools of the[csvkit](https://csvkit.readthedocs.io/en/latest/) toolbox, we
 can run
 ```shell
-csvgrep -c Latitude,Glottocode -r".+" wals-2020.1/cldf/languages.csv | \
+csvgrep -c Latitude,Glottocode -r".+" wals-2020.1/languages.csv | \
 csvcut -c ID,Glottocode,Latitude | \
 awk '{if(NR==1){print $0",Parameter_ID"}else{print $0",latitude"}}' | \
 sed 's/ID,Glottocode,Latitude,Parameter_ID/ID,Language_ID,Value,Parameter_ID/g' > values.csv
@@ -93,7 +101,7 @@ abb,chad1249,13.8333333333,latitude
 
 Now we can run
 ```shell
-cldfbench cldfviz.map values.csv --parameters latitude --glottolog PATH/TO/glottolog
+cldfbench cldfviz.map values.csv --parameters latitude --glottolog PATH/TO/GLOTTOLOG
 ```
 ![WALS latitudes](docs/wals_latitude.jpg)
 
@@ -121,14 +129,21 @@ cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --paramete
 
 ![WALS 129A, 130A and 130B](docs/wals_129A_130A_130B.jpg)
 
-Finally, if `cldfviz` is installed with `cartopy` similar maps to the ones shown above can also be created
+
+#### Printable maps via cartopy
+
+If `cldfviz` is installed with `cartopy` similar maps to the ones shown above can also be created
 in various image formats:
 ```shell
-cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --parameters 129A --colormaps tol \
---language-property Latitude --pacific-centered \
+cldfbench cldfviz.map wals-2020.1/StructureDataset-metadata.json --parameters 129A --colormaps tol \
+--language-properties Latitude --pacific-centered \
 --format jpg --width 20 --height 10 --dpi 300 --markersize 40
 ```
 ![WALS 129A and latitude](docs/wals_latitude_handandarm_2.jpg)
+
+While these maps lack the interactivity of the HTML maps, they may be better suited for inclusion in print
+formats than screen shots of maps in the browser. They also provide some additional options like a choice
+between various map projections.
 
 
 #### Advanced dataset pre-processing
