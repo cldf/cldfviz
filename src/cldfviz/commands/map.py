@@ -8,11 +8,19 @@ Usage examples:
   cldfbench cldfviz.map PATH/TO/DATASET --parameters PID
 - plot values of a column in the dataset's LanguageTable:
   cldfbench cldfviz.map PATH/TO/DATASET --language-property Macroarea
+
+Colormaps: Colormaps can be specified by name - chosing from the ones available - or explicitly,
+by providing a mapping from values (as found in the value column of ValueTable) to colors (see
+below), serialized as JSON object, e.g. `--colormaps '{"x": "#a00", "y": "#0a0"}'`.
+
+Colors: Colors can be specified as
+- hex-triplets ("#a00", "AA0000")
+- name (see https://www.w3.org/TR/css-color-4/#named-colors)
 """
 import pathlib
 
 from pycldf.cli_util import get_dataset, add_dataset
-from clldutils.clilib import PathType
+from clldutils.clilib import PathType, ParserError
 from cldfbench.cli_util import add_catalog_spec
 
 from cldfviz.colormap import Colormap, COLORMAPS
@@ -95,6 +103,13 @@ def register(parser):
         default=False,
         help="Display language names on the map",
     )
+    parser.add_argument(
+        '--missing-value',
+        default=None,
+        help="A color used to indicate missing values. If not specified missing values will be "
+             "omitted.",
+    )
+
     for cls in Map.__subclasses__():
         cls.add_options(
             parser, help_suffix='(Only for FORMATs {})'.format(join_quoted(cls.__formats__)))
@@ -111,7 +126,11 @@ def run(args):
     glottolog = {lg.id: lg for lg in args.glottolog.api.languoids() if lg.latitude is not None} \
         if args.glottolog else {}
     data = MultiParameter(
-        ds, args.parameters, glottolog=glottolog, language_properties=args.language_properties)
+        ds,
+        args.parameters,
+        glottolog=glottolog,
+        include_missing=args.missing_value is not None,
+        language_properties=args.language_properties)
     if args.parameters and not args.colormaps:
         args.colormaps = [None] * len(args.parameters)
     if args.language_properties and not args.language_properties_colormaps:
@@ -119,8 +138,15 @@ def run(args):
             [None] * len(args.language_properties)
     args.colormaps.extend(args.language_properties_colormaps)
     assert len(args.colormaps) == len(data.parameters)
-    cms = {pid: Colormap(data.parameters[pid].domain, name=cm)
-           for pid, cm in zip(data.parameters, args.colormaps)}
+    try:
+        cms = {
+            pid: Colormap(
+                data.parameters[pid],
+                name=cm,
+                novalue=args.missing_value)
+            for pid, cm in zip(data.parameters, args.colormaps)}
+    except (ValueError, KeyError) as e:
+        raise ParserError(str(e))
 
     with FORMATS[args.format](data.languages.values(), args) as fig:
         for lang, values in data.iter_languages():

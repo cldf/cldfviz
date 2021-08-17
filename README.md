@@ -108,7 +108,7 @@ option to visualize a claim from [WALS' chapter 129](https://wals.info/chapter/1
 
 ```shell
 cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --parameters 129A --colormaps tol \
---markersize 20 --language-property Latitude --pacific-centered
+--markersize 20 --language-properties Latitude --pacific-centered
 ```
 ![WALS 129A and latitude](docs/wals_latitude_handandarm.jpg)
 

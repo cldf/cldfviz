@@ -118,6 +118,7 @@ class MapPlot(Map):
             type=float,
             default=100.0,
         )
+        
 
     def _lonlat(self, language):
         lat, lon = language.lat, language.lon

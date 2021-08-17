@@ -1,9 +1,12 @@
+import typing
 import decimal
 import functools
 import itertools
 import collections
 
 import attr
+import pycldf
+from pyglottolog.languoids import Languoid
 
 CONTINUOUS = 1
 CATEGORICAL = 2
@@ -43,6 +46,7 @@ class Parameter:
     name = attr.ib()
     type = attr.ib(default=CATEGORICAL)
     domain = attr.ib(default=attr.Factory(dict))
+    value_to_code = attr.ib(default=attr.Factory(dict))
 
     @classmethod
     def from_object(cls, obj):
@@ -61,7 +65,7 @@ class Value:
     def __attrs_post_init__(self):
         try:
             self.float = float(self.v)
-        except ValueError:
+        except (ValueError, TypeError):
             self.float = None
 
     def __eq__(self, other):
@@ -77,12 +81,23 @@ class Value:
             lid=row['languageReference'],
             pid=row['parameterReference'],
             code=codes[row['parameterReference']][row['codeReference']]
-            if row['parameterReference'] in codes else None,
+            if row['parameterReference'] in codes and row['codeReference'] else None,
         )
 
 
 class MultiParameter:
-    def __init__(self, ds, pids, include_missing=False, glottolog=None, language_properties=None):
+    """
+    Extracts relevant data about a set of parameters from a CLDF dataset.
+
+    :ivar parameters: `OrderedDict` mapping parameter IDs to :class:`Parameter` instances.
+    """
+    def __init__(self,
+                 ds: pycldf.Dataset,
+                 pids: typing.Iterable[str],
+                 include_missing: bool = False,
+                 glottolog: typing.Optional[typing.Dict[str, Languoid]] = None,
+                 language_properties: typing.Optional[typing.Iterable[str]] = None):
+        self.include_missing = include_missing
         language_properties = language_properties or []
         langs = {lg.id: Language.from_object(lg, glottolog=glottolog)
                  for lg in ds.objects('LanguageTable')} if 'LanguageTable' in ds else {}
@@ -119,13 +134,16 @@ class MultiParameter:
         if codes:
             colmap.append('codeReference')
         for val in ds.iter_rows('ValueTable', *colmap):
-            if (val['value'] is not None) and val['parameterReference'] in self.parameters:
+            if ((val['value'] is not None) or self.include_missing) and \
+                    val['parameterReference'] in self.parameters:
                 lang = langs.get(val['languageReference'])
                 if not lang:
                     lang = Language.from_glottolog(val['languageReference'], glottolog)
                 if lang:
                     self.languages[val['languageReference']] = lang
                     self.values.append(Value.from_row(val, codes))
+                    self.parameters[val['parameterReference']].value_to_code[str(val['value'])] = \
+                        val.get('codeReference') or val['Value']
         for language_property in language_properties:
             for lang in language_rows:
                 if lang[language_property] is not None:
@@ -157,9 +175,8 @@ class MultiParameter:
                     p.domain = collections.OrderedDict([
                         (v, v) for v in sorted(set(vv.v for vv in vals), key=lambda vv: str(vv))])
 
-        self.include_missing = include_missing
-
-    def iter_languages(self):
+    def iter_languages(self) \
+            -> typing.Iterator[typing.Tuple[Language, typing.Dict[str, typing.List[Value]]]]:
         for lid, values in itertools.groupby(sorted(self.values), lambda v: v.lid):
             values = {pid: list(vals) for pid, vals in itertools.groupby(values, lambda v: v.pid)}
             values = collections.OrderedDict(

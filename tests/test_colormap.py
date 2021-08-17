@@ -1,6 +1,19 @@
 import pytest
 
-from cldfviz.colormap import Colormap
+from cldfviz.colormap import *
+from cldfviz.multiparameter import Parameter
+
+
+@pytest.mark.parametrize(
+    's,res',
+    [
+        ('r', '#FF0000'),
+        ('aqua', '#00FFFF'),
+        ('a00', '#AA0000'),
+    ]
+)
+def test_hextriplet(s, res):
+    assert hextriplet(s) == res
 
 
 @pytest.mark.parametrize(
@@ -11,12 +24,26 @@ from cldfviz.colormap import Colormap
     ]
 )
 def test_Colormap(vals, kw, val, expected):
-    cm = Colormap(vals, **kw)
+    cm = Colormap(Parameter(id='x', name='y', domain=vals), **kw)
     assert cm(val) == expected
     assert cm.scalar_mappable()
 
 
 def test_Colormap2():
-    cm = Colormap(dict(a=1, b=2, c=3), name='seq', novalue='x')
+    with pytest.raises(ValueError):
+        _ = Colormap(Parameter(id='x', name='y', domain=dict(a=1)), name='seq', novalue='x')
+
+    param = Parameter(
+        id='x',
+        name='y',
+        domain=dict(a=1, b=2, c=3),
+        value_to_code={'a': 'a', 'b': 'b', 'c': 'c', 'None': None},
+    )
+    with pytest.raises(ValueError):
+        _ = Colormap(param, name='{"a":"0a0"}', novalue='a00')
+
+    cm = Colormap(param, name='{"a":"0a0","b":"fec44f","c":"blue"}', novalue='a00')
     assert cm('b') == '#FEC44F'
-    assert cm(None) == 'x'
+    assert cm(None) == '#AA0000'
+    cm = Colormap(param, name='seq')
+    assert cm('b') == '#FEC44F'
