@@ -97,13 +97,12 @@ ID,Language_ID,Parameter_ID,Value
             '--test',
             str(values)])
 
-        with pytest.raises(SystemExit):
-            main([
-                'cldfviz.map',
-                '--glottolog', str(glottolog_dir),
-                '--output', str(tmp_path / 'testmap'),
-                '--format', 'png',
-                '--projection', 'Robinson',
-                '--parameters', 'param1,param2',
-                '--test',
-                str(values)])
+        main([
+            'cldfviz.map',
+            '--glottolog', str(glottolog_dir),
+            '--output', str(tmp_path / 'testmap'),
+            '--format', 'png',
+            '--projection', 'Robinson',
+            '--parameters', 'param1,param2',
+            '--test',
+            str(values)])

@@ -1,8 +1,10 @@
 """
 Map plotting with matplotlib and cartopy
 """
+import math
 import textwrap
 
+import numpy as np
 import cartopy.feature
 import cartopy.crs
 from matplotlib import pyplot as plt
@@ -45,9 +47,6 @@ class MapPlot(Map):
     __formats__ = ['jpg', 'png', 'pdf']
 
     def __init__(self, languages, args):
-        if args.projection != 'PlateCarree' and len(args.parameters + args.language_properties) > 1:
-            raise ValueError('Projections other than PlateCarree only support a single '
-                             'parameter/language property')
         Map.__init__(self, languages, args)
         lats, lons = [k.lat for k in languages], [k.lon for k in languages]
         self.central_longitude = PACIFIC_CENTERED if args.pacific_centered else 0
@@ -133,8 +132,7 @@ class MapPlot(Map):
         )
         parser.add_argument(
             '--projection',
-            help="Map projection; note that only PlateCarree (the default) supports multiple "
-                 "parameters/language properties. For details, see "
+            help="Map projection. For details, see "
                  "https://scitools.org.uk/cartopy/docs/latest/crs/projections.html "
                  "{}".format(help_suffix),
             choices=[
@@ -175,10 +173,31 @@ class MapPlot(Map):
                 kw.update(text_kw)
             self.ax.text(lon + text_offset[0], lat + text_offset[1], text, **kw)
 
+    def pie_markers(self, colors):
+        start = 0.
+        for color in colors:
+            ratio = 1 / len(colors)
+            x = [0] + np.cos(
+                np.linspace(2 * math.pi * start, 2 * math.pi * (start + ratio), 30)).tolist()
+            y = [0] + np.sin(
+                np.linspace(2 * math.pi * start, 2 * math.pi * (start + ratio), 30)).tolist()
+            yield color, np.column_stack([x, y])
+            start += ratio
+
     def add_language(self, language, values, colormaps):
         s, angle = 0, 360.0 / len(values)
         lon, lat = self._lonlat(language)
         if self.args.projection != 'PlateCarree':
+            if len(values) > 1:
+                for color, marker in self.pie_markers(
+                        [colormaps[pid](vals[0].v) for pid, vals in values.items()]):
+                    self.ax.scatter(
+                        [language.lon], [language.lat],
+                        marker=marker,
+                        s=[self.args.markersize * 10],
+                        transform=cartopy.crs.Geodetic(),
+                        facecolor=color)
+                return
             pid, vals = list(values.items())[0]
             self.ax.plot(
                 language.lon, language.lat,

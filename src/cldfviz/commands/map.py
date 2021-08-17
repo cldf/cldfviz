@@ -156,7 +156,7 @@ def run(args):
 
     try:
         map = FORMATS[args.format](data.languages.values(), args)
-    except ValueError as e:
+    except ValueError as e:  # pragma: no cover
         raise ParserError(str(e))
 
     with map as fig:

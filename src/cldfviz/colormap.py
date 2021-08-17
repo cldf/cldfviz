@@ -39,11 +39,13 @@ class Colormap:
             raw = json.loads(name, object_pairs_hook=collections.OrderedDict)
             if novalue:
                 raw.setdefault('None', novalue)
+            label_to_code = {v: k for k, v in parameter.domain.items()}
             for v, c in raw.items():
-                if v not in parameter.value_to_code:
+                if (v not in parameter.value_to_code) and v not in label_to_code:
                     raise ValueError('Colormap value "{}" not in domain {}'.format(
                         v, list(parameter.value_to_code.keys())))
-                self.explicit_cm[parameter.value_to_code[v]] = hextriplet(c)
+                v = parameter.value_to_code.get(v, label_to_code.get(v))
+                self.explicit_cm[v] = hextriplet(c)
             vals = list(parameter.value_to_code)
             if len(vals) > len(self.explicit_cm):
                 raise ValueError('Colormap {} does not cover all values {}!'.format(

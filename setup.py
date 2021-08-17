@@ -29,6 +29,7 @@ setup(
         'tqdm',
         'yattag',
         'matplotlib',
+        'numpy',
     ],
     extras_require={
         'cartopy': [
