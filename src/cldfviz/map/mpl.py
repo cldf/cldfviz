@@ -13,6 +13,12 @@ from PIL import Image
 from .base import Map, PACIFIC_CENTERED
 
 
+def iter_subclasses(cls):
+    for cls_ in cls.__subclasses__():
+        yield cls_
+        yield from iter_subclasses(cls_)
+
+
 class HandleWedge(HandlerPatch):
     def create_artists(
             self,
@@ -39,6 +45,9 @@ class MapPlot(Map):
     __formats__ = ['jpg', 'png', 'pdf']
 
     def __init__(self, languages, args):
+        if args.projection != 'PlateCarree' and len(args.parameters + args.language_properties) > 1:
+            raise ValueError('Projections other than PlateCarree only support a single '
+                             'parameter/language property')
         Map.__init__(self, languages, args)
         lats, lons = [k.lat for k in languages], [k.lon for k in languages]
         self.central_longitude = PACIFIC_CENTERED if args.pacific_centered else 0
@@ -50,18 +59,22 @@ class MapPlot(Map):
         ]
         self.ax = None
         self.scaling_factor = 1
-        self.proj = cartopy.crs.PlateCarree(central_longitude=self.central_longitude)
+        self.proj = getattr(cartopy.crs, args.projection)(central_longitude=self.central_longitude)
 
     def __enter__(self):
         plt.clf()
         fig = plt.figure(figsize=(self.args.width, self.args.height), dpi=self.args.dpi)
         ax = fig.add_subplot(1, 1, 1, projection=self.proj)
-        ax.set_extent(self.extent, crs=self.proj)
+        if self.args.projection == 'PlateCarree':
+            ax.set_extent(self.extent, crs=self.proj)
+        else:
+            pass
+        if self.args.with_stock_img:
+            ax.stock_img()
         if not self.args.test:  # pragma: no cover
-            ax.coastlines(resolution='50m')
-            ax.add_feature(cartopy.feature.LAND)
-            ax.add_feature(cartopy.feature.OCEAN)
-            ax.add_feature(cartopy.feature.COASTLINE)
+            ax.coastlines(resolution='50m', color='darkgrey')
+            ax.add_feature(cartopy.feature.LAND, color='lightgrey')
+            ax.add_feature(cartopy.feature.OCEAN, color='lightblue')
             ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
             ax.add_feature(cartopy.feature.LAKES, alpha=0.5)
             ax.add_feature(cartopy.feature.RIVERS)
@@ -118,7 +131,23 @@ class MapPlot(Map):
             type=float,
             default=100.0,
         )
-        
+        parser.add_argument(
+            '--projection',
+            help="Map projection; note that only PlateCarree (the default) supports multiple "
+                 "parameters/language properties. For details, see "
+                 "https://scitools.org.uk/cartopy/docs/latest/crs/projections.html "
+                 "{}".format(help_suffix),
+            choices=[
+                c.__name__ for c in iter_subclasses(cartopy.crs.Projection)
+                if c.__module__ == 'cartopy.crs' and not c.__name__.startswith('_')],
+            default='PlateCarree',
+        )
+        parser.add_argument(
+            '--with-stock-img',
+            help="Add a map underlay (using cartopy's `stock_img` method). {}".format(help_suffix),
+            action="store_true",
+            default=False,
+        )
 
     def _lonlat(self, language):
         lat, lon = language.lat, language.lon
@@ -149,6 +178,20 @@ class MapPlot(Map):
     def add_language(self, language, values, colormaps):
         s, angle = 0, 360.0 / len(values)
         lon, lat = self._lonlat(language)
+        if self.args.projection != 'PlateCarree':
+            pid, vals = list(values.items())[0]
+            self.ax.plot(
+                language.lon, language.lat,
+                color=colormaps[pid](vals[0].v),
+                markersize=self.args.markersize,
+                zorder=4,
+                marker='o',
+                markeredgecolor='black',
+                linewidth=1,
+                transform=cartopy.crs.Geodetic(),
+            )
+            return
+
         for pid, vals in values.items():
             self.ax.add_patch(Wedge(
                 [lon, lat],

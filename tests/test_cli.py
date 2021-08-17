@@ -12,6 +12,7 @@ ID,Language_ID,Parameter_ID,Value
 1,abcd1235,param1,val1
 2,abcd1234,param1,val2
 3,book1243,param1,val3
+5,book1243,param2,val3
 4,isol1234,param1,val4""", encoding='utf8')
     main([
         'cldfviz.map',
@@ -84,3 +85,25 @@ ID,Language_ID,Parameter_ID,Value
             '--test',
             str(StructureDataset.directory / 'StructureDataset-metadata.json')])
         assert tmp_path.joinpath('testmap.jpg').exists()
+
+        main([
+            'cldfviz.map',
+            '--glottolog', str(glottolog_dir),
+            '--output', str(tmp_path / 'testmap'),
+            '--format', 'png',
+            '--projection', 'Robinson',
+            '--parameters', 'param1',
+            '--with-stock-img',
+            '--test',
+            str(values)])
+
+        with pytest.raises(SystemExit):
+            main([
+                'cldfviz.map',
+                '--glottolog', str(glottolog_dir),
+                '--output', str(tmp_path / 'testmap'),
+                '--format', 'png',
+                '--projection', 'Robinson',
+                '--parameters', 'param1,param2',
+                '--test',
+                str(values)])

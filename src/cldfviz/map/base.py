@@ -28,4 +28,5 @@ class Map:
         raise NotImplementedError()
 
     def open(self):  # pragma: no cover
-        webbrowser.open(self.args.output.resolve().as_uri())
+        if self.args.format == 'html':
+            webbrowser.open(self.args.output.resolve().as_uri())

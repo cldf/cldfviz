@@ -109,6 +109,12 @@ def register(parser):
         help="A color used to indicate missing values. If not specified missing values will be "
              "omitted.",
     )
+    parser.add_argument(
+        '--no-legend',
+        action='store_true',
+        default=False,
+        help="Don't add a legend to the map (e.g. because it would be too big).",
+    )
 
     for cls in Map.__subclasses__():
         cls.add_options(
@@ -148,12 +154,19 @@ def run(args):
     except (ValueError, KeyError) as e:
         raise ParserError(str(e))
 
-    with FORMATS[args.format](data.languages.values(), args) as fig:
+    try:
+        map = FORMATS[args.format](data.languages.values(), args)
+    except ValueError as e:
+        raise ParserError(str(e))
+
+    with map as fig:
         for lang, values in data.iter_languages():
             fig.add_language(lang, values, cms)
 
-        fig.add_legend(data.parameters, cms)
+        if not args.no_legend:
+            fig.add_legend(data.parameters, cms)
 
-        args.log.info('Output written to: {}'.format(args.output))
+        args.log.info('Writing output to: {}'.format(args.output))
+        args.log.info('For non-html maps this may take a while.')
         if not args.test:
             fig.open()  # pragma: no cover

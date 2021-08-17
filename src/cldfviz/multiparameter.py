@@ -25,7 +25,7 @@ class Language:
         glang = (glottolog or {}).get(getattr(obj.cldf, 'glottocode', obj.id))
         if (not lonlat) and glang and glang.latitude is not None:
             lonlat = (glang.longitude, glang.latitude)
-        if lonlat:
+        if lonlat and lonlat[0] is not None:
             return cls(
                 id=obj.id,
                 name=getattr(obj.cldf, 'name', obj.id),
@@ -101,6 +101,7 @@ class MultiParameter:
         language_properties = language_properties or []
         langs = {lg.id: Language.from_object(lg, glottolog=glottolog)
                  for lg in ds.objects('LanguageTable')} if 'LanguageTable' in ds else {}
+        langs = {k: v for k, v in langs.items() if v}
         params = {p.id: Parameter.from_object(p)
                   for p in ds.objects('ParameterTable')} if 'ParameterTable' in ds else {}
         self.parameters = collections.OrderedDict(
@@ -146,7 +147,7 @@ class MultiParameter:
                         val.get('codeReference') or val['Value']
         for language_property in language_properties:
             for lang in language_rows:
-                if lang[language_property] is not None:
+                if (lang['id'] in langs) and lang[language_property] is not None:
                     self.languages.setdefault(lang['id'], langs[lang['id']])
                     self.values.append(Value(
                         v=lang[language_property],
