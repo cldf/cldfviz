@@ -5,6 +5,7 @@ PACIFIC_CENTERED = 154
 
 class Map:
     __formats__ = []
+    __marker_class__ = None
 
     def __init__(self, languages, args):
         self.languages = languages
@@ -21,7 +22,17 @@ class Map:
     def add_options(parser, help_suffix):  # pragma: no cover
         pass
 
-    def add_language(self, language, values, colormaps):  # pragma: no cover
+    def api_add_language(self, language, values, colormaps):  # pragma: no cover
+        marker_spec = None
+        if self.args.marker_factory:
+            marker_spec = self.args.marker_factory(self, language, values, colormaps)
+            if marker_spec is True:
+                # All done!
+                return
+            assert isinstance(marker_spec, self.__marker_class__)
+        self.add_language(language, values, colormaps, spec=marker_spec)
+
+    def add_language(self, language, values, colormaps, spec=None):  # pragma: no cover
         raise NotImplementedError()
 
     def add_legend(self, parameters, colormaps):  # pragma: no cover

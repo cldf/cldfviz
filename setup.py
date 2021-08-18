@@ -24,7 +24,9 @@ setup(
     platforms='any',
     python_requires='>=3.6',
     install_requires=[
+        'clldutils',
         'cldfbench>=1.5.0',
+        'attrs',
         'pyglottolog',
         'tqdm',
         'yattag',

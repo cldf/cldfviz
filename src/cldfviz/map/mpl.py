@@ -4,6 +4,7 @@ Map plotting with matplotlib and cartopy
 import math
 import textwrap
 
+import attr
 import numpy as np
 import cartopy.feature
 import cartopy.crs
@@ -40,11 +41,21 @@ class HandleWedge(HandlerPatch):
         return [p]
 
 
+@attr.s
+class MPLMarkerSpec:
+    marker_kw = attr.ib(default=attr.Factory(dict))
+    text = attr.ib(default=None)
+    text_offset_x = attr.ib(default=None)
+    text_offset_y = attr.ib(default=None)
+    text_kw = attr.ib(default=attr.Factory(dict))
+
+
 class MapPlot(Map):
     """
     A geographic map, zoomed in to the extent defined by a list of languages.
     """
     __formats__ = ['jpg', 'png', 'pdf']
+    __marker_class__ = MPLMarkerSpec
 
     def __init__(self, languages, args):
         Map.__init__(self, languages, args)
@@ -72,11 +83,11 @@ class MapPlot(Map):
             ax.stock_img()
         if not self.args.test:  # pragma: no cover
             ax.coastlines(resolution='50m', color='darkgrey')
-            ax.add_feature(cartopy.feature.LAND, color='lightgrey')
-            ax.add_feature(cartopy.feature.OCEAN, color='lightblue')
-            ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
-            ax.add_feature(cartopy.feature.LAKES, alpha=0.5)
-            ax.add_feature(cartopy.feature.RIVERS)
+            ax.add_feature(cartopy.feature.LAND, color='lightgrey', zorder=0.5)
+            ax.add_feature(cartopy.feature.OCEAN, color='lightblue', zorder=0.5)
+            ax.add_feature(cartopy.feature.BORDERS, linestyle=':', zorder=1)
+            ax.add_feature(cartopy.feature.LAKES, alpha=0.5, zorder=0.7)
+            ax.add_feature(cartopy.feature.RIVERS, zorder=0.7)
         self.ax = ax
         # Figure out the scaling factor between degrees and pixels. Many config values are given
         # in pixels but need to be converted to degrees for plotting.
@@ -155,24 +166,6 @@ class MapPlot(Map):
                 lon += 360
         return lon, lat
 
-    def plot_language_marker(self,
-                             language,
-                             text=None,
-                             marker_kw=None,
-                             text_kw=None,
-                             text_offset=(-0.075, -0.075)):  # pragma: no cover
-        lon, lat = self._lonlat(language)
-        kw = dict(color='red', markersize=self.args.markersize, zorder=4, marker='o')
-        if marker_kw:
-            kw.update(marker_kw)
-        self.ax.plot(lon, lat, **kw)
-
-        if text:
-            kw = dict(fontsize=10, zorder=5)
-            if text_kw:
-                kw.update(text_kw)
-            self.ax.text(lon + text_offset[0], lat + text_offset[1], text, **kw)
-
     def pie_markers(self, colors):
         start = 0.
         for color in colors:
@@ -184,8 +177,28 @@ class MapPlot(Map):
             yield color, np.column_stack([x, y])
             start += ratio
 
-    def add_language(self, language, values, colormaps):
-        s, angle = 0, 360.0 / len(values)
+    def add_language(self, language, values, colormaps, spec=None):
+        if spec:
+            marker_kw = dict(
+                color='white',
+                markersize=self.args.markersize,
+                zorder=2.5,
+                marker='o',
+                markeredgecolor='black',
+                linewidth=1,
+                transform=cartopy.crs.Geodetic(),
+            )
+            marker_kw.update(spec.marker_kw)
+            self.ax.plot(language.lon, language.lat, **marker_kw)
+            if spec.text:
+                text_kw = dict(zorder=3, fontsize='small')
+                text_kw.update(spec.text_kw)
+                self.ax.text(
+                    language.lon + (spec.text_offset_x or 0),
+                    language.lat + (spec.text_offset_y or 0),
+                    spec.text,
+                    **text_kw)
+            return
         lon, lat = self._lonlat(language)
         if self.args.projection != 'PlateCarree':
             if len(values) > 1:
@@ -196,6 +209,7 @@ class MapPlot(Map):
                         marker=marker,
                         s=[self.args.markersize * 10],
                         transform=cartopy.crs.Geodetic(),
+                        zorder=2.5,
                         facecolor=color)
                 return
             pid, vals = list(values.items())[0]
@@ -203,7 +217,7 @@ class MapPlot(Map):
                 language.lon, language.lat,
                 color=colormaps[pid](vals[0].v),
                 markersize=self.args.markersize,
-                zorder=4,
+                zorder=2.5,
                 marker='o',
                 markeredgecolor='black',
                 linewidth=1,
@@ -211,6 +225,7 @@ class MapPlot(Map):
             )
             return
 
+        s, angle = 0, 360.0 / len(values)
         for pid, vals in values.items():
             self.ax.add_patch(Wedge(
                 [lon, lat],
@@ -225,7 +240,9 @@ class MapPlot(Map):
         if self.args.language_labels:
             self.ax.text(
                 lon + self.args.markersize * self.scaling_factor + 3 * self.scaling_factor,
-                lat, language.name, fontsize='small')
+                lat, language.name,
+                zorder=3,
+                fontsize='small')
 
     def add_legend(self, parameters, colormaps):
         def wrapped_label(s):

@@ -25,8 +25,8 @@ from cldfbench.cli_util import add_catalog_spec
 
 from cldfviz.colormap import Colormap, COLORMAPS
 from cldfviz.multiparameter import MultiParameter, CONTINUOUS, CATEGORICAL
-from cldfviz.map import Map
-from cldfviz.cli_util import add_testable, add_listvalued
+from cldfviz.map import Map, MarkerFactory
+from cldfviz.cli_util import add_testable, add_listvalued, import_subclass
 
 FORMATS = {}
 for cls in Map.__subclasses__():
@@ -86,6 +86,11 @@ def register(parser):
         default=10,
     )
     parser.add_argument(
+        '--marker-factory',
+        help="A python module providing a subclass of `cldfviz.map.MarkerFactory`.",
+        default=None,
+    )
+    parser.add_argument(
         '--title',
         default=None,
         help="Title for the map plot",
@@ -123,7 +128,7 @@ def register(parser):
 
 def run(args):
     ds = get_dataset(args)
-
+    print(ds.module)
     if not args.output.suffix:
         args.output = args.output.parent / "{}.{}".format(args.output.name, args.format)
     else:
@@ -142,8 +147,11 @@ def run(args):
     if args.language_properties and not args.language_properties_colormaps:
         args.language_properties_colormaps = \
             [None] * len(args.language_properties)
+    if '__language__' in data.parameters:
+        assert len(data.parameters) == 1
+        args.colormaps = [None]
     args.colormaps.extend(args.language_properties_colormaps)
-    assert len(args.colormaps) == len(data.parameters)
+    assert len(args.colormaps) == len(data.parameters), '{}'.format(data.parameters.keys())
     try:
         cms = {
             pid: Colormap(
@@ -154,6 +162,11 @@ def run(args):
     except (ValueError, KeyError) as e:
         raise ParserError(str(e))
 
+    if args.marker_factory:
+        comps = args.marker_factory.split(',')
+        cls = import_subclass(comps[0], MarkerFactory)
+        args.marker_factory = cls(ds, args, *comps[1:])
+
     try:
         map = FORMATS[args.format](data.languages.values(), args)
     except ValueError as e:  # pragma: no cover
@@ -161,7 +174,7 @@ def run(args):
 
     with map as fig:
         for lang, values in data.iter_languages():
-            fig.add_language(lang, values, cms)
+            fig.api_add_language(lang, values, cms)
 
         if not args.no_legend:
             fig.add_legend(data.parameters, cms)

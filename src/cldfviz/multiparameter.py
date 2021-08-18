@@ -104,14 +104,16 @@ class MultiParameter:
         langs = {k: v for k, v in langs.items() if v}
         params = {p.id: Parameter.from_object(p)
                   for p in ds.objects('ParameterTable')} if 'ParameterTable' in ds else {}
+        # For each pid, we add a parameter:
         self.parameters = collections.OrderedDict(
             [(pid, params.get(pid, Parameter(id=pid, name=pid))) for pid in pids])
+        # For each language-property we add a parameter:
         for language_property in language_properties:
             self.parameters[language_property] = Parameter(
                 id=language_property, name=language_property)
         if not self.parameters:
             # No parameters and no language property specified: Just plot language locations.
-            self.parameters['language'] = Parameter(id='language', name='language')
+            self.parameters['__language__'] = Parameter(id='__language__', name='language')
 
         codes = collections.defaultdict(collections.OrderedDict)
         if 'CodeTable' in ds:
@@ -134,17 +136,20 @@ class MultiParameter:
         colmap = ['languageReference', 'parameterReference', 'value']
         if codes:
             colmap.append('codeReference')
-        for val in ds.iter_rows('ValueTable', *colmap):
-            if ((val['value'] is not None) or self.include_missing) and \
-                    val['parameterReference'] in self.parameters:
-                lang = langs.get(val['languageReference'])
-                if not lang:
-                    lang = Language.from_glottolog(val['languageReference'], glottolog)
-                if lang:
-                    self.languages[val['languageReference']] = lang
-                    self.values.append(Value.from_row(val, codes))
-                    self.parameters[val['parameterReference']].value_to_code[str(val['value'])] = \
-                        val.get('codeReference') or val['Value']
+        if pids:
+            comp = 'ValueTable' if ds.module == 'StructureDataset' else 'FormTable'
+            for val in ds.iter_rows(comp, *colmap):
+                if ((val['value'] is not None) or self.include_missing) and \
+                        val['parameterReference'] in self.parameters:
+                    lang = langs.get(val['languageReference'])
+                    if not lang:
+                        lang = Language.from_glottolog(val['languageReference'], glottolog)
+                    if lang:
+                        self.languages[val['languageReference']] = lang
+                        self.values.append(Value.from_row(val, codes))
+                        self.parameters[val['parameterReference']] \
+                            .value_to_code[str(val['value'])] = \
+                            val.get('codeReference') or val['Value']
         for language_property in language_properties:
             for lang in language_rows:
                 if (lang['id'] in langs) and lang[language_property] is not None:
@@ -160,7 +165,7 @@ class MultiParameter:
                 self.languages.setdefault(lang['id'], langs[lang['id']])
                 self.values.append(Value(
                     v='y',
-                    pid='language',
+                    pid='__language__',
                     lid=lang['id'],
                     code='language'))
 

@@ -49,6 +49,7 @@
             opacity: 70% !important;
         }
 
+        $css
     </style>
 </head>
 <body>
@@ -68,7 +69,7 @@
         var html = "<h3>" + feature.properties.name + "</h3><dl>";
         html += '<p>' + feature.properties.values + '</p>';
         layer.bindPopup(html);
-        layer.bindTooltip(feature.properties.name);
+        layer.bindTooltip(feature.properties.tooltip, {className: feature.properties.tooltip_class});
         markers.push(layer);
     }
 
@@ -80,7 +81,7 @@
                 {
                     icon: L.icon({
                         iconUrl: feature.properties.icon,
-                        iconSize: [feature.properties.markerSize, feature.properties.markerSize]
+                        iconSize: [feature.properties.markersize, feature.properties.markersize]
                     })
                 })
         }

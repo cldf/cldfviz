@@ -1,6 +1,7 @@
 import json
 import string
 
+import attr
 import yattag
 from clldutils import svg
 
@@ -53,13 +54,26 @@ BASE_LAYERS = {
 }
 
 
+@attr.s
+class LeafletMarkerSpec:
+    icon = attr.ib(default=svg.data_url(svg.icon('c000')))
+    name = attr.ib(default=None)
+    values = attr.ib(default=None)
+    tooltip = attr.ib(default=None)
+    tooltip_class = attr.ib(default=None)
+    markersize = attr.ib(default=None)
+    css = attr.ib(default=None)
+
+
 class MapLeaflet(Map):
     __formats__ = ['html']
+    __marker_class__ = LeafletMarkerSpec
 
     def __init__(self, languages, args):
         Map.__init__(self, languages, args)
         self.features = []
         self.legend = ''
+        self.css = set()
 
     @staticmethod
     def add_options(parser, help_suffix):
@@ -76,20 +90,28 @@ class MapLeaflet(Map):
             lon += 360  # make the map pacific-centered.
         return [lon, lat]
 
-    def add_language(self, language, values, colormaps):
+    def add_language(self, language, values, colormaps, spec=None):
+        props = {
+            "name": language.name,
+            "tooltip": language.name,
+            "values": ' / '.join(['{}'.format(vals[0].v) for vals in values.values() if vals]),
+            "icon": svg.data_url(svg.pie(
+                [1] * len(values),
+                [colormaps[pid](vals[0].v) for pid, vals in values.items()],
+                stroke_circle=True)),
+            "markersize": self.args.markersize,
+            "tooltip_class": "tt",
+        }
+        if spec:
+            if spec.css:
+                self.css.add(spec.css)
+            props.update(
+                {k: v for k, v in attr.asdict(spec).items() if v is not None and k != 'css'})
         self.features.append({
             # A language as GeoJSON point with svg marker icon
             "geometry": {"coordinates": self._lonlat(language), "type": "Point"},
             "id": language.id,
-            "properties": {
-                "name": language.name,
-                "values": ' / '.join(['{}'.format(vals[0].v) for vals in values.values() if vals]),
-                "icon": svg.data_url(svg.pie(
-                    [1] * len(values),
-                    [colormaps[pid](vals[0].v) for pid, vals in values.items()],
-                    stroke_circle=True)),
-                "markerSize": self.args.markersize,
-            },
+            "properties": props,
             "type": "Feature"
         })
 
@@ -152,6 +174,7 @@ class MapLeaflet(Map):
             cldfviz.PKG_DIR.joinpath('templates', 'map', 'leaflet.html').read_text(encoding='utf8')
         ).substitute(
             title=self.args.title or '',
+            css='\n'.join(sorted(self.css)),
             legend=self.legend,
             options=json.dumps({'language_labels': self.args.language_labels}),
             tile_url=json.dumps(BASE_LAYERS[self.args.base_layer][0]),

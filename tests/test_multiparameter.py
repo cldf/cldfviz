@@ -17,7 +17,7 @@ def test_MultiParameter(metadatafree_dataset, StructureDataset, glottolog, tmp_p
     mp = MultiParameter(StructureDataset, ['B'], language_properties=['Family_name'])
     assert 'Family_name' in mp.parameters
     mp = MultiParameter(StructureDataset, [])
-    assert 'language' in mp.parameters
+    assert '__language__' in mp.parameters
 
     values = tmp_path / 'values.csv'
     values.write_text("""\
