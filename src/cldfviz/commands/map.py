@@ -177,7 +177,7 @@ def run(args):
             fig.api_add_language(lang, values, cms)
 
         if not args.no_legend:
-            fig.add_legend(data.parameters, cms)
+            fig.api_add_legend(data.parameters, cms)
 
         args.log.info('Writing output to: {}'.format(args.output))
         args.log.info('For non-html maps this may take a while.')

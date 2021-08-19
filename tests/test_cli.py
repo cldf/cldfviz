@@ -2,7 +2,7 @@ import pytest
 
 from cldfbench.__main__ import main
 
-from cldfviz.map import WITH_CARTOPY, MarkerFactory, leaflet
+from cldfviz.map import WITH_CARTOPY, MarkerFactory, leaflet, mpl
 
 class MF(MarkerFactory):
     def __init__(self, ds, args, param):

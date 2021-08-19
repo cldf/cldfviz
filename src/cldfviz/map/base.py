@@ -35,6 +35,11 @@ class Map:
     def add_language(self, language, values, colormaps, spec=None):  # pragma: no cover
         raise NotImplementedError()
 
+    def api_add_legend(self, parameters, colormaps):
+        if self.args.marker_factory:
+            return self.args.marker_factory.legend(self, parameters, colormaps)
+        self.add_legend(parameters, colormaps)
+
     def add_legend(self, parameters, colormaps):  # pragma: no cover
         raise NotImplementedError()
 
