@@ -242,7 +242,7 @@ class MapPlot(Map):
                 language.lon, language.lat,
                 color=colormaps[pid](vals[0].v),
                 markersize=self.args.markersize,
-                zorder=20,
+                zorder=zorder,
                 marker='o',
                 markeredgecolor='black',
                 linewidth=1,
@@ -261,14 +261,14 @@ class MapPlot(Map):
                 edgecolor="black",
                 linewidth=1,
                 label=language.name,
-                zorder=20
+                zorder=zorder
             ))
             s += angle
         if self.args.language_labels:
             self.ax.text(
                 lon + self.args.markersize * self.scaling_factor + 3 * self.scaling_factor,
                 lat, language.name,
-                zorder=30,
+                zorder=zorder+10,
                 fontsize='small')
 
     def add_legend(self, parameters, colormaps):
