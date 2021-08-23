@@ -177,7 +177,7 @@ class MapPlot(Map):
 
     def pie_markers(self, colors):
         start = 0.
-        for i, color in enumerate(colors):
+        for color in colors:
             ratio = 1 / len(colors)
             x = [0] + np.cos(
                 np.linspace(2 * np.pi * start, 2 * np.pi * (start + ratio),
