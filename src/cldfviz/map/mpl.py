@@ -61,12 +61,23 @@ class MapPlot(Map):
         Map.__init__(self, languages, args)
         lats, lons = [k.lat for k in languages], [k.lon for k in languages]
         self.central_longitude = PACIFIC_CENTERED if args.pacific_centered else 0
-        self.extent = [
-            round(min(lons) - args.padding_left, 1) + self.central_longitude,
-            round(max(lons) + args.padding_right, 1) + self.central_longitude,
-            round(min(lats) - args.padding_bottom, 1),
-            round(max(lats) + args.padding_top, 1)
-        ]
+        minl = min([round(lon - args.padding_left, 1) + self.central_longitude
+            for lon in lons])
+        maxl = max([round(lon + args.padding_left, 1) + self.central_longitude
+            for lon in lons])
+
+        if args.extent:
+            left, right, top, bottom = [int(x) for x in args.extent.split(',')]
+            self.extent = [
+                    left, right, bottom, top
+                    ]
+        else:
+            self.extent = [
+                round(min(lons) - args.padding_left, 1) + self.central_longitude,
+                round(max(lons) + args.padding_right, 1) + self.central_longitude,
+                round(min(lats) - args.padding_bottom, 1),
+                round(max(lats) + args.padding_top, 1)
+            ]
         self.ax = None
         self.scaling_factor = 1
         self.proj = getattr(cartopy.crs, args.projection)(central_longitude=self.central_longitude)
@@ -126,6 +137,11 @@ class MapPlot(Map):
                 type=int,
                 default=1,
             )
+        parser.add_argument(
+            '--extent',
+            help="Set extent of the figure in terms of coordinates (left, right, top, bottom)",
+            default=None
+        )
         parser.add_argument(
             '--width',
             help="Width of the figure in inches. {}".format(help_suffix),
