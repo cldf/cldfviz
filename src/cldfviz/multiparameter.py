@@ -153,21 +153,23 @@ class MultiParameter:
         for language_property in language_properties:
             for lang in language_rows:
                 if (lang['id'] in langs) and lang[language_property] is not None:
-                    self.languages.setdefault(lang['id'], langs[lang['id']])
-                    self.values.append(Value(
-                        v=lang[language_property],
-                        pid=language_property,
-                        lid=lang['id'],
-                        code=language_property))
+                    if lang['id'] in langs:
+                        self.languages.setdefault(lang['id'], langs[lang['id']])
+                        self.values.append(Value(
+                            v=lang[language_property],
+                            pid=language_property,
+                            lid=lang['id'],
+                            code=language_property))
         if not self.values:
             # No parameters and no language property specified: Just plot language locations.
             for lang in ds.iter_rows('LanguageTable', 'id', 'name'):
-                self.languages.setdefault(lang['id'], langs[lang['id']])
-                self.values.append(Value(
-                    v='y',
-                    pid='__language__',
-                    lid=lang['id'],
-                    code='language'))
+                if lang['id'] in langs:
+                    self.languages.setdefault(lang['id'], langs[lang['id']])
+                    self.values.append(Value(
+                        v='y',
+                        pid='__language__',
+                        lid=lang['id'],
+                        code='language'))
 
         for p in self.parameters.values():
             if p.id in codes:
