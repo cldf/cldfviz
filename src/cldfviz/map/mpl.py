@@ -1,6 +1,7 @@
 """
 Map plotting with matplotlib and cartopy
 """
+import json
 import textwrap
 
 import attr
@@ -11,7 +12,6 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Wedge
 from matplotlib.legend_handler import HandlerPatch
 from PIL import Image
-import json
 
 from .base import Map, PACIFIC_CENTERED
 
@@ -61,16 +61,10 @@ class MapPlot(Map):
         Map.__init__(self, languages, args)
         lats, lons = [k.lat for k in languages], [k.lon for k in languages]
         self.central_longitude = PACIFIC_CENTERED if args.pacific_centered else 0
-        minl = min([round(lon - args.padding_left, 1) + self.central_longitude
-            for lon in lons])
-        maxl = max([round(lon + args.padding_left, 1) + self.central_longitude
-            for lon in lons])
 
         if args.extent:
-            left, right, top, bottom = [int(x) for x in args.extent.split(',')]
-            self.extent = [
-                    left, right, bottom, top
-                    ]
+            left, right, top, bottom = [float(x) for x in args.extent.replace('"', '').split(',')]
+            self.extent = [left, right, bottom, top]
         else:
             self.extent = [
                 round(min(lons) - args.padding_left, 1) + self.central_longitude,
@@ -81,9 +75,6 @@ class MapPlot(Map):
         self.ax = None
         self.scaling_factor = 1
         self.proj = getattr(cartopy.crs, args.projection)(central_longitude=self.central_longitude)
-        if args.zorder:
-            self.args.zorder = json.loads(args.zorder)
-
 
     def __enter__(self):
         plt.clf()
@@ -159,7 +150,7 @@ class MapPlot(Map):
             help="Pixel density of the figure. {}".format(help_suffix),
             type=float,
             default=100.0,
-        )            
+        )
         parser.add_argument(
             '--projection',
             help="Map projection. For details, see "
@@ -179,8 +170,9 @@ class MapPlot(Map):
         parser.add_argument(
             '--zorder',
             help="Determine zorder of individual markers by color.",
+            type=lambda s: json.loads(s),
             action="store",
-            default=None
+            default={},
         )
 
     def _lonlat(self, language):
@@ -195,18 +187,16 @@ class MapPlot(Map):
         start = 0.
         for color in colors:
             ratio = 1 / len(colors)
-            x = [0] + np.cos(
-                np.linspace(2 * np.pi * start, 2 * np.pi * (start + ratio),
-                    30)).tolist() + [0]
-            y = [0] + np.sin(
-                np.linspace(2 * np.pi * start, 2 * np.pi * (start + ratio),
-                    30)).tolist() + [0]
+            x = [0] + \
+                np.cos(np.linspace(2 * np.pi * start, 2 * np.pi * (start + ratio), 30)).tolist() + \
+                [0]
+            y = [0] + \
+                np.sin(np.linspace(2 * np.pi * start, 2 * np.pi * (start + ratio), 30)).tolist() + \
+                [0]
             yield color, np.column_stack([x, y])
             start += ratio
 
-
     def add_language(self, language, values, colormaps, spec=None):
-        
         # add zorder by using a point-system that penalizes missing data
         # according to user-defined weights
         if self.args.zorder:
@@ -250,8 +240,8 @@ class MapPlot(Map):
                         transform=cartopy.crs.Geodetic(),
                         zorder=zorder,
                         edgecolors=["black"],
-                        facecolor=color
-                        )
+                        facecolor=color,
+                    )
                 return
             pid, vals = list(values.items())[0]
             self.ax.plot(
@@ -284,7 +274,7 @@ class MapPlot(Map):
             self.ax.text(
                 lon + self.args.markersize * self.scaling_factor + 3 * self.scaling_factor,
                 lat, language.name,
-                zorder=zorder+10,
+                zorder=zorder + 10,
                 fontsize='small')
 
     def add_legend(self, parameters, colormaps):
