@@ -35,7 +35,9 @@ setup(
     ],
     extras_require={
         'cartopy': [
-            'cartopy',
+            # Newer cartopy requires PROJ >= 8 which isn't available by default
+            # on current Ubuntu.
+            'cartopy<0.20',
         ],
         'dev': ['flake8', 'wheel', 'twine'],
         'test': [
