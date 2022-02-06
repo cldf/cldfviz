@@ -25,8 +25,11 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'clldutils',
+        'pycldf>=1.25.0',
         'cldfbench>=1.5.0',
         'attrs',
+        'termcolor',
+        'jinja2',
         'pyglottolog',
         'tqdm',
         'yattag',

@@ -1,0 +1,3 @@
+ID,Language_ID,Primary_Text,Analyzed_Word,Gloss,Translated_Text,Comment,Source
+igt,Ho_NM,The text,The	t-ext,The	GL-OSS,the translation,See ptonly,Peterson2017
+ptonly,Ho_NM,Only primary text,,,and translation,,
