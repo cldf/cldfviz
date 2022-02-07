@@ -35,3 +35,9 @@ ID,Language_ID,Parameter_ID,Value
 def StructureDataset():
     return Dataset.from_metadata(
         pathlib.Path(__file__).parent / 'StructureDataset' / 'StructureDataset-metadata.json')
+
+
+@pytest.fixture
+def Wordlist():
+    return Dataset.from_metadata(
+        pathlib.Path(__file__).parent / 'Wordlist' / 'Wordlist-metadata.json')

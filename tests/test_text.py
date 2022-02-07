@@ -1,3 +1,5 @@
+import pytest
+
 from pycldf import Generic
 
 from cldfviz.text import *
@@ -51,21 +53,30 @@ _Only primary text_
 </blockquote>"""
 
 
-def test_render_source(StructureDataset):
-    assert "Peterson, John. 2017." in render('[P](sources.bib#cldf:Peterson2017)', StructureDataset)
-    assert "- " in render('[P](sources.bib#cldf:__all__)', StructureDataset)
-
-
-def test_render_language(StructureDataset):
-    res = render('[P](LanguageTable?with_glottolog_link#cldf:Juang_SM)', StructureDataset)
-    assert 'glottolog.org' in res
-
-    res = render('[P](LanguageTable#cldf:Juang_SM)', StructureDataset)
-    assert 'glottolog.org' not in res
-
-
-def test_render_parameter(StructureDataset):
-    res = render('[](ParameterTable#cldf:C)', StructureDataset)
-    assert "Codes" in res
-
-
+@pytest.mark.parametrize(
+    'comp,query,oid,ds,expected',
+    [
+        ('BorrowingTable', None, 'dutch_eiland', 'wl', 'Old Frisian'),
+        ('CodeTable', None, 'C-0', 'sd', 'affixal'),
+        ('CognateTable', None, 'Tena-1_one-1-1', 'wl', 'List and'),
+        ('CognateTable', 'cognatesetReference=1', '__all__', 'wl', 'hʊk'),
+        ('CognatesetTable', None, '1', 'wl', 'One-1'),
+        ('ContributionTable', None, '12', 'wl', 'Dutch'),
+        ('FormTable', None, '2', 'wl', 'eiland'),
+        ('FormTable', 'with_language', '2', 'wl', 'Dutch'),
+        ('LanguageTable', None, 'Juang_SM', 'sd', lambda s: 'glottolog.org' not in s),
+        ('LanguageTable', 'with_glottolog_link', 'Juang_SM', 'sd', 'glottolog.org'),
+        ('ParameterTable', None, 'C', 'sd', 'Codes'),
+        ('Source', None, 'Peterson2017', 'sd', 'Peterson, John. 2017.'),
+        ('Source', None, '__all__', 'sd', '- '),
+        ('Source', 'with_link', 'Peterson2017', 'sd', '[DOI:'),
+    ]
+)
+def test_templates(Wordlist, StructureDataset, comp, query, oid, ds, expected):
+    res = render(
+        '[]({}{}#cldf:{})'.format(comp, '?{}'.format(query) if query else '', oid),
+        Wordlist if ds == 'wl' else StructureDataset)
+    if callable(expected):
+        assert expected(res)
+    else:
+        assert expected in res

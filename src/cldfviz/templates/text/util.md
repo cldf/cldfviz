@@ -1,19 +1,20 @@
 {# 
  Template macros
  #}
-{% macro reference(ref, year_brackets=None, pages=True) -%}
-{{ ref.source.refkey(year_brackets=year_brackets) }}{% if ref.description %}: {{ ref.description }}{% endif %}
+{% macro reference(ref, year_brackets=None, pages=True, with_internal_ref_link=False) -%}
+{% if with_internal_ref_link %}[{% endif %}{{ ref.source.refkey(year_brackets=year_brackets) }}{% if with_internal_ref_link %}
+](#source-{{ ref.id }}){% endif %}{% if ref.description %}: {{ ref.description }}{% endif %}
 {%- endmacro %}
 
-{% macro references(refs, brackets=True, pages=True) -%}
+{% macro references(refs, brackets=True, pages=True, with_internal_ref_link=False) -%}
 {% if refs %}{% if brackets %}
  ({% endif %}{% for ref in refs %}
-{{ reference(ref, pages=pages) }}{% if loop.last == False %}, {% endif %}{% endfor %}{% if brackets %}
+{{ reference(ref, pages=pages, with_internal_ref_link=with_internal_ref_link) }}{% if loop.last == False %}, {% endif %}{% endfor %}{% if brackets %}
 ){% endif %}{% endif %}
 {%- endmacro %}
 
-{% macro form(f) -%}
-_{{ f.cldf.form }}_ ‘{{ f.parameter.name if f.parameter else f.cldf.parameterReference }}’
+{% macro form(f, with_language=False) -%}
+{% if with_language %}{{ f.language.name }} {% endif %}_{{ f.cldf.form }}_ ‘{{ f.parameter.name if f.parameter else f.cldf.parameterReference }}’
 {%- endmacro %}
 
 {% macro alignments(cogs, cognatesetReference) -%}
@@ -32,4 +33,13 @@ _{{ f.cldf.form }}_ ‘{{ f.parameter.name if f.parameter else f.cldf.parameterR
 
 {% endif %}
 {% endfor %}
+{%- endmacro %}
+
+{% macro source(src, with_anchor=False, with_link=False) -%}
+{% if with_anchor %}<a id="source-{{ src.id }}"> </a>{% endif %}{{ src.text() }}{% if with_link %}
+{% if src.get("doi") %}
+ [DOI: {{ src["doi"] }}](https://doi.org/{{ src["doi"] }}){% else %}{% if src.get("url") %}
+ [{{ src["url"] }}]({{ src["url"] }}){% endif %}
+{% endif %}
+{% endif %}
 {%- endmacro %}

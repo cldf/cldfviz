@@ -73,7 +73,7 @@ def iter_md(env, md, cldf, table_map):
             type_ = table_map[fname]
             _, _, oid = url.fragment.partition(':')
             tmpl_context = {
-                k: v[0] for k, v in
+                k: True if v[0] == '' else v[0] for k, v in
                 urllib.parse.parse_qs(url.query, keep_blank_values=True).items()}
             tmpl_context['ctx'] = list(datadict[fname].values()) \
                 if oid == '__all__' else datadict[fname][oid]

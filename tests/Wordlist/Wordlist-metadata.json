@@ -135,6 +135,12 @@
                         }
                     },
                     {
+                        "name": "Name",
+                        "required": false,
+                        "propertyUrl": "http://cldf.clld.org/v1.0/terms.rdf#name",
+                        "datatype": "string"
+                    },
+                    {
                         "name": "Description",
                         "required": false,
                         "propertyUrl": "http://cldf.clld.org/v1.0/terms.rdf#description",
