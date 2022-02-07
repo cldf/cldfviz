@@ -3,7 +3,8 @@
  #}
 {% macro reference(ref, year_brackets=None, pages=True, with_internal_ref_link=False) -%}
 {% if with_internal_ref_link %}[{% endif %}{{ ref.source.refkey(year_brackets=year_brackets) }}{% if with_internal_ref_link %}
-](#source-{{ ref.id }}){% endif %}{% if ref.description %}: {{ ref.description }}{% endif %}
+](#{% if with_internal_ref_link is string %}{{ with_internal_ref_link }}{% else %}source-{{ ref.source.id }}{% endif %}){% endif %}{% if ref.description %}
+: {{ ref.description }}{% endif %}
 {%- endmacro %}
 
 {% macro references(refs, brackets=True, pages=True, with_internal_ref_link=False) -%}
