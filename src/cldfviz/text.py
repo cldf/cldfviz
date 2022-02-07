@@ -8,6 +8,8 @@ from clldutils.misc import nfilter
 
 import cldfviz
 
+__all__ = ['iter_templates', 'render']
+
 MD_LINK_PATTERN = re.compile(r'\[(?P<label>[^]]*)]\((?P<url>[^)]+)\)')
 TEMPLATE_DIR = cldfviz.PKG_DIR.joinpath('templates', 'text')
 
@@ -33,7 +35,6 @@ def render_template(env, fname_or_component, ctx, index=False, fmt='md'):
     template = env.get_template('{}_{}.{}'.format(
         fname_or_component, 'index' if index else 'detail', fmt))
     res = template.render(**ctx)
-    #print(res)
     return res
 
 
@@ -76,5 +77,8 @@ def iter_md(env, md, cldf, table_map):
                 urllib.parse.parse_qs(url.query, keep_blank_values=True).items()}
             tmpl_context['ctx'] = list(datadict[fname].values()) \
                 if oid == '__all__' else datadict[fname][oid]
+            tmpl_context['cldf'] = cldf
             yield render_template(env, type_ or fname, tmpl_context, index=oid == '__all__')
+        else:
+            yield md[m.start():m.end()]
     yield md[current:]

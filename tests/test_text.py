@@ -1,4 +1,15 @@
-from cldfviz.text import render
+from pycldf import Generic
+
+from cldfviz.text import *
+
+
+def test_iter_templates():
+    assert len(list(iter_templates())) > 17
+
+
+def test_regular_md(StructureDataset):
+    assert render('[Glottolog](https://glottolog.org)', StructureDataset) == \
+           '[Glottolog](https://glottolog.org)'
 
 
 def test_custom_templates(StructureDataset, tmp_path):
@@ -6,6 +17,16 @@ def test_custom_templates(StructureDataset, tmp_path):
     tmpl.mkdir()
     tmpl.joinpath('LanguageTable_detail.md').write_text("stuff", encoding='utf8')
     assert 'stuff' in render('[](LanguageTable#cldf:Juang_SM)', StructureDataset, template_dir=tmpl)
+
+
+def test_non_standard_table(tmp_path):
+    ds = Generic.in_dir(tmp_path)
+    ds.add_table('data.csv', 'id', 'name', 'description')
+    ds.write(tmp_path / 'md.json', **{'data.csv': [dict(id='1', name='The Name', description='')]})
+    tmpl = tmp_path / 'tmpl'
+    tmpl.mkdir()
+    tmpl.joinpath('data.csv_detail.md').write_text("{{ ctx['name'] }}", encoding='utf8')
+    assert 'The Name' in render('[](data.csv#cldf:1)', ds, template_dir=tmpl)
 
 
 def test_render_example(StructureDataset):
