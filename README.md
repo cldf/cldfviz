@@ -237,3 +237,8 @@ be specified as [query string](https://en.wikipedia.org/wiki/Query_string) of th
 ```
 [cognateset X](some/path/CognateTable?cognatesetReference=X#cldf:__all__)
 ```
+
+In addition to data objects you can also specify maps to be created with `cldfviz.map` e.g.:
+```
+![](map.jpg?parameters=1A#cldfviz.map)
+```

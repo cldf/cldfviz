@@ -32,10 +32,13 @@ def iter_templates():
 
 
 def render_template(env, fname_or_component, ctx, index=False, fmt='md'):
-    template = env.get_template('{}_{}.{}'.format(
-        fname_or_component, 'index' if index else 'detail', fmt))
-    res = template.render(**ctx)
-    return res
+    # Determine the template to use ...
+    tmpl_fname = ctx.pop(
+        '__template__',  # ... by looking for an explicit name ...
+        # ... and falling back to the "most suitable" one.
+        '{}_{}.{}'.format(fname_or_component, 'index' if index else 'detail', fmt),
+    )
+    return env.get_template(tmpl_fname).render(**ctx)
 
 
 def render(doc, cldf, template_dir=None):
@@ -75,6 +78,9 @@ def iter_md(env, md, cldf, table_map):
             tmpl_context = {
                 k: True if v[0] == '' else v[0] for k, v in
                 urllib.parse.parse_qs(url.query, keep_blank_values=True).items()}
+            for k in tmpl_context:
+                if k.startswith('with_') and (tmpl_context[k] in ['0', 'false', 'False']):
+                    tmpl_context[k] = False
             tmpl_context['ctx'] = list(datadict[fname].values()) \
                 if oid == '__all__' else datadict[fname][oid]
             tmpl_context['cldf'] = cldf

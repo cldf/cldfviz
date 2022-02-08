@@ -1,9 +1,13 @@
 {# 
  Template macros
  #}
+{% macro sourceref(src, year_brackets=None, with_internal_ref_link=False) -%}
+{% if with_internal_ref_link %}[{% endif %}{{ src.refkey(year_brackets=year_brackets) }}{% if with_internal_ref_link %}
+](#{% if with_internal_ref_link is string %}{{ with_internal_ref_link }}{% else %}source-{{ src.id }}{% endif %}){% endif %}
+{%- endmacro %}
+
 {% macro reference(ref, year_brackets=None, pages=True, with_internal_ref_link=False) -%}
-{% if with_internal_ref_link %}[{% endif %}{{ ref.source.refkey(year_brackets=year_brackets) }}{% if with_internal_ref_link %}
-](#{% if with_internal_ref_link is string %}{{ with_internal_ref_link }}{% else %}source-{{ ref.source.id }}{% endif %}){% endif %}{% if ref.description %}
+{{ sourceref(ref.source, year_brackets=year_brackets, with_internal_ref_link=with_internal_ref_link) }}{% if ref.description %}
 : {{ ref.description }}{% endif %}
 {%- endmacro %}
 
