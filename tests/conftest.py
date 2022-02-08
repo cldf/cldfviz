@@ -41,3 +41,9 @@ def StructureDataset():
 def Wordlist():
     return Dataset.from_metadata(
         pathlib.Path(__file__).parent / 'Wordlist' / 'Wordlist-metadata.json')
+
+
+@pytest.fixture
+def Generic():
+    return Dataset.from_metadata(
+        pathlib.Path(__file__).parent / 'Generic' / 'Generic-metadata.json')

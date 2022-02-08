@@ -58,6 +58,7 @@ def test_render_example(StructureDataset):
         ('CognatesetTable', None, '1', 'wl', 'One-1'),
         ('ContributionTable', None, '12', 'wl', 'Dutch'),
         ('FormTable', None, '2', 'wl', 'eiland'),
+        ('FormTable', None, '1', 'gn', 'a lot, '),
         ('FormTable', 'with_language', '2', 'wl', 'Dutch'),
         ('LanguageTable', None, 'Juang_SM', 'sd', lambda s: 'glottolog.org' not in s),
         ('LanguageTable', 'with_glottolog_link', 'Juang_SM', 'sd', 'glottolog.org'),
@@ -67,11 +68,17 @@ def test_render_example(StructureDataset):
         ('Source', 'with_link', 'Peterson2017', 'sd', '[DOI:'),
     ]
 )
-def test_templates(Wordlist, StructureDataset, comp, query, oid, ds, expected):
+def test_templates(Wordlist, Generic, StructureDataset, comp, query, oid, ds, expected):
+    if ds == 'wl':
+        dataset = Wordlist
+    elif ds == 'gn':
+        dataset = Generic
+    else:
+        dataset = StructureDataset
     res = render(
-        '[]({}{}#cldf:{})'.format(comp, '?{}'.format(query) if query else '', oid),
-        Wordlist if ds == 'wl' else StructureDataset)
+        '[]({}{}#cldf:{})'.format(comp, '?{}'.format(query) if query else '', oid), dataset)
     if callable(expected):
         assert expected(res)
     else:
+        print(res)
         assert expected in res
