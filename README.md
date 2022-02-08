@@ -238,7 +238,13 @@ be specified as [query string](https://en.wikipedia.org/wiki/Query_string) of th
 [cognateset X](some/path/CognateTable?cognatesetReference=X#cldf:__all__)
 ```
 
-In addition to data objects you can also specify maps to be created with `cldfviz.map` e.g.:
+In addition to data objects you can also specify maps to be created with `cldfviz.map` and included in the
+resulting markdown document; e.g.:
 ```
 ![](map.jpg?parameters=1A#cldfviz.map)
 ```
+
+An example of a document rendered with `cldfviz.text` is [docs/text_example/README.md](docs/text_example/README.md),
+several paragraphs of [WALS' chapter 21](https://wals.info/chapter/21), rewritten in 
+["CLDF markdown"](docs/text_example/README_tmpl.md) and rendered by "filling in" data from 
+[WALS as CLDF dataset](https://github.com/cldf-datasets/wals/).

@@ -61,7 +61,10 @@ def create_maps(oargs, md, ds, base_dir):
             kw['output'] = [str(p)]
             kw['format'] = [p.suffix[1:].lower()]
             for k, v in kw.items():
-                args.extend(['--' + k, v[0]])
+                if k in ['pacific-centered', 'language-labels', 'no-legend']:
+                    args.append('--' + k)
+                else:
+                    args.extend(['--' + k, v[0]])
             p = argparse.ArgumentParser()
             map.register(p)
             args = p.parse_args(args)
