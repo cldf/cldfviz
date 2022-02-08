@@ -1,13 +1,9 @@
 {# 
  Template macros
  #}
-{% macro sourceref(src, year_brackets=None, with_internal_ref_link=False) -%}
-{% if with_internal_ref_link %}[{% endif %}{{ src.refkey(year_brackets=year_brackets) }}{% if with_internal_ref_link %}
-](#{% if with_internal_ref_link is string %}{{ with_internal_ref_link }}{% else %}source-{{ src.id }}{% endif %}){% endif %}
-{%- endmacro %}
-
 {% macro reference(ref, year_brackets=None, pages=True, with_internal_ref_link=False) -%}
-{{ sourceref(ref.source, year_brackets=year_brackets, with_internal_ref_link=with_internal_ref_link) }}{% if ref.description %}
+{% if with_internal_ref_link %}[{% endif %}{{ ref.source.refkey(year_brackets=year_brackets) }}{% if with_internal_ref_link %}
+](#{% if with_internal_ref_link is string %}{{ with_internal_ref_link }}{% else %}source-{{ ref.source.id }}{% endif %}){% endif %}{% if ref.description %}
 : {{ ref.description }}{% endif %}
 {%- endmacro %}
 
@@ -18,8 +14,27 @@
 ){% endif %}{% endif %}
 {%- endmacro %}
 
+
 {% macro form(f, with_language=False) -%}
-{% if with_language %}{{ f.language.name }} {% endif %}_{{ f.cldf.form }}_ ‘{{ f.parameter.name if f.parameter else f.cldf.parameterReference }}’
+{% if f.cldf.form is string %}
+    {% set form_string = "_" + f.cldf.form + "_" %}
+{% else %}
+    {% set form_strings = [] %}
+    {% for form in f.cldf.form %}
+        {% set form_strings = form_strings.append("_" + form + "_") %}
+    {% endfor %}
+    {% set form_string = form_strings|join('/') %}
+{% endif %}
+{% if f.cldf.parameterReference is not string %} 
+    {% set translations = [] %}
+    {% for par in f.parameters %}
+        {% set translations = translations.append(par.name) %}
+    {% endfor %}
+    {% set trans_string = translations|join(', ') %}
+{% else %}
+    {% set trans_string = f.parameter.name %}
+{% endif %}
+{% if with_language %}{{ f.language.name }} {% endif %}{{form_string}} ‘{{ trans_string }}’
 {%- endmacro %}
 
 {% macro alignments(cogs, cognatesetReference) -%}
