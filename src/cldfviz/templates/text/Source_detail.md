@@ -5,7 +5,8 @@
   Pass `ref` to create a reference to the source object in "author(s) year" format.
   year_brackets=None, pages=True, with_internal_ref_link=False
 #}
-{% import 'util.md' as util %}
+{% import "util.md" as util %}
+{% set year_brackets = year_brackets or None %}
 {% if ref is defined %}
-{{ util.sourceref(ctx, year_brackets=year_brackets or None, with_internal_ref_link=with_internal_ref_link) }}{% else %}
+{{ util.sourceref(ctx, year_brackets=year_brackets, with_internal_ref_link=with_internal_ref_link) }}{% else %}
 {{ util.source(ctx, with_anchor=with_anchor, with_link=with_link) }}{% endif %}

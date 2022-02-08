@@ -23,6 +23,7 @@ def get_env(template_dir=None):
 def iter_templates():
     env = get_env()
     for p in sorted(TEMPLATE_DIR.iterdir(), key=lambda pp: pp.name):
+        #print('****', p)
         m = re.match(r"{#(.+?)#}", p.read_text(encoding='utf8'), flags=re.MULTILINE | re.DOTALL)
         doc = m.group(1) if m else None
         template_source = env.loader.get_source(env, p.name)
