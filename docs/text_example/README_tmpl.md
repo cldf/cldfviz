@@ -81,7 +81,7 @@ Case exponence has a different distribution than tense-aspect-mood exponence,
 but in both instances, polyexponence is rare. Map 21A displays case exponence, 
 with the following feature values: 
 
-![](wals21A/wals21A.jpg?parameters=21A&width=12&height=8&colormaps={"1":"ffff00","2":"dd0000","3":"990099","4":"0000dd","5":"ffffff"}&markersize=20#cldfviz.map)
+![](wals21A/wals21A.jpg?pacific-centered&padding-left=10&padding-right=10&padding-top=20&padding-bottom=20&parameters=21A&width=12&height=8&colormaps={"1":"ffff00","2":"dd0000","3":"990099","4":"0000dd","5":"ffffff"}&markersize=20#cldfviz.map)
 
 
 
