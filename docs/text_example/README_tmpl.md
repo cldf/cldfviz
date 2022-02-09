@@ -48,7 +48,7 @@ be uttered independently, and the absence of vowel harmony and other
 alternations
 ([](sources.bib?ref&with_internal_ref_link=references#cldf:Everett-and-Kern-1997): 332f.):
 
-[](ExampleTable?example_id=1#cldf:igt-2775)
+[](ExampleTable?example_id=1&as_monospace#cldf:igt-2775)
 
 The corresponding first and second person formatives are *‘ina* and *ma*, 
 respectively. The future forms are *ta’* (1SG), *ra* (2SG), *tara* (3SG), 
