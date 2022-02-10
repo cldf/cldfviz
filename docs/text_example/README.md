@@ -49,10 +49,12 @@ alternations
 ([Everett and Kern 1997](#references): 332f.):
 
 
-    (1) Wari'
-        Toc       na                      com.
-        drink.SG  3SG.REAL.NONFUT.ACTIVE  water
-        ‘He is drinking water.’
+> (1) Wari'
+<pre>
+Toc       na                      com.  
+drink.SG  3SG.REAL.NONFUT.ACTIVE  water  
+‘He is drinking water.’</pre>
+
 
 The corresponding first and second person formatives are *‘ina* and *ma*, 
 respectively. The future forms are *ta’* (1SG), *ra* (2SG), *tara* (3SG), 
