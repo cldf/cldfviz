@@ -16,7 +16,7 @@
 {% if ctx.cldf.analyzedWord != [] %}
 > |{% for word in ctx.cldf.analyzedWord %} {{ word }} |{% endfor %}
 
-> |{% for word in ctx.cldf.analyzedWord %} --- |{% endfor %}
+> |{% for word in ctx.cldf.analyzedWord %} :-- |{% endfor %}
 
 > |{% for word in ctx.cldf.gloss %} {{ word }} |{% endfor %}
 
