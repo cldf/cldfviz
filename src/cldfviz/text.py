@@ -32,15 +32,29 @@ def iter_templates():
         yield p, doc, [v for v in vars if v != 'ctx']
 
 
-def render_template(env, fname_or_component, ctx, index=False, fmt='md'):
+def render_template(env, fname_or_component, ctx, index=False, fmt='md', func_dict={}):
     # Determine the template to use ...
     tmpl_fname = ctx.pop(
         '__template__',  # ... by looking for an explicit name ...
         # ... and falling back to the "most suitable" one.
         '{}_{}.{}'.format(fname_or_component, 'index' if index else 'detail', fmt),
     )
-    return env.get_template(tmpl_fname).render(**ctx)
+    jinja_template = env.get_template(tmpl_fname)
+    jinja_template.globals.update(func_dict)
+    return jinja_template.render(**ctx)
 
+def pad_ex(obj, gloss):
+    out_obj = []
+    out_gloss = []
+    for o, g in zip(obj, gloss):
+        diff = len(o)-len(g)
+        if diff < 0:
+            o += " "*-diff
+        else:
+            g += " "*diff
+        out_obj.append(o)
+        out_gloss.append(g)
+    return "  ".join(out_obj).strip(), "  ".join(out_gloss).strip()
 
 def render(doc, cldf, template_dir=None):
     table_map = {}
@@ -55,7 +69,7 @@ def render(doc, cldf, template_dir=None):
     return ''.join(iter_md(get_env(template_dir=template_dir), doc, cldf, table_map))
 
 
-def iter_md(env, md, cldf, table_map):
+def iter_md(env, md, cldf, table_map, func_dict={"pad_ex": pad_ex}):
     datadict = {}
     datadict[cldf.bibname] = {src.id: src for src in cldf.sources}
 
@@ -85,7 +99,7 @@ def iter_md(env, md, cldf, table_map):
             tmpl_context['ctx'] = list(datadict[fname].values()) \
                 if oid == '__all__' else datadict[fname][oid]
             tmpl_context['cldf'] = cldf
-            yield render_template(env, type_ or fname, tmpl_context, index=oid == '__all__')
+            yield render_template(env, type_ or fname, tmpl_context, index=oid == '__all__', func_dict=func_dict)
         else:
             yield md[m.start():m.end()]
     yield md[current:]
