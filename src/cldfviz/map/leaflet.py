@@ -11,7 +11,7 @@ import cldfviz
 
 BASE_LAYERS = {
     'OpenStreetMap': (
-        'http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png',
+        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         {
             'maxZoom': 18,
             'attribution':
