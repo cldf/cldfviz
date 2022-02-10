@@ -26,15 +26,16 @@
 
 {% else %}
 {% set pad_len = (example_id or ctx.id)|length+3 %}
-    ({{ example_id or ctx.id }}) {{ ctx.related('languageReference').name }}{{ util.references(ctx.references, with_internal_ref_link=with_internal_ref_link) }}
+> ({{ example_id or ctx.id }}) {{ ctx.related('languageReference').name }}{{ util.references(ctx.references, with_internal_ref_link=with_internal_ref_link) }}
 {% if (ctx.cldf.analyzedWord == [] and ctx.cldf.primaryText != None) or with_primaryText %}
-    {{ " "*pad_len + ctx.cldf.primaryText }}
+<pre><i>{{ ctx.cldf.primaryText }}</i>  
 {% endif %}
 {% if ctx.cldf.analyzedWord != [] %}
 {% set obj, gloss = pad_ex(ctx.cldf.analyzedWord, ctx.cldf.gloss) %}
-    {{ " "*pad_len + obj }}
-    {{ " "*pad_len + gloss }}
+{{ obj }}  
+{{ gloss }}  
 {% endif %}
 {% if ctx.cldf.translatedText != None %}
-    {{" "*pad_len}}‘{{ ctx.cldf.translatedText }}’{% endif %}
+‘{{ ctx.cldf.translatedText }}’{% endif %}
+</pre>
 {% endif %}
