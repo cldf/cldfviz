@@ -25,7 +25,6 @@
 {% if ctx.cldf.translatedText != None %}> ‘{{ ctx.cldf.translatedText }}’{% endif %}
 
 {% else %}
-{% set pad_len = (example_id or ctx.id)|length+3 %}
 > ({{ example_id or ctx.id }}) {{ ctx.related('languageReference').name }}{{ util.references(ctx.references, with_internal_ref_link=with_internal_ref_link) }}
 <pre>
 {% if (ctx.cldf.analyzedWord == [] and ctx.cldf.primaryText != None) or with_primaryText %}

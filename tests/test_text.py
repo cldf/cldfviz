@@ -33,19 +33,20 @@ def test_non_standard_table(tmp_path):
 
 def test_render_example(StructureDataset):
     assert render('[ex](ExampleTable#cldf:igt)', StructureDataset) == """\
+
 > (igt) Ho (Peterson 2017)
->
-> | The | t-ext |
-> | --- | --- |
-> | The | GL-OSS |
->
-> ‘the translation’"""
+<pre>
+The  t-ext  
+The  GL-OSS  
+‘the translation’</pre>
+"""
     assert render('[ex](ExampleTable#cldf:ptonly)', StructureDataset) == """\
+
 > (ptonly) Ho
-> _Only primary text_
->
->
-> ‘and translation’"""
+<pre>
+<i>Only primary text</i>  
+‘and translation’</pre>
+"""
 
 
 @pytest.mark.parametrize(
