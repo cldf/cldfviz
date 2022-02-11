@@ -44,6 +44,12 @@ def Wordlist():
 
 
 @pytest.fixture
+def Dictionary():
+    return Dataset.from_metadata(
+        pathlib.Path(__file__).parent / 'Dictionary' / 'Dictionary-metadata.json')
+
+
+@pytest.fixture
 def Generic():
     return Dataset.from_metadata(
         pathlib.Path(__file__).parent / 'Generic' / 'Generic-metadata.json')
