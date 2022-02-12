@@ -48,7 +48,7 @@
 
 | Form | Language | {% for seg in cog.cldf.alignment %}- | {% endfor %}
 
-| --- | --- | {% for seg in cog.cldf.alignment %} --- | {% endfor %}
+| :-- | :-- | {% for seg in cog.cldf.alignment %} :-- | {% endfor %}
 
 {% set vars.header = True %}
 {% endif %}
