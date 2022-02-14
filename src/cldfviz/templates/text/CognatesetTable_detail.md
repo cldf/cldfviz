@@ -9,7 +9,8 @@
  or table of cognates with alingnments!
  #}
 {% import 'util.md' as util %}
-{{ ctx.name }}
+
+{% if ctx.name %}{{ ctx.name }}{% endif %}
 
 {% if ctx.cldf.description %}{{ ctx.cldf.description }}{% endif %}
 

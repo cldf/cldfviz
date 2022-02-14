@@ -206,6 +206,7 @@ cldfbench cldfviz.map wals-copy/cldf/StructureDataset-metadata.json --pacific-ce
 
 A rather traditional visualization of linguistic data is the practice of interspersing bits of data
 in descriptive texts, most obviously perhaps as examples formatted as **I**nterlinear **G**lossed **T**ext.
+Other examples of data in text include forms, either in running text or in a table.
 
 To support this use case, the `cldfviz.text` command can fill data from a CLDF dataset into a markdown
 document, where references to CLDF data objects (rows of tables or complete tables) are marked using the
