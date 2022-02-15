@@ -128,7 +128,6 @@ def register(parser):
 
 def run(args):
     ds = get_dataset(args)
-    print(ds.module)
     if not args.output.suffix:
         args.output = args.output.parent / "{}.{}".format(args.output.name, args.format)
     else:

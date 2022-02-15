@@ -4,6 +4,19 @@ from cldfbench.__main__ import main
 
 from cldfviz.map import WITH_CARTOPY, MarkerFactory, leaflet, mpl
 
+
+@pytest.fixture
+def ds_arg(StructureDataset):
+    return str(StructureDataset.directory / 'StructureDataset-metadata.json')
+
+
+def test_text(ds_arg, capsys):
+    main(['cldfviz.text', '--text-string', '"[](Source#cldf:__all__)"', ds_arg])
+    assert 'Peterson, John' in capsys.readouterr()[0]
+    main(['cldfviz.text', '-l', ds_arg])
+    assert 'CodeTable' in capsys.readouterr()[0]
+
+
 class MF(MarkerFactory):
     def __init__(self, ds, args, param):
         MarkerFactory.__init__(self, ds, args, param)
@@ -15,7 +28,7 @@ class MF(MarkerFactory):
         return mpl.MPLMarkerSpec(text='text')
 
 
-def test_map(glottolog_dir, tmp_path, StructureDataset, capsys):
+def test_map(glottolog_dir, tmp_path, capsys, ds_arg):
     values = tmp_path.joinpath('values.csv')
     values.write_text("""\
 ID,Language_ID,Parameter_ID,Value
@@ -24,7 +37,7 @@ ID,Language_ID,Parameter_ID,Value
 3,book1243,param1,val3
 5,book1243,param2,val3
 4,isol1234,param1,val4""", encoding='utf8')
-    sd = StructureDataset.directory / 'StructureDataset-metadata.json'
+    sd = ds_arg
 
     def run(data=None, **kw):
         for k, v in dict(
