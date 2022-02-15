@@ -11,10 +11,17 @@ def ds_arg(StructureDataset):
 
 
 def test_text(ds_arg, capsys):
-    main(['cldfviz.text', '--text-string', '"[](Source#cldf:__all__)"', ds_arg])
+    main(['cldfviz.text', '--text-string', '"[](Source?with_the_works=false#cldf:__all__)"', ds_arg])
     assert 'Peterson, John' in capsys.readouterr()[0]
     main(['cldfviz.text', '-l', ds_arg])
     assert 'CodeTable' in capsys.readouterr()[0]
+
+
+def test_text_with_map(ds_arg, capsys, tmp_path):
+    tmpl = tmp_path / 'templ.md'
+    tmpl.write_text('![](map.html?parameters=B&pacific-centered#cldfviz.map)')
+    main(['cldfviz.text', '--text-file', str(tmpl), '--test', ds_arg])
+    assert tmp_path.joinpath('map.html').exists()
 
 
 class MF(MarkerFactory):

@@ -23,7 +23,6 @@ def get_env(template_dir=None):
 def iter_templates():
     env = get_env()
     for p in sorted(TEMPLATE_DIR.iterdir(), key=lambda pp: pp.name):
-        #print('****', p)
         m = re.match(r"{#(.+?)#}", p.read_text(encoding='utf8'), flags=re.MULTILINE | re.DOTALL)
         doc = m.group(1) if m else None
         template_source = env.loader.get_source(env, p.name)
@@ -32,7 +31,8 @@ def iter_templates():
         yield p, doc, [v for v in vars if v != 'ctx']
 
 
-def render_template(env, fname_or_component, ctx, index=False, fmt='md', func_dict={}):
+def render_template(env, fname_or_component, ctx, index=False, fmt='md', func_dict=None):
+    func_dict = func_dict or {}
     # Determine the template to use ...
     tmpl_fname = ctx.pop(
         '__template__',  # ... by looking for an explicit name ...
@@ -43,18 +43,20 @@ def render_template(env, fname_or_component, ctx, index=False, fmt='md', func_di
     jinja_template.globals.update(func_dict)
     return jinja_template.render(**ctx)
 
+
 def pad_ex(obj, gloss):
     out_obj = []
     out_gloss = []
     for o, g in zip(obj, gloss):
-        diff = len(o)-len(g)
+        diff = len(o) - len(g)
         if diff < 0:
-            o += " "*-diff
+            o += " "*-diff  # noqa E225
         else:
-            g += " "*diff
+            g += " " * diff
         out_obj.append(o)
         out_gloss.append(g)
     return "  ".join(out_obj).strip(), "  ".join(out_gloss).strip()
+
 
 def render(doc, cldf, template_dir=None):
     table_map = {}
@@ -69,7 +71,8 @@ def render(doc, cldf, template_dir=None):
     return ''.join(iter_md(get_env(template_dir=template_dir), doc, cldf, table_map))
 
 
-def iter_md(env, md, cldf, table_map, func_dict={"pad_ex": pad_ex}):
+def iter_md(env, md, cldf, table_map, func_dict=None):
+    func_dict = func_dict or {"pad_ex": pad_ex}
     datadict = {}
     datadict[cldf.bibname] = {src.id: src for src in cldf.sources}
 
@@ -99,7 +102,8 @@ def iter_md(env, md, cldf, table_map, func_dict={"pad_ex": pad_ex}):
             tmpl_context['ctx'] = list(datadict[fname].values()) \
                 if oid == '__all__' else datadict[fname][oid]
             tmpl_context['cldf'] = cldf
-            yield render_template(env, type_ or fname, tmpl_context, index=oid == '__all__', func_dict=func_dict)
+            yield render_template(
+                env, type_ or fname, tmpl_context, index=oid == '__all__', func_dict=func_dict)
         else:
             yield md[m.start():m.end()]
     yield md[current:]

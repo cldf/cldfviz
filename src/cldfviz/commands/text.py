@@ -10,13 +10,15 @@ from clldutils.clilib import PathType
 from pycldf.cli_util import get_dataset, add_dataset
 from termcolor import colored
 
-from cldfviz.text import *
+from cldfviz.text import iter_templates, render
+from cldfviz.cli_util import add_testable
 from . import map
 
 MD_IMG_PATTERN = re.compile(r'!\[(?P<label>[^]]*)]\((?P<url>[^)]+)\)')
 
 
 def register(parser):
+    add_testable(parser)
     add_dataset(parser)
     parser.add_argument('-l', '--list', help='list templates', default=False, action='store_true')
     parser.add_argument('--text-string', default=None)
@@ -68,5 +70,7 @@ def create_maps(oargs, md, ds, base_dir):
             p = argparse.ArgumentParser()
             map.register(p)
             args = p.parse_args(args)
+            if oargs.test:
+                args.test = True
             args.log = oargs.log
             map.run(args)
