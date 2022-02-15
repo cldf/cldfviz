@@ -49,6 +49,13 @@ The  GL-OSS
 """
 
 
+def test_render_entry(Dictionary):
+    assert render('[ex](EntryTable#cldf:entry-1)', Dictionary) \
+        == '‘Motschegiebschn’, *noun*: lady bug\n'
+    assert render('[ex](EntryTable#cldf:entry-2)', Dictionary) \
+        == '‘Bemme’, *noun*: 1. sandwich 2. tire of a bicycle\n'
+
+
 @pytest.mark.parametrize(
     'comp,query,oid,ds,expected',
     [
