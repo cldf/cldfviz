@@ -24,6 +24,7 @@ def register(parser):
     parser.add_argument('--text-string', default=None)
     parser.add_argument('--text-file', type=PathType(type='file', must_exist=True), default=None)
     parser.add_argument('--templates', type=PathType(type='dir'), default=None)
+    parser.add_argument('--output', type=PathType(type='file', must_exist=False), default=None)
 
 
 def run(args):
@@ -48,8 +49,18 @@ def run(args):
     assert args.text_string or args.text_file
     res = render(
         args.text_string or args.text_file.read_text(encoding='utf8'), ds, args.templates)
-    create_maps(args, res, ds, pathlib.Path('.') if args.text_string else args.text_file.parent)
-    print(res)
+    create_maps(
+        args,
+        res,
+        ds,
+        args.output.parent if args.output
+        else (pathlib.Path('.') if args.text_string else args.text_file.parent))
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(res, encoding='utf8')
+        args.log.info('{} written'.format(args.output))
+    else:
+        print(res)
 
 
 def create_maps(oargs, md, ds, base_dir):

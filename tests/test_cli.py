@@ -20,7 +20,7 @@ def test_text(ds_arg, capsys):
 def test_text_with_map(ds_arg, capsys, tmp_path):
     tmpl = tmp_path / 'templ.md'
     tmpl.write_text('![](map.html?parameters=B&pacific-centered#cldfviz.map)')
-    main(['cldfviz.text', '--text-file', str(tmpl), '--test', ds_arg])
+    main(['cldfviz.text', '--text-file', str(tmpl), '--test', '--output', str(tmp_path / 'test.md'), ds_arg])
     assert tmp_path.joinpath('map.html').exists()
 
 
