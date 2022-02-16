@@ -17,7 +17,13 @@ TEMPLATE_DIR = cldfviz.PKG_DIR.joinpath('templates', 'text')
 def get_env(template_dir=None):
     loader = jinja2.FileSystemLoader(
         searchpath=[str(d) for d in nfilter([template_dir, TEMPLATE_DIR])])
-    return jinja2.Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
+    env = jinja2.Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
+
+    def paragraphs(s):
+        return '\n\n'.join(s.split('\n'))
+
+    env.filters['paragraphs'] = paragraphs
+    return env
 
 
 def iter_templates():

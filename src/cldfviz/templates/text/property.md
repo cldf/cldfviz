@@ -2,4 +2,5 @@
  Render a single property/attribute of a data object.
  #}
 {% set prop = property if property is defined else "name" %}
-{{ ctx[prop] }}
+{% set res = ctx["cldf"][prop] or ctx["data"][prop] or ctx[prop] %}
+{{ res | paragraphs }}

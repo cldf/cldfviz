@@ -49,17 +49,19 @@ def run(args):
     assert args.text_string or args.text_file
     res = render(
         args.text_string or args.text_file.read_text(encoding='utf8'), ds, args.templates)
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(res, encoding='utf8')
+        args.log.info('{} written'.format(args.output))
+
     create_maps(
         args,
         res,
         ds,
         args.output.parent if args.output
         else (pathlib.Path('.') if args.text_string else args.text_file.parent))
-    if args.output:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(res, encoding='utf8')
-        args.log.info('{} written'.format(args.output))
-    else:
+
+    if not args.output:
         print(res)
 
 

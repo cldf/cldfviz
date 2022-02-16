@@ -41,6 +41,7 @@ setup(
             # Newer cartopy requires PROJ >= 8 which isn't available by default
             # on current Ubuntu.
             'cartopy<0.20',
+            'scipy',
         ],
         'dev': ['flake8', 'wheel', 'twine'],
         'test': [

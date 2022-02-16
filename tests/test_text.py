@@ -17,7 +17,8 @@ def test_regular_md(StructureDataset):
 def test_custom_templates(StructureDataset, tmp_path):
     tmpl = tmp_path / 'tmpl'
     tmpl.mkdir()
-    tmpl.joinpath('LanguageTable_detail.md').write_text("stuff", encoding='utf8')
+    tmpl.joinpath('LanguageTable_detail.md').write_text(
+        '{{ "stuff" | paragraphs }}', encoding='utf8')
     assert 'stuff' in render('[](LanguageTable#cldf:Juang_SM)', StructureDataset, template_dir=tmpl)
 
 
