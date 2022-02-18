@@ -28,14 +28,18 @@
     {% endfor %}
     {% set form_string = form_strings|join("/") %}
 {% endif %}
-{% if f.cldf.parameterReference is not string %} 
-    {% set translations = [] %}
-    {% for par in f.parameters %}
-        {% set translations = translations.append(par.name) %}
-    {% endfor %}
-    {% set trans_string = translations|join(", ") %}
+{% if f.parameter == None %}
+    {% set trans_string = f.cldf.parameterReference %}
 {% else %}
-    {% set trans_string = f.parameter.name %}
+    {% if f.cldf.parameterReference is not string %} 
+        {% set translations = [] %}
+        {% for par in f.parameters %}
+            {% set translations = translations.append(par.name) %}
+        {% endfor %}
+        {% set trans_string = translations|join(", ") %}
+    {% else %}
+        {% set trans_string = f.parameter.name %}
+    {% endif %}
 {% endif %}
 {% if with_language %}{{ f.language.name }} {% endif %}{{form_string}} ‘{{ trans_string }}’
 {%- endmacro %}
