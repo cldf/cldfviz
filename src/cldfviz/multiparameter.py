@@ -99,8 +99,13 @@ class MultiParameter:
                  language_properties: typing.Optional[typing.Iterable[str]] = None):
         self.include_missing = include_missing
         language_properties = language_properties or []
-        langs = {lg.id: Language.from_object(lg, glottolog=glottolog)
-                 for lg in ds.objects('LanguageTable')} if 'LanguageTable' in ds else {}
+        if 'LanguageTable' in ds:
+            langs = {lg.id: Language.from_object(lg, glottolog=glottolog)
+                     for lg in ds.objects('LanguageTable')}
+        else:
+            langs = {gc: Language.from_glottolog(gc, glottolog=glottolog)
+                     for gc in set(r['languageReference'] for r in
+                                   ds.iter_rows('ValueTable', 'languageReference'))}
         langs = {k: v for k, v in langs.items() if v}
         params = {p.id: Parameter.from_object(p)
                   for p in ds.objects('ParameterTable')} if 'ParameterTable' in ds else {}
@@ -142,8 +147,6 @@ class MultiParameter:
                 if ((val['value'] is not None) or self.include_missing) and \
                         val['parameterReference'] in self.parameters:
                     lang = langs.get(val['languageReference'])
-                    if not lang:
-                        lang = Language.from_glottolog(val['languageReference'], glottolog)
                     if lang:
                         self.languages[val['languageReference']] = lang
                         self.values.append(Value.from_row(val, codes))
@@ -162,14 +165,23 @@ class MultiParameter:
                             code=language_property))
         if not self.values:
             # No parameters and no language property specified: Just plot language locations.
-            for lang in ds.iter_rows('LanguageTable', 'id', 'name'):
-                if lang['id'] in langs:
-                    self.languages.setdefault(lang['id'], langs[lang['id']])
+            if 'LanguageTable' not in ds:
+                for lid, lang in langs.items():
+                    self.languages.setdefault(lid, lang)
                     self.values.append(Value(
                         v='y',
                         pid='__language__',
-                        lid=lang['id'],
+                        lid=lid,
                         code='language'))
+            else:
+                for lang in ds.iter_rows('LanguageTable', 'id', 'name'):
+                    if lang['id'] in langs:
+                        self.languages.setdefault(lang['id'], langs[lang['id']])
+                        self.values.append(Value(
+                            v='y',
+                            pid='__language__',
+                            lid=lang['id'],
+                            code='language'))
 
         for p in self.parameters.values():
             if p.id in codes:

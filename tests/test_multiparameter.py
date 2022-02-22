@@ -35,6 +35,8 @@ ID,Language_ID,Parameter_ID,Value
     ds = Dataset.from_data(values)
     mp = MultiParameter(ds, ['param1'], glottolog={lg.id: lg for lg in glottolog.languoids()})
     assert list(mp.parameters.values())[0].type == CONTINUOUS
+    mp = MultiParameter(ds, [], glottolog={lg.id: lg for lg in glottolog.languoids()})
+    assert len(mp.languages) == 2
 
 
 def test_Language(glottolog):
