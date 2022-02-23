@@ -61,16 +61,35 @@
 <script type="text/javascript">
     var geojson = $geojson;
     var options = $options;
-    var markers = [],
-        map = L.map('map', {fullscreenControl: true}).setView([5, 160], 2);
-    L.tileLayer($tile_url, $tile_options).addTo(map);
+    var layers = [L.tileLayer($tile_url, $tile_options)];
+    var layer_groups = {};
+    var markers = [];
 
     function onEachFeature(feature, layer) {
+        var values = feature.properties.values.split(' / ');
         var html = "<h3>" + feature.properties.name + "</h3><dl>";
         html += '<p>' + feature.properties.values + '</p>';
         layer.bindPopup(html);
         layer.bindTooltip(feature.properties.tooltip, {className: feature.properties.tooltip_class});
         markers.push(layer);
+        if (options.with_layers) {
+            for (let i = 0; i < values.length; i++) {
+                if (layer_groups.hasOwnProperty(values[i])) {
+                    layer_groups[values[i]].addLayer(layer);
+                } else {
+                    layer_groups[values[i]] = L.layerGroup([layer]);
+                    layers.push(layer_groups[values[i]]);
+                }
+            }
+        } else if (options.with_layers_for_combinations) {
+            values = feature.properties.values;
+            if (layer_groups.hasOwnProperty(values)) {
+                layer_groups[values].addLayer(layer);
+            } else {
+                layer_groups[values] = L.layerGroup([layer]);
+                layers.push(layer_groups[values]);
+            }
+        }
     }
 
     L.geoJSON([geojson], {
@@ -85,8 +104,12 @@
                     })
                 })
         }
-    }).addTo(map);
+    });
 
+    map = L.map('map', {layers: layers, fullscreenControl: true}).setView([5, 160], 2);
+    if (options.with_layers || options.with_layers_for_combinations) {
+        L.control.layers({}, layer_groups, {collapsed: false, sortLayers: true}).addTo(map);
+    }
     var group = new L.featureGroup(markers);
     map.fitBounds(group.getBounds());
 

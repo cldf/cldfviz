@@ -10,6 +10,7 @@ from cldfviz.multiparameter import Parameter
         ('r', '#FF0000'),
         ('aqua', '#00FFFF'),
         ('a00', '#AA0000'),
+        ('diamond', 'diamond'),
     ]
 )
 def test_hextriplet(s, res):

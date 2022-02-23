@@ -9,11 +9,19 @@ import numpy as np
 import cartopy.feature
 import cartopy.crs
 from matplotlib import pyplot as plt
-from matplotlib.patches import Wedge
+from matplotlib.patches import Wedge, Rectangle
 from matplotlib.legend_handler import HandlerPatch
 from PIL import Image
 
 from .base import Map, PACIFIC_CENTERED
+
+SHAPE_MAP = {
+    'triangle_down': '^',
+    'triangle_up': 'v',
+    'square': 's',
+    'diamond': 'D',
+    'circle': 'o',
+}
 
 
 def iter_subclasses(cls):
@@ -230,6 +238,21 @@ class MapPlot(Map):
             return
         lon, lat = self._lonlat(language)
         if self.args.projection != 'PlateCarree':
+            colors = [colormaps[pid](vals[0].v) for pid, vals in values.items()]
+            res = self.get_shape_and_color(colors)
+            if res:
+                self.ax.plot(
+                    language.lon, language.lat,
+                    color=res[1],
+                    markersize=self.args.markersize,
+                    zorder=zorder,
+                    marker=SHAPE_MAP[res[0]],
+                    markeredgecolor='black',
+                    linewidth=1,
+                    transform=cartopy.crs.Geodetic(),
+                )
+                return
+
             if len(values) > 1:
                 for color, marker in self.pie_markers(
                         [colormaps[pid](vals[0].v) for pid, vals in values.items()]):
@@ -256,20 +279,33 @@ class MapPlot(Map):
             )
             return
 
-        s, angle = 0, 360.0 / len(values)
-        for pid, vals in values.items():
-            self.ax.add_patch(Wedge(
-                [lon, lat],
-                self.args.markersize * self.scaling_factor / 2.0,
-                s,
-                s + angle,
-                facecolor=colormaps[pid](vals[0].v),
-                edgecolor="black",
+        colors = [colormaps[pid](vals[0].v) for pid, vals in values.items()]
+        res = self.get_shape_and_color(colors)
+        if res:
+            self.ax.plot(
+                lon, lat,
+                color=res[1],
+                markersize=self.args.markersize,
+                zorder=zorder,
+                marker=SHAPE_MAP[res[0]],
+                markeredgecolor='black',
                 linewidth=1,
-                label=language.name,
-                zorder=zorder
-            ))
-            s += angle
+            )
+        else:
+            s, angle = 0, 360.0 / len(values)
+            for pid, vals in values.items():
+                self.ax.add_patch(Wedge(
+                    [lon, lat],
+                    self.args.markersize * self.scaling_factor / 2.0,
+                    s,
+                    s + angle,
+                    facecolor=colormaps[pid](vals[0].v),
+                    edgecolor="black",
+                    linewidth=1,
+                    label=language.name,
+                    zorder=zorder
+                ))
+                s += angle
         if self.args.language_labels:
             self.ax.text(
                 lon + self.args.markersize * self.scaling_factor + 3 * self.scaling_factor,
@@ -280,6 +316,40 @@ class MapPlot(Map):
     def add_legend(self, parameters, colormaps):
         def wrapped_label(s):
             return '\n'.join(textwrap.wrap(s, width=20))
+
+        with_shapes = False
+        if len(parameters) == 2:
+            for pid, parameter in parameters.items():
+                if not isinstance(parameter.domain, tuple):
+                    for v, label in parameter.domain.items():
+                        if colormaps[pid](v) in SHAPE_MAP:
+                            with_shapes = True
+                            break
+
+        if with_shapes:
+            handles = []
+            for pid, parameter in parameters.items():
+                handles.append(
+                    Rectangle(
+                        (0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0,
+                        label=wrapped_label(parameter.name)))
+                for v, label in parameter.domain.items():
+                    color = colormaps[pid](v)
+                    handles.append(
+                        plt.Line2D(
+                            [], [],
+                            marker=SHAPE_MAP[color] if color in SHAPE_MAP else 'o',
+                            color='#000000' if color in SHAPE_MAP else color,
+                            linewidth=1,
+                            linestyle='',
+                            label=wrapped_label(label))
+                    )
+            self.ax.legend(
+                bbox_to_anchor=(1, 1),
+                handles=handles,
+                loc='upper left',
+            )
+            return
 
         handles = []
         s, angle = 0, 360.0 / len(parameters)

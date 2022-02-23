@@ -14,12 +14,22 @@ COLORMAPS = {
     CATEGORICAL: ['boynton', 'tol', 'base', 'seq'],
     CONTINUOUS: [cm for cm in plt.colormaps() if not cm.endswith('_r')],
 }
+SHAPES = {
+    'triangle_down',
+    'triangle_up',
+    'square',
+    'diamond',
+    'circle',
+}
 
 
 def hextriplet(s):
     """
     Wrap clldutils.color.rgb_as_hex to provide unified error handling.
     """
+    if s in SHAPES:
+        # A bit of a hack: We allow a handful of shape names as "color" spec as well.
+        return s
     if s in BASE_COLORS:
         return rgb_as_hex([float(d) for d in BASE_COLORS[s]])
     if s in CSS4_COLORS:
@@ -35,6 +45,9 @@ class Colormap:
         domain = parameter.domain
         self.explicit_cm = None
         if name and name.startswith('{'):
+            if isinstance(parameter.domain, tuple):
+                raise ValueError(
+                    'Explicit color maps are only supported for categorical parameters')
             self.explicit_cm = collections.OrderedDict()
             raw = json.loads(name, object_pairs_hook=collections.OrderedDict)
             if novalue:
@@ -74,6 +87,10 @@ class Colormap:
                 else:
                     colors = qualitative_colors(len(domain), set=name)
                 self.cm = lambda v: dict(zip(domain, colors))[v]
+
+    @property
+    def with_shapes(self):
+        return self.explicit_cm and any(c in SHAPES for c in self.explicit_cm.values())
 
     def scalar_mappable(self):
         return cm.ScalarMappable(norm=None, cmap=self._cm)

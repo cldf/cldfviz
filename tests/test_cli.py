@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 from cldfbench.__main__ import main
@@ -60,7 +62,7 @@ ID,Language_ID,Parameter_ID,Value
             if v is not None:
                 args.append(str(v))
         args.append(str(data or values))
-        main(args)
+        main(args, log=logging.getLogger(__name__))
 
     run(parameters='param1')
     assert tmp_path.joinpath('testmap.html').exists()
@@ -68,6 +70,25 @@ ID,Language_ID,Parameter_ID,Value
     run(parameters='param1',
         colormaps='{"val1": "#a00", "val2": "#0a0", "val3": "#00a", "val4": "#000"}')
     assert tmp_path.joinpath('testmap.html').exists()
+
+    with pytest.raises(SystemExit):  # Shapes in colormap, but just one parameter.
+        run(parameters='param1',
+            colormaps='{"val1": "circle", "val2": "#0a0", "val3": "#00a", "val4": "#000"}')
+
+    with pytest.raises(SystemExit):  # Explicit color map for non-categorical parameter.
+        run(parameters='B',
+            colormaps='{"v":"#aaaaaa"}',
+            data=sd)
+
+    with pytest.raises(SystemExit):  # Shapes in color maps for both parameters.
+        run(parameters='C,D',
+            colormaps='{"0":"circle","1":"diamond","2":"square"},'
+                      '{"0":"circle","1":"diamond","2":"square"}',
+            data=sd)
+
+    run(parameters='C,D',
+        colormaps='{"0":"circle","1":"diamond","2":"square"},tol',
+        data=sd)
 
     with pytest.raises(SystemExit):
         # Non-matching colormap values:
@@ -105,3 +126,12 @@ ID,Language_ID,Parameter_ID,Value
         run(format='png', projection='Robinson', parameters='param1,param2')
         run(format='png', marker_factory='cldfviz.map', data=sd)
         run(format='png', marker_factory='{},test'.format(__file__), data=sd)
+        run(format='png',
+            data=sd,
+            parameters='C,D',
+            colormaps='{"0":"circle","1":"diamond","2":"square"},tol')
+        run(format='png',
+            data=sd,
+            parameters='C,D',
+            colormaps='{"0":"circle","1":"diamond","2":"square"},tol',
+            projection='Mollweide')

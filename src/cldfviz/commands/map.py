@@ -161,6 +161,13 @@ def run(args):
     except (ValueError, KeyError) as e:
         raise ParserError(str(e))
 
+    with_shapes = sum(1 for cm in cms.values() if cm.with_shapes)
+    if with_shapes:
+        if with_shapes > 1:
+            raise ParserError('Only one colormap can specify shapes.')
+        if len(data.parameters) != 2:
+            raise ParserError('Shapes can only be specified for one of two parameters.')
+
     if args.marker_factory:
         comps = args.marker_factory.split(',')
         cls = import_subclass(comps[0], MarkerFactory)

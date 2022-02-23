@@ -1,5 +1,7 @@
 import webbrowser
 
+from cldfviz.colormap import SHAPES
+
 PACIFIC_CENTERED = 154
 
 
@@ -17,6 +19,17 @@ class Map:
     def __exit__(self, exc_type, exc_val, exc_tb):  # pragma: no cover
         """write files"""
         raise NotImplementedError()
+
+    @staticmethod
+    def get_shape_and_color(colors_or_shapes):
+        if len(colors_or_shapes) == 2:
+            shapes, colors = [], []
+            for c in colors_or_shapes:
+                (shapes if c in SHAPES else colors).append(c)
+            if shapes:
+                if len(shapes) > 1:
+                    raise ValueError('Only one shape can be specified for a marker')
+                return shapes[0], colors[0]
 
     @staticmethod
     def add_options(parser, help_suffix):  # pragma: no cover
