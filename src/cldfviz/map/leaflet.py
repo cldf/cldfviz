@@ -93,13 +93,14 @@ class MapLeaflet(Map):
             '--with-layers',
             default=False,
             action='store_true',
-            help='Create clickable Leaflet layers for each parameter value',
+            help='Create clickable Leaflet layers for each parameter value. {}'.format(help_suffix),
         )
         parser.add_argument(
             '--with-layers-for-combinations',
             default=False,
             action='store_true',
-            help='Create clickable Leaflet layers for each combination of parameter values',
+            help='Create clickable Leaflet layers for each combination of parameter values. '
+                 '{}'.format(help_suffix),
         )
 
     def _lonlat(self, language):

@@ -1,6 +1,7 @@
 # Colormaps for `cldfviz.map`
 
-Colormaps are use to specify the appearance of map markers.
+Colormaps are used to specify the appearance of map markers.
+
 
 
 ## Shapes
