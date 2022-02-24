@@ -2,6 +2,15 @@
 
 Colormaps are used to specify the appearance of map markers.
 
+Colormaps can be specified in two ways:
+
+1. You can specify a colormap by using its name as value for the option. `cldfviz.map` provides access to
+   to the color schemes defined 
+   - in [clldutils.color](https://clldutils.readthedocs.io/en/latest/color.html)
+     for categorical (or sequential or diverging parameter values) and
+   - in [matplotlib](https://matplotlib.org/stable/tutorials/colors/colormaps.html) for continuous parameter values
+2. You can specify a custom colormap for categorical variables by mapping each parameter value to a color.
+   Such a mapping can then be passed as literal [JSON object](https://en.wikipedia.org/wiki/JSON#Data_types).
 
 
 ## Shapes

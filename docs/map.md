@@ -1,12 +1,15 @@
 # `cdfviz.map`
 
-The `cldfviz.map` subcommand for `cldfbench` allows you to create geographic maps displaying data from CLDF
-`StructureDataset`s - i.e. maps as used in typological Atlases such as [WALS](https://wals.info).
+A common way to visualize data from a CLDF StructureDataset is as "dots on a map",
+i.e. as [WALS](https://wals.info)-like geographic maps.
 
+This can be done using the `cldfviz.map` command.
 Consulting the help for the `cldfbench cldfviz.map` command displays a somewhat lengthy message. So for better
 readability, we'll explain some options here in more detail.
 
 Note that some options are only valid for some output formats.
+
+For example usage of `cldfviz.map`, see the [Examples](#examples) section below.
 
 
 ## Output
@@ -81,66 +84,210 @@ For details about how to specify colormaps, see [colormaps.md](colormaps.md).
 
 ### `--markersize`
 
-The size of the mao markers is controled via the `--markersize` option. You might need to experiment a bit
+The size of the map markers is controled via the `--markersize` option. You might need to experiment a bit
 to figure out a perfect size, since "size in pixels" may translate to quite different optics depending on
 screen size, `--dpi` settings, projections, etc.
 
 
 ### Other general options
 
-  --title TITLE         Title for the map plot (default: None)
-  --pacific-centered    Center maps of the whole world at the pacific, thus
-                        not cutting large language families in half. (default:
-                        False)
-  --language-labels     Display language names on the map (default: False)
-  --missing-value MISSING_VALUE
-                        A color used to indicate missing values. If not
-                        specified missing values will be omitted. (default:
-                        None)
-  --no-legend           Don't add a legend to the map (e.g. because it would
-                        be too big). (default: False)
+There's a handfull of options to control the overall appearance of maps:
+
+- `--title`:  Specify a title for the map plot.
+- `--pacific-centered`: Flag to center maps of the whole world at the pacific, thus not cutting large language families 
+  in half.
+- `--language-labels`: Flag to display language names on the map. Note: This quickly gets crowded.
+- `--missing-value`: Specify a color used to indicate missing values. If not specified missing values will be omitted.
+- `--no-legend`: Flag to not add a legend to the map. This is mainly of interest for printable maps, e.g. when a
+  legend is provided elsewhere in a paper.
 
 
 ### Options for HTML maps
 
-  --base-layer {OpenStreetMap,OpenTopoMap,Esri_WorldImagery,Esri_WorldPhysical,Esri_NatGeoWorldMap}
-                        Tile layer for Leaflet maps. (Only for FORMATs "html")
-                        (default: OpenStreetMap)
-  --with-layers         Create clickable Leaflet layers for each parameter
-                        value (default: False)
-  --with-layers-for-combinations
-                        Create clickable Leaflet layers for each combination
-                        of parameter values (default: False)
+The following options are only relevant for HTML maps:
+
+- `--base-layer`: Specify a [tile layer](https://leafletjs.com/reference.html#tilelayer) to use for the Leaflet maps.
+  See [cldfviz.map.leaflet](../src/cldfviz/map/leaflet.py) for available layers.
+- `--with-layers`: Add a [Leaflet layer control](https://leafletjs.com/examples/layers-control/) to toggle between
+  displaying and hiding markers for individual values of a parameter.
+- `--with-layers-for-combinations`: Add a [Leaflet layer control](https://leafletjs.com/examples/layers-control/) to 
+  toggle between displaying and hiding markers for individual combinations of values for the plotted parameters. Note:
+  While this option allows more fine-grained control over the displayed markers (in comparison with `--with-layers`),
+  it may lead to unwieldy legends in case several parameters with multiple values are chosen.
 
 
 ### Options for printable maps
 
-  --padding-left PADDING_LEFT
-                        Left padding of the map in degrees. (Only for FORMATs
-                        "jpg", "png", "pdf") (default: 1)
-  --padding-right PADDING_RIGHT
-                        Right padding of the map in degrees. (Only for FORMATs
-                        "jpg", "png", "pdf") (default: 1)
-  --padding-top PADDING_TOP
-                        Top padding of the map in degrees. (Only for FORMATs
-                        "jpg", "png", "pdf") (default: 1)
-  --padding-bottom PADDING_BOTTOM
-                        Bottom padding of the map in degrees. (Only for
-                        FORMATs "jpg", "png", "pdf") (default: 1)
-  --extent EXTENT       Set extent of the figure in terms of coordinates
-                        (left, right, top, bottom) (default: None)
-  --width WIDTH         Width of the figure in inches. (Only for FORMATs
-                        "jpg", "png", "pdf") (default: 6.4)
-  --height HEIGHT       Height of the figure in inches. (Only for FORMATs
-                        "jpg", "png", "pdf") (default: 4.8)
-  --dpi DPI             Pixel density of the figure. (Only for FORMATs "jpg",
-                        "png", "pdf") (default: 100.0)
-  --projection {PlateCarree,RotatedPole,LambertCylindrical,Miller,TransverseMercator,OSGB,OSNI,UTM,EuroPP,Mercator,LambertConformal,LambertAzimuthalEqualArea,Gnomonic,Stereographic,NorthPolarStereo,SouthPolarStereo,Orthographic,EckertI,EckertII,EckertIII,EckertIV,EckertV,EckertVI,EqualEarth,Mollweide,Robinson,InterruptedGoodeHomolosine,Geostationary,NearsidePerspective,AlbersEqualArea,AzimuthalEquidistant,Sinusoidal,EquidistantConic}
-                        Map projection. For details, see https://scitools.org.
-                        uk/cartopy/docs/latest/crs/projections.html (Only for
-                        FORMATs "jpg", "png", "pdf") (default: PlateCarree)
-  --with-stock-img      Add a map underlay (using cartopy's `stock_img`
-                        method). (Only for FORMATs "jpg", "png", "pdf")
-                        (default: False)
-  --zorder ZORDER       Determine zorder of individual markers by color.
-                        (default: {})
+The following options are only relevant for image (aka printable) maps:
+
+- `--padding-left|right|top|bottom`: Specify the padding to be added to maps (around the bounding box of the
+  displayed markers) in degrees. 
+- `--extent`: Specify the explicit geographic extent of the map as comma-separated list of degrees for 
+  (left, right, top, bottom) edge of the map.
+- `--width`: Width of the figure in inches.
+- `--height`: Height of the figure in inches.
+- `--dpi`: Pixel density of the figure. The default of `100` makes for rather small file size and is mostly suitable
+  for experimentation. For printable quality you should set it to `300`.
+- `--projection`: Map projection. For available projections, see 
+  https://scitools.org.uk/cartopy/docs/latest/crs/projections.html
+- `--with-stock-img`: Add a map underlay (using cartopy's 
+  [`stock_img`](https://scitools.org.uk/cartopy/docs/v0.15/matplotlib/intro.html) method).
+- `--zorder`: Specify explit drawing order (i.e. specify what's plotted on top) by giving a JSON dictionary mapping
+  parameter values to integers (the higher, the more on top).
+
+
+## Examples
+
+We'll explain the usage of the command by using it with the [WALS CLDF data](https://github.com/cldf-datasets/wals/releases/tag/v2020.1).
+You can download the WALS data - for example - using another `cldfbench` plugin: [cldfzenodo](https://github.com/cldf/cldfzenodo/#cli):
+```shell
+cldfbench zenodo.download 10.5281/zenodo.4683137 --directory wals-2020.1/
+```
+
+### HTML maps
+
+With the [leaflet](https://leafletjs.com) library, we can create interactive maps which can be explored in a browser.
+
+Running
+```shell
+cldfbench cldfviz.map wals-2020.1/StructureDataset-metadata.json --base-layer Esri_WorldPhysical --pacific-centered
+```
+will create an HTML page `map.html` and open it in the browser, thus rendering an interactive
+map of the languages in the dataset.
+
+![WALS languages](wals_languages.jpg)
+
+For smaller language samples, it may be suitable to display the language names on the map, too.
+Here's [WALS' feature 10B](https://wals.info/feature/10B):
+```shell
+cldfbench cldfviz.map wals-2020.1/StructureDataset-metadata.json --parameters 10B --colormaps tol --markersize 20 --language-labels
+```
+![WALS 10B](wals_10B.jpg)
+
+`cldfviz.map` can detect and display continuous variables, too. There are no continuous features in WALS, but since
+`cldfviz.map` also works with
+[metadata-free CLDF datasets](https://github.com/cldf/cldf/blob/master/README.md#metadata-free-conformance), let's
+quickly create one. Using the [UNIX shell](https://swcarpentry.github.io/shell-novice/) tools `sed` and `awk` and the
+tools of the[csvkit](https://csvkit.readthedocs.io/en/latest/) toolbox, we
+can run
+```shell
+csvgrep -c Latitude,Glottocode -r".+" wals-2020.1/languages.csv | \
+csvcut -c ID,Glottocode,Latitude | \
+awk '{if(NR==1){print $0",Parameter_ID"}else{print $0",latitude"}}' | \
+sed 's/ID,Glottocode,Latitude,Parameter_ID/ID,Language_ID,Value,Parameter_ID/g' > values.csv
+```
+Let's break this down: The first line selects all WALS languages for which latitude and Glottocode is given.
+The next line narrows the resulting CSV to just three columns - the future `ID`, `Language_ID` and `Value`
+columns of our metadata-free StructureDataset. The `awk` command adds a constant column `Parameter_ID`,
+and the `sed` command renames the columns appropriately.
+
+The resulting CSV looks as follows:
+```shell
+$ head -n 4 values.csv 
+ID,Language_ID,Value,Parameter_ID
+aar,aari1239,6,latitude
+aba,abau1245,-4,latitude
+abb,chad1249,13.8333333333,latitude
+```
+
+Now we can run
+```shell
+cldfbench cldfviz.map values.csv --parameters latitude --glottolog PATH/TO/GLOTTOLOG
+```
+![WALS latitudes](wals_latitude.jpg)
+
+Note that for metadata-free datasets, `cldfviz.map` needs to lookup coordinates in Glottolog. Thus, languages
+may be displayed at slightly different locations than above (when the coordinates in WALS differ).
+
+Now we could have done this in a simpler way, too, because `cldfviz.map` has a special option to display language
+properties encoded as columns in the `LanguageTable` as if they were parameters of the dataset. We can use this
+option to visualize a claim from [WALS' chapter 129](https://wals.info/chapter/129) that there is a
+
+> strong correlation between values [for feature 129] and latitudinal location
+
+```shell
+cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --parameters 129A --colormaps tol \
+--markersize 20 --language-properties Latitude --pacific-centered
+```
+![WALS 129A and latitude](wals_latitude_handandarm.jpg)
+
+As seen above, `cldfviz.map` can visualize multiple parameters at once. E.g. we can explore the related WALS
+features 129A, 130A and 130B, selecting suitable colormaps for the two boolean parameters:
+```shell
+cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --parameters 129A,130A,130B \
+--colormaps base,base,tol --pacific-centered --markersize 30 
+```
+
+![WALS 129A, 130A and 130B](wals_129A_130A_130B.jpg)
+
+
+#### Printable maps via cartopy
+
+If `cldfviz` is installed with `cartopy` similar maps to the ones shown above can also be created
+in various image formats:
+```shell
+cldfbench cldfviz.map wals-2020.1/StructureDataset-metadata.json --parameters 129A --colormaps tol \
+--language-properties Latitude --pacific-centered \
+--format jpg --width 20 --height 10 --dpi 300 --markersize 40
+```
+![WALS 129A and latitude](wals_latitude_handandarm_2.jpg)
+
+While these maps lack the interactivity of the HTML maps, they may be better suited for inclusion in print
+formats than screen shots of maps in the browser. They also provide some additional options like a choice
+between various map projections.
+
+
+#### Advanced dataset pre-processing
+
+Going one step further, we might visualize data that has been synthesized on the fly. E.g. we
+can visualize the AES endangerment information given in the [Glottolog CLDF data](https://github.com/glottolog/glottolog-cldf/releases/tag/v4.4)
+for the WALS languages:
+
+Since we will alter the WALS CLDF data, we make a copy of it first:
+```shell
+cp -r wals-2020.1 wals-copy
+```
+
+Now we extract the AES data from Glottolog ...
+```shell
+csvgrep -c Parameter_ID -m"aes" glottolog-cldf-4.4/cldf/values.csv |\
+csvgrep -c Value -m"NA" -i |\
+csvcut -c Language_ID,Parameter_ID,Code_ID  > aes1.csv
+```
+
+... and massage it into a form that can be appended to the WALS `ValueTable`:
+```shell
+csvjoin -y 0 -c Glottocode,Language_ID wals-2020.1/cldf/languages.csv aes1.csv |\
+csvcut -c Parameter_ID,Code_ID,ID |\
+awk '{if(NR==1){print $0",ID"}else{print $0",aes-"NR}}' |\
+sed 's/Parameter_ID,Code_ID,ID,ID/Parameter_ID,Value,Language_ID,ID/g' |\
+csvcut -c ID,Language_ID,Parameter_ID,Value |\
+awk '{if(NR==1){print $0",Code_ID,Comment,Source,Example_ID"}else{print $0",,,,"}}' > aes2.csv
+```
+Notes:
+- The first `awk` call adds a unique value `ID`. We cannot re-use the value `ID` from Glottolog,
+  because the mapping between WALS and Glottolog languages is many-to-one.
+- Using `awk` to manipulate CSV data is somewhat fragile, since it will break if the data contains
+  multi-line cell content. To guard against that, you may compare the row count reported by
+  `csvstat` with the line count from `wc -l` before using `awk`.
+
+Now we append the values and a row for the `ParameterTable` ...
+```shell
+csvstack aes2.csv wals-copy/cldf/values.csv > values.csv
+cp values.csv wals-copy/cldf
+echo "ID,Name,Description,Chapter_ID" > aes_param.csv
+echo "aes,AES,," >> aes_param.csv
+csvstack aes_param.csv wals-copy/cldf/parameters.csv > parameters.csv
+cp parameters.csv wals-copy/cldf
+```
+
+... and make sure the resulting dataset is valid:
+```shell
+cldf validate wals-copy/cldf/StructureDataset-metadata.json
+```
+
+Finally, we can plot the map:
+```shell
+cldfbench cldfviz.map wals-copy/cldf/StructureDataset-metadata.json --pacific-centered --colormaps seq --parameters aes
+```
+![WALS AES](wals_aes.jpg)
