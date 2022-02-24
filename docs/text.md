@@ -5,14 +5,31 @@ in descriptive texts, most obviously perhaps as examples formatted as **I**nterl
 Other examples of data in text include forms, either in running text or in a table, or just references.
 
 To support this use case, the `cldfviz.text` command can fill data from a CLDF dataset into a markdown
-document, where references to CLDF data objects (rows of tables or complete tables) are marked using the
-markdown link format with a special URL syntax. To reference a single row:
+document, where references to CLDF data objects (rows of tables or complete tables) are marked using
+markdown links.
 
+While this process may seem overly complex - after all, you could just type an IGT example into your document - there
+are advantages:
+1. Valuable structured data can be made available as CLDF data, thus opening it up for re-use (and various
+   attempts to extract IGT from text documents are proof that this content is considered valuable).
+2. Rendering of structured data can be made more uniform and automatic - thereby simplifying authoring of such
+   documents.
+
+Basically, we want to have data in two places, and the better authoritative place for it seems to be the CLDF dataset.
+With `cldfviz.text` we want to make it easier to "pull data back into text".
+
+
+## Syntax
+
+"CLDF markdown" is just plain markdown where URLs specified in [markdown links](https://www.markdownguide.org/basic-syntax/#links)
+may be interpreted as references to objects in a CLDF dataset.
+
+The link syntax to reference a single object, i.e. a row in a CLDF table looks as follows:
 ```
 [An arbitrary label](some/path/<component-name-or-csv-filename>#cldf:<obect-id>)
 ```
 
-To reference a whole table:
+To reference all rows in a table, use
 ```
 [An arbitrary label](some/path/<component-name-or-csv-filename>#cldf:__all__)
 ```
@@ -26,6 +43,9 @@ document. E.g.
 will render as `Meier 2020`, linking to the BibTeX file when the document is simply rendered as markdown by
 a service like GitHub, while the enhanced document created from `cldfviz.text` will replace the link with
 the reference data expanded to a full citation according to the Unified Stylesheet for Linguistics.
+
+
+## Rendering
 
 Rendering of data objects is controled with [templates](../src/cldfviz/templates/text) using the
 [Jinja](https://jinja.palletsprojects.com/) template language. Sometimes, templates can be parametrized,
@@ -45,3 +65,43 @@ An example of a document rendered with `cldfviz.text` is [text_example/README.md
 several paragraphs of [WALS' chapter 21](https://wals.info/chapter/21), rewritten in
 ["CLDF markdown"](text_example/README_tmpl.md) and rendered by "filling in" data from
 [WALS as CLDF dataset](https://github.com/cldf-datasets/wals/).
+
+
+## CLI
+
+```shell
+$ cldfbench cldfviz.text -h
+usage: cldfbench cldfviz.text [-h] [-l] [--text-string TEXT_STRING]
+                              [--text-file TEXT_FILE] [--templates TEMPLATES]
+                              [--output OUTPUT]
+                              DATASET
+
+positional arguments:
+  DATASET               Dataset specification (i.e. path to a CLDF metadata
+                        file or to the data file)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -l, --list            list templates (default: False)
+  --text-string TEXT_STRING
+  --text-file TEXT_FILE
+  --templates TEMPLATES
+  --output OUTPUT
+```
+
+
+## Examples
+
+- Rendering a parameter description from a CLDF StructureDataset:
+  ```shell
+  $ cldfbench cldfviz.text --text-string "[](ParameterTable#cldf:D)" tests/StructureDataset/StructureDataset-metadata.json
+  **Oblique Nouns**
+  
+  Description:
+  Oblique stems of common nouns
+  
+  Codes:
+  - 0: 0
+  - 1: 1
+  - 2: 2
+  ```
