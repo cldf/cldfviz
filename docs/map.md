@@ -69,24 +69,21 @@ list of column names from the `LanguageTable` for the `--language-properties` op
 
 ## Configuring marker appearance
 
-### `--*-colormaps`
+- `--*-colormaps`
+  The default visual style for `cldfviz.map` maps is "dots", i.e. colored circle markers plotted at the
+  language's location on the map. Thus, the primary mechanism to influence the appearance is by specifying
+  colormaps to control the colors used for corresponding parameter values.
 
-The default visual style for `cldfviz.map` maps is "dots", i.e. colored circle markers plotted at the
-language's location on the map. Thus, the primary mechanism to influence the appearance is by specifying
-colormaps to control the colors used for corresponding parameter values.
+  You don't have to specify any colormaps, but if you do, the number of colormaps specified for
+  `--colormaps` (and `--language-properties-colormaps` respectively) must match the number of parameters 
+  (and language properties respectively) to be plotted.
 
-You don't have to specify any colormaps, but if you do, the number of colormaps specified for
-`--colormaps` (and `--language-properties-colormaps` respectively) must match the number of parameters 
-(and language properties respectively) to be plotted.
+  For details about how to specify colormaps, see [colormaps.md](colormaps.md).
 
-For details about how to specify colormaps, see [colormaps.md](colormaps.md).
-
-
-### `--markersize`
-
-The size of the map markers is controled via the `--markersize` option. You might need to experiment a bit
-to figure out a perfect size, since "size in pixels" may translate to quite different optics depending on
-screen size, `--dpi` settings, projections, etc.
+- `--markersize`
+  The size of the map markers is controled via the `--markersize` option. You might need to experiment a bit
+  to figure out a perfect size, since "size in pixels" may translate to quite different optics depending on
+  screen size, `--dpi` settings, projections, etc.
 
 
 ### Other general options
