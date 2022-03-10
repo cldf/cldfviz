@@ -56,7 +56,9 @@ def pad_ex(obj, gloss):
         out_gloss.append(g)
     return "  ".join(out_obj).strip(), "  ".join(out_gloss).strip()
 
-def render(doc, cldf, template_dir=None):
+def render(doc, cldf, template_dir=None, func_dict={}):
+    if "pad_ex" not in func_dict:
+        func_dict["pad_ex"] = pad_ex
     table_map = {}
     for table in cldf.tables:
         fname = str(table.url)
@@ -66,10 +68,10 @@ def render(doc, cldf, template_dir=None):
             except ValueError:
                 table_map[fname] = None
     table_map[cldf.bibname] = 'Source'
-    return ''.join(iter_md(get_env(template_dir=template_dir), doc, cldf, table_map))
+    return ''.join(iter_md(get_env(template_dir=template_dir), doc, cldf, table_map, func_dict=func_dict))
 
 
-def iter_md(env, md, cldf, table_map, func_dict={"pad_ex": pad_ex}):
+def iter_md(env, md, cldf, table_map, func_dict={}):
     datadict = {}
     datadict[cldf.bibname] = {src.id: src for src in cldf.sources}
 
