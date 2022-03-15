@@ -67,6 +67,17 @@ The  GL-OSS
 <i>Only primary text</i>  
 ‘and translation’</pre>
 """
+    res = render(
+        """[](ExampleTable?with_internal_ref_link#cldf:igt)
+[](sources.bib#cldf:__all__)""",
+        StructureDataset)
+    assert "The Title" in res
+    res = render(
+        """[](ExampleTable?with_internal_ref_link#cldf:igt)
+[](sources.bib?cited_only=1#cldf:__all__)""",
+        StructureDataset)
+    assert "The Title" not in res
+    assert "Fitting the pieces" in res
 
 
 def test_render_entry(Dictionary):

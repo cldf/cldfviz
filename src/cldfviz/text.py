@@ -139,24 +139,56 @@ def replace_links(env, md, cldf, table_map, func_dict=None):
     datadict = {}
     datadict[cldf.bibname] = {src.id: src for src in cldf.sources}
     reverse_table_map = {v: k for k, v in table_map.items()}
+    with_partial_local_reflist = False  # Only cited references are to be included.
+
+    def get_tmpl_context(ml, fname):
+        if fname not in datadict:
+            objs = cldf.objects(table_map[fname]) \
+                if table_map[fname] else cldf.iter_rows(fname, 'id')
+            datadict[fname] = {r.id if isinstance(r, orm.Object) else r['id']: r for r in objs}
+        tmpl_context = {k: True if v[0] == '' else v[0] for k, v in ml.parsed_url_query.items()}
+        for k in tmpl_context:
+            if k.startswith('with_') and (tmpl_context[k] in ['0', 'false', 'False']):
+                tmpl_context[k] = False
+        tmpl_context['ctx'] = list(datadict[fname].values()) \
+            if ml.all else datadict[fname][ml.objid]
+        tmpl_context['cldf'] = cldf
+        return tmpl_context
 
     def repl(ml):
         if ml.is_cldf_link:
+            if ml.component(cldf) == 'Source' and ml.all and 'cited_only' in ml.parsed_url_query:
+                nonlocal with_partial_local_reflist
+                with_partial_local_reflist = True
+                return ml
+
             fname = reverse_table_map.get(ml.table_or_fname, ml.table_or_fname)
-            if fname not in datadict:
-                objs = cldf.objects(table_map[fname]) \
-                    if table_map[fname] else cldf.iter_rows(fname, 'id')
-                datadict[fname] = {r.id if isinstance(r, orm.Object) else r['id']: r for r in objs}
             type_ = table_map[fname]
-            tmpl_context = {k: True if v[0] == '' else v[0] for k, v in ml.parsed_url_query.items()}
-            for k in tmpl_context:
-                if k.startswith('with_') and (tmpl_context[k] in ['0', 'false', 'False']):
-                    tmpl_context[k] = False
-            tmpl_context['ctx'] = list(datadict[fname].values()) \
-                if ml.all else datadict[fname][ml.objid]
-            tmpl_context['cldf'] = cldf
             return render_template(
-                env, type_ or fname, tmpl_context, index=ml.all, func_dict=func_dict)
+                env, type_ or fname, get_tmpl_context(ml, fname), index=ml.all, func_dict=func_dict)
         return ml
 
-    return CLDFMarkdownLink.replace(md, repl)
+    md = CLDFMarkdownLink.replace(md, repl)
+
+    if with_partial_local_reflist:
+        # We need a second pass.
+        # 1. Determine which sources have been referenced:
+        cited = set(
+            MarkdownLink.from_match(ml).url.split('-')[-1]
+            for ml in MarkdownLink.pattern.finditer(md)
+            if MarkdownLink.from_match(ml).url.startswith('#source-'))
+
+        # 2. Insert the pruned list of sources:
+        def insert_refs(ml):
+            if ml.is_cldf_link:
+                if ml.component(cldf) == 'Source' and \
+                        ml.all and \
+                        'cited_only' in ml.parsed_url_query:
+                    ctx = get_tmpl_context(ml, cldf.bibname)
+                    ctx['ctx'] = [v for k, v in datadict[cldf.bibname].items() if k in cited]
+                    return render_template(env, 'Source', ctx, index=True, func_dict=func_dict)
+            return ml
+
+        md = CLDFMarkdownLink.replace(md, insert_refs)
+
+    return md

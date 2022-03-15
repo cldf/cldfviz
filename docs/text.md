@@ -67,6 +67,21 @@ several paragraphs of [WALS' chapter 21](https://wals.info/chapter/21), rewritte
 [WALS as CLDF dataset](https://github.com/cldf-datasets/wals/).
 
 
+### References
+
+Any object in a CLDF dataset may reference sources. These references are typically rendered by the templates
+associated with the object type. Thus, when a complete CLDF markdown document is rendered, it may be desireable
+to include a list of all **cited** sources. This is supported as follows:
+
+1. To insert a list of cited references in the document, add the link
+   ```
+   [References](Source?cited_only#cldf:__all__)
+   ```
+   at the location where the list should appear.
+2. Discovery of cited sources relies on the references being rendered as links. Thus, it is necessary that all
+   CLDF markdown links in the document are specified adding the `with_internal_ref_link` URL parameter.
+
+
 ## CLI
 
 ```shell
