@@ -2,6 +2,8 @@ import re
 
 import attr
 from pycldf import orm
+from pycldf.util import pkg_path
+from pycldf.dataset import MD_SUFFIX
 import jinja2
 import jinja2.meta
 from clldutils.misc import nfilter
@@ -9,7 +11,7 @@ from clldutils.markup import MarkdownLink, MarkdownImageLink
 
 import cldfviz
 
-__all__ = ['iter_templates', 'render', 'iter_cldf_image_links']
+__all__ = ['iter_templates', 'render', 'iter_cldf_image_links', 'CLDFMarkdownLink']
 
 TEMPLATE_DIR = cldfviz.PKG_DIR.joinpath('templates', 'text')
 
@@ -82,6 +84,12 @@ class CLDFMarkdownLink(MarkdownLink):
     """
     CLDF markdown links are specified using URLs of a particular format.
     """
+    @classmethod
+    def from_component(cls, comp, objid='__all__', label=None):
+        return cls(
+            label=label or '{}:{}'.format(comp, objid),
+            url='{}#cldf:{}'.format(comp, objid))
+
     @property
     def is_cldf_link(self):
         return self.parsed_url.fragment.startswith('cldf:')
@@ -90,6 +98,24 @@ class CLDFMarkdownLink(MarkdownLink):
     def table_or_fname(self):
         if self.is_cldf_link:
             return self.parsed_url.path.split('/')[-1]
+
+    def component(self, cldf=None):
+        """
+        :param cldf: `pycldf.Dataset` instance to which the link refers.
+        :return: Name of the CLDF component the link pertains to or `None`.
+        """
+        name = self.table_or_fname
+        if cldf is None:
+            # If no CLDF dataset is passed as context, we can only detect links using proper
+            # component names as path:
+            return name if pkg_path('components', name + MD_SUFFIX).exists() else None
+
+        if name == cldf.bibname or name == 'Source':
+            return 'Source'
+        try:
+            return cldf.get_tabletype(cldf[name])
+        except (KeyError, ValueError):
+            return None
 
     @property
     def objid(self):
