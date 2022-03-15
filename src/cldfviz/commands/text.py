@@ -1,20 +1,16 @@
 """
 
 """
-import re
 import pathlib
 import argparse
-import urllib.parse
 
 from clldutils.clilib import PathType
 from pycldf.cli_util import get_dataset, add_dataset
 from termcolor import colored
 
-from cldfviz.text import iter_templates, render
+from cldfviz.text import iter_templates, render, iter_cldf_image_links
 from cldfviz.cli_util import add_testable
 from . import map
-
-MD_IMG_PATTERN = re.compile(r'!\[(?P<label>[^]]*)]\((?P<url>[^)]+)\)')
 
 
 def register(parser):
@@ -66,24 +62,22 @@ def run(args):
 
 
 def create_maps(oargs, md, ds, base_dir):
-    for m in MD_IMG_PATTERN.finditer(md):
-        url = urllib.parse.urlparse(m.group('url'))
-        p = base_dir.joinpath(url.path)
+    for ml in iter_cldf_image_links(md):
+        p = base_dir.joinpath(ml.parsed_url.path)
         p.parent.mkdir(parents=True, exist_ok=True)
-        if url.fragment == 'cldfviz.map':
-            args = [str(ds.tablegroup._fname)]
-            kw = urllib.parse.parse_qs(url.query, keep_blank_values=True)
-            kw['output'] = [str(p)]
-            kw['format'] = [p.suffix[1:].lower()]
-            for k, v in kw.items():
-                if k in ['pacific-centered', 'language-labels', 'no-legend']:
-                    args.append('--' + k)
-                else:
-                    args.extend(['--' + k, v[0]])
-            p = argparse.ArgumentParser()
-            map.register(p)
-            args = p.parse_args(args)
-            if oargs.test:
-                args.test = True
-            args.log = oargs.log
-            map.run(args)
+        args = [str(ds.tablegroup._fname)]
+        kw = ml.parsed_url_query
+        kw['output'] = [str(p)]
+        kw['format'] = [p.suffix[1:].lower()]
+        for k, v in kw.items():
+            if k in ['pacific-centered', 'language-labels', 'no-legend']:
+                args.append('--' + k)
+            else:
+                args.extend(['--' + k, v[0]])
+        p = argparse.ArgumentParser()
+        map.register(p)
+        args = p.parse_args(args)
+        if oargs.test:
+            args.test = True
+        args.log = oargs.log
+        map.run(args)

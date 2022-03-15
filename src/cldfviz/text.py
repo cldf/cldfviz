@@ -1,16 +1,16 @@
 import re
-import urllib.parse
 
+import attr
 from pycldf import orm
 import jinja2
 import jinja2.meta
 from clldutils.misc import nfilter
+from clldutils.markup import MarkdownLink, MarkdownImageLink
 
 import cldfviz
 
-__all__ = ['iter_templates', 'render']
+__all__ = ['iter_templates', 'render', 'iter_cldf_image_links']
 
-MD_LINK_PATTERN = re.compile(r'\[(?P<label>[^]]*)]\((?P<url>[^)]+)\)')
 TEMPLATE_DIR = cldfviz.PKG_DIR.joinpath('templates', 'text')
 
 
@@ -74,42 +74,63 @@ def render(doc, cldf, template_dir=None):
             except ValueError:
                 table_map[fname] = None
     table_map[cldf.bibname] = 'Source'
-    return ''.join(iter_md(get_env(template_dir=template_dir), doc, cldf, table_map))
+    return replace_links(get_env(template_dir=template_dir), doc, cldf, table_map)
 
 
-def iter_md(env, md, cldf, table_map, func_dict=None):
+@attr.s
+class CLDFMarkdownLink(MarkdownLink):
+    """
+    CLDF markdown links are specified using URLs of a particular format.
+    """
+    @property
+    def is_cldf_link(self):
+        return self.parsed_url.fragment.startswith('cldf:')
+
+    @property
+    def table_or_fname(self):
+        if self.is_cldf_link:
+            return self.parsed_url.path.split('/')[-1]
+
+    @property
+    def objid(self):
+        if self.is_cldf_link:
+            return self.parsed_url.fragment.split(':')[-1]
+
+    @property
+    def all(self):
+        return self.objid == '__all__'
+
+
+def iter_cldf_image_links(md):
+    for match in MarkdownImageLink.pattern.finditer(md):
+        ml = MarkdownImageLink.from_match(match)
+        if ml.parsed_url.fragment == 'cldfviz.map':
+            yield ml
+
+
+def replace_links(env, md, cldf, table_map, func_dict=None):
     func_dict = func_dict or {"pad_ex": pad_ex}
     datadict = {}
     datadict[cldf.bibname] = {src.id: src for src in cldf.sources}
-
     reverse_table_map = {v: k for k, v in table_map.items()}
-    current = 0
-    for m in MD_LINK_PATTERN.finditer(md):
-        yield md[current:m.start()]
-        current = m.end()
-        url = urllib.parse.urlparse(m.group('url'))
-        fname = url.path.split('/')[-1]
-        if fname in reverse_table_map:
-            fname = reverse_table_map[fname]
-        if url.fragment.startswith('cldf:') and fname in table_map:
+
+    def repl(ml):
+        if ml.is_cldf_link:
+            fname = reverse_table_map.get(ml.table_or_fname, ml.table_or_fname)
             if fname not in datadict:
                 objs = cldf.objects(table_map[fname]) \
                     if table_map[fname] else cldf.iter_rows(fname, 'id')
                 datadict[fname] = {r.id if isinstance(r, orm.Object) else r['id']: r for r in objs}
-
             type_ = table_map[fname]
-            _, _, oid = url.fragment.partition(':')
-            tmpl_context = {
-                k: True if v[0] == '' else v[0] for k, v in
-                urllib.parse.parse_qs(url.query, keep_blank_values=True).items()}
+            tmpl_context = {k: True if v[0] == '' else v[0] for k, v in ml.parsed_url_query.items()}
             for k in tmpl_context:
                 if k.startswith('with_') and (tmpl_context[k] in ['0', 'false', 'False']):
                     tmpl_context[k] = False
             tmpl_context['ctx'] = list(datadict[fname].values()) \
-                if oid == '__all__' else datadict[fname][oid]
+                if ml.all else datadict[fname][ml.objid]
             tmpl_context['cldf'] = cldf
-            yield render_template(
-                env, type_ or fname, tmpl_context, index=oid == '__all__', func_dict=func_dict)
-        else:
-            yield md[m.start():m.end()]
-    yield md[current:]
+            return render_template(
+                env, type_ or fname, tmpl_context, index=ml.all, func_dict=func_dict)
+        return ml
+
+    return CLDFMarkdownLink.replace(md, repl)
