@@ -108,7 +108,8 @@ class CLDFMarkdownLink(MarkdownLink):
         if cldf is None:
             # If no CLDF dataset is passed as context, we can only detect links using proper
             # component names as path:
-            return name if pkg_path('components', name + MD_SUFFIX).exists() else None
+            return name if name == 'Source' or pkg_path('components', name + MD_SUFFIX).exists() \
+                else None
 
         if name == cldf.bibname or name == 'Source':
             return 'Source'

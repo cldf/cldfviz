@@ -22,6 +22,8 @@ def test_CLDFMarkdownLink(StructureDataset, md, comp):
 def test_CLDFMarkdownLink_roundtrip():
     ml = CLDFMarkdownLink.from_component('LanguageTable', objid='l')
     assert ml.component() == 'LanguageTable' and ml.objid == 'l'
+    ml = CLDFMarkdownLink.from_component('Source', objid='l')
+    assert ml.component() == 'Source' and ml.objid == 'l'
 
 
 def test_iter_templates():
