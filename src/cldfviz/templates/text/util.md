@@ -28,7 +28,7 @@
     {% endfor %}
     {% set form_string = form_strings|join("/") %}
 {% endif %}
-{% if f.parameter == None %}
+{% if f.cldf.parameter == None %}
     {% set trans_string = f.cldf.parameterReference %}
 {% else %}
     {% if f.cldf.parameterReference is not string %} 
