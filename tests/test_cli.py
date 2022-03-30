@@ -19,10 +19,27 @@ def test_text(ds_arg, capsys):
     assert 'CodeTable' in capsys.readouterr()[0]
 
 
+def test_text_invalid(StructureDataset):
+    with pytest.raises(SystemExit):
+        main([
+            'cldfviz.text', '--text-string', '"a"', str(StructureDataset.directory / 'sources.bib')])
+
+
+def test_text_multi_ds(ds_arg, capsys):
+    main([
+        'cldfviz.text',
+        '--text-string', '"[](ParameterTable#cldf-p1:B) [](ParameterTable#cldf-p2:D)"',
+        ds_arg + '#p1',
+        ds_arg + '#p2',
+    ])
+    out = capsys.readouterr()[0]
+    assert 'Gender' in out and 'Oblique' in out
+
+
 def test_text_with_map(ds_arg, capsys, tmp_path):
     tmpl = tmp_path / 'templ.md'
-    tmpl.write_text('![](map.html?parameters=B&pacific-centered#cldfviz.map)')
-    main(['cldfviz.text', '--text-file', str(tmpl), '--test', '--output', str(tmp_path / 'test.md'), ds_arg])
+    tmpl.write_text('![](map.html?parameters=B&pacific-centered#cldfviz.map-pref)')
+    main(['cldfviz.text', '--text-file', str(tmpl), '--test', '--output', str(tmp_path / 'test.md'), ds_arg + '#pref'])
     assert tmp_path.joinpath('map.html').exists()
 
 

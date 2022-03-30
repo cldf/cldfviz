@@ -120,3 +120,25 @@ optional arguments:
   - 1: 1
   - 2: 2
   ```
+
+
+## Referencing data from multiple CLDF datasets
+
+While CLDF is designed to make merging data from multiple datasets easy, one may still want to reference data
+from multiple datasets in the same CLDF markdown document. This is supported as follows.
+
+The `cldfbench cldfviz.text` command accepts multiple datasets (specified by metadata file). To disambiguate
+references, the URL fragment in reference links must also specify the dataset
+- either by position in the argument list (starting from "1")
+- or using an identifier assigned to the dataset (by appending it separated by `#` to the metadata file).
+
+So for example, you can print sources from two CLDF datasets via
+```shell
+$ cldfbench cldfviz.text \
+  tests/StructureDataset/StructureDataset-metadata.json#peterson tests/Wordlist/Wordlist-metadata.json#list \
+  --text-string "[](Source#cldf-peterson:Peterson2017) [](Source#cldf-list:List2014e)"
+Peterson, John. 2017. Fitting the pieces together - Towards a linguistic prehistory of eastern-central South Asia (and beyond). Journal of South Asian Languages and Linguistics 4. Walter de Gruyter {GmbH}.
+List, J.-M. and Prokić, J. 2014. A benchmark database of phonetic alignments in historical linguistics and dialectology. In Calzolari, Nicoletta and Choukri, Khalid and Declerck, Thierry and Loftsson, Hrafn and Maegaard, Bente and Mariani, Joseph and Moreno, Asuncion and Odijk, Jan and Piperidis, Stelios (eds.), Proceedings of the Ninth International Conference on Language Resources and Evaluation, 288-294. Reykjavik, Iceland: European Language Resources Association (ELRA).
+```
+
+Similarly, for `cldfviz.map` references, use `cldfviz.map-<id>` as URL fragment in the relevant links.

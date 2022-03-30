@@ -87,6 +87,8 @@ def test_render_entry(Dictionary):
         == '‘Motschegiebschn’, *noun*: lady bug\n'
     assert render('[ex](EntryTable#cldf:entry-2)', Dictionary) \
         == '‘Bemme’, *noun*: 1. sandwich 2. tire of a bicycle\n'
+    assert render('[ex](EntryTable#cldf-pref:entry-2)', dict(pref=Dictionary)) \
+           == '‘Bemme’, *noun*: 1. sandwich 2. tire of a bicycle\n'
 
 
 @pytest.mark.parametrize(

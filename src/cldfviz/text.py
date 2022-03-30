@@ -1,7 +1,7 @@
 import re
 
 import attr
-from pycldf import orm
+from pycldf import orm, Dataset
 from pycldf.util import pkg_path
 from pycldf.dataset import MD_SUFFIX
 import jinja2
@@ -66,17 +66,21 @@ def pad_ex(obj, gloss):
     return "  ".join(out_obj).strip(), "  ".join(out_gloss).strip()
 
 
-def render(doc, cldf, template_dir=None):
-    table_map = {}
-    for table in cldf.tables:
-        fname = str(table.url)
-        if (fname, 'id') in cldf:
-            try:
-                table_map[fname] = cldf.get_tabletype(table)
-            except ValueError:
-                table_map[fname] = None
-    table_map[cldf.bibname] = 'Source'
-    return replace_links(get_env(template_dir=template_dir), doc, cldf, table_map)
+def render(doc, cldf_dict, template_dir=None):
+    if isinstance(cldf_dict, Dataset):
+        cldf_dict = {None: cldf_dict}
+    for prefix, cldf in cldf_dict.items():
+        table_map = {}
+        for table in cldf.tables:
+            fname = str(table.url)
+            if (fname, 'id') in cldf:
+                try:
+                    table_map[fname] = cldf.get_tabletype(table)
+                except ValueError:
+                    table_map[fname] = None
+        table_map[cldf.bibname] = 'Source'
+        doc = replace_links(get_env(template_dir=template_dir), doc, cldf, prefix, table_map)
+    return doc
 
 
 @attr.s
@@ -84,6 +88,8 @@ class CLDFMarkdownLink(MarkdownLink):
     """
     CLDF markdown links are specified using URLs of a particular format.
     """
+    fragment_pattern = re.compile(r'cldf(-(?P<dsid>[a-zA-Z0-9_]+))?:')
+
     @classmethod
     def from_component(cls, comp, objid='__all__', label=None):
         return cls(
@@ -92,7 +98,12 @@ class CLDFMarkdownLink(MarkdownLink):
 
     @property
     def is_cldf_link(self):
-        return self.parsed_url.fragment.startswith('cldf:')
+        return bool(self.fragment_pattern.match(self.parsed_url.fragment))
+
+    @property
+    def dsid(self):
+        if self.is_cldf_link:
+            return self.fragment_pattern.match(self.parsed_url.fragment).group('dsid')
 
     @property
     def table_or_fname(self):
@@ -131,11 +142,11 @@ class CLDFMarkdownLink(MarkdownLink):
 def iter_cldf_image_links(md):
     for match in MarkdownImageLink.pattern.finditer(md):
         ml = MarkdownImageLink.from_match(match)
-        if ml.parsed_url.fragment == 'cldfviz.map':
+        if ml.parsed_url.fragment.startswith('cldfviz.map'):
             yield ml
 
 
-def replace_links(env, md, cldf, table_map, func_dict=None):
+def replace_links(env, md, cldf, prefix, table_map, func_dict=None):
     func_dict = func_dict or {"pad_ex": pad_ex}
     datadict = {}
     datadict[cldf.bibname] = {src.id: src for src in cldf.sources}
@@ -157,7 +168,7 @@ def replace_links(env, md, cldf, table_map, func_dict=None):
         return tmpl_context
 
     def repl(ml):
-        if ml.is_cldf_link:
+        if ml.is_cldf_link and (prefix is None or (ml.dsid == prefix)):
             if ml.component(cldf) == 'Source' and ml.all and 'cited_only' in ml.parsed_url_query:
                 nonlocal with_partial_local_reflist
                 with_partial_local_reflist = True
