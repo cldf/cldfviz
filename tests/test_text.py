@@ -91,6 +91,14 @@ def test_render_entry(Dictionary):
            == '‘Bemme’, *noun*: 1. sandwich 2. tire of a bicycle\n'
 
 
+def test_render_metadata(StructureDataset):
+    assert render('[](p/StructureDataset-metadata.json#cldf:"dc:identifier")', StructureDataset) == \
+        'https://doi.org/10.1515/jsall-2017-0008'
+    assert render(
+        """[](Metadata#cldf:tables[?"dc:conformsTo"=='http://cldf.clld.org/v1.0/terms.rdf#LanguageTable'].url | [0])""",
+        StructureDataset) == 'languages.csv'
+
+
 @pytest.mark.parametrize(
     'comp,query,oid,ds,expected',
     [

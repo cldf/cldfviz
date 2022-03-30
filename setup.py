@@ -22,7 +22,7 @@ setup(
         ],
     },
     platforms='any',
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     install_requires=[
         'clldutils>=3.11.1',
         'pycldf>=1.25.1',
@@ -35,6 +35,7 @@ setup(
         'yattag',
         'matplotlib',
         'numpy',
+        'jmespath',
     ],
     extras_require={
         'cartopy': [
@@ -58,7 +59,6 @@ setup(
         'Natural Language :: English',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',

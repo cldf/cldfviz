@@ -6,6 +6,7 @@ from pycldf.util import pkg_path
 from pycldf.dataset import MD_SUFFIX
 import jinja2
 import jinja2.meta
+import jmespath
 from clldutils.misc import nfilter
 from clldutils.markup import MarkdownLink, MarkdownImageLink
 
@@ -79,6 +80,7 @@ def render(doc, cldf_dict, template_dir=None):
                 except ValueError:
                     table_map[fname] = None
         table_map[cldf.bibname] = 'Source'
+        table_map[cldf.tablegroup._fname.name] = 'Metadata'
         doc = replace_links(get_env(template_dir=template_dir), doc, cldf, prefix, table_map)
     return doc
 
@@ -132,7 +134,7 @@ class CLDFMarkdownLink(MarkdownLink):
     @property
     def objid(self):
         if self.is_cldf_link:
-            return self.parsed_url.fragment.split(':')[-1]
+            return self.parsed_url.fragment.split(':', maxsplit=1)[-1]
 
     @property
     def all(self):
@@ -150,6 +152,7 @@ def replace_links(env, md, cldf, prefix, table_map, func_dict=None):
     func_dict = func_dict or {"pad_ex": pad_ex}
     datadict = {}
     datadict[cldf.bibname] = {src.id: src for src in cldf.sources}
+    datadict[cldf.tablegroup._fname.name] = cldf.tablegroup.asdict(omit_defaults=True)
     reverse_table_map = {v: k for k, v in table_map.items()}
     with_partial_local_reflist = False  # Only cited references are to be included.
 
@@ -162,8 +165,11 @@ def replace_links(env, md, cldf, prefix, table_map, func_dict=None):
         for k in tmpl_context:
             if k.startswith('with_') and (tmpl_context[k] in ['0', 'false', 'False']):
                 tmpl_context[k] = False
-        tmpl_context['ctx'] = list(datadict[fname].values()) \
-            if ml.all else datadict[fname][ml.objid]
+        if table_map[fname] == 'Metadata':
+            tmpl_context['ctx'] = jmespath.search(ml.objid, datadict[fname])
+        else:
+            tmpl_context['ctx'] = list(datadict[fname].values()) \
+                if ml.all else datadict[fname][ml.objid]
         tmpl_context['cldf'] = cldf
         return tmpl_context
 

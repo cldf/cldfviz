@@ -45,6 +45,20 @@ a service like GitHub, while the enhanced document created from `cldfviz.text` w
 the reference data expanded to a full citation according to the Unified Stylesheet for Linguistics.
 
 
+### Metadata
+
+CLDF datasets may come with rich metadata, serialized as JSON. To reference (and insert) bits and pieces of this
+metadata in CLDF markdown documents, the special component name `Metadata` (or the name of the JSON metadata
+file) may be used in the URL. The particular piece of metadata must be selected using [JMESPath](https://jmespath.org/)
+syntax.
+
+So in the simplest case this could be `[](Metadata#cldf:"dc:license")`. A more complex example would be
+```
+[](Metadata#cldf:tables[?"dc:conformsTo"=='http://cldf.clld.org/v1.0/terms.rdf#LanguageTable'].url | [0])
+```
+to select the filename used for the `LanguageTable` component of the dataset.
+
+
 ## Rendering
 
 Rendering of data objects is controled with [templates](../src/cldfviz/templates/text) using the
