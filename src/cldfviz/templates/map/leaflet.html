@@ -109,6 +109,8 @@
     map = L.map('map', {layers: layers, fullscreenControl: true}).setView([5, 160], 2);
     if (options.with_layers || options.with_layers_for_combinations) {
         L.control.layers({}, layer_groups, {collapsed: false, sortLayers: true}).addTo(map);
+    } else {
+        L.layerGroup(markers).addTo(map);
     }
     var group = new L.featureGroup(markers);
     map.fitBounds(group.getBounds());
