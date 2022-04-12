@@ -85,7 +85,7 @@ def render(doc, cldf_dict, template_dir=None, fallback_template_dir=None, loader
         if loader is None:
             env = folder_env
         else:
-            env = jinja2.Environment(loader=jinja2.ChoiceLoader([folder_env.loader, loader]))
+            env = jinja2.Environment(loader=jinja2.ChoiceLoader([loader, folder_env.loader]))
         doc = replace_links(env, doc, cldf, prefix, table_map)
     return doc
 
