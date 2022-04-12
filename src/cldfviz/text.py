@@ -67,7 +67,7 @@ def pad_ex(obj, gloss):
     return "  ".join(out_obj).strip(), "  ".join(out_gloss).strip()
 
 
-def render(doc, cldf_dict, template_dir=None, fallback_template_dir=None):
+def render(doc, cldf_dict, template_dir=None, fallback_template_dir=None, env=None):
     if isinstance(cldf_dict, Dataset):
         cldf_dict = {None: cldf_dict}
     for prefix, cldf in cldf_dict.items():
@@ -81,7 +81,11 @@ def render(doc, cldf_dict, template_dir=None, fallback_template_dir=None):
                     table_map[fname] = None
         table_map[cldf.bibname] = 'Source'
         table_map[cldf.tablegroup._fname.name] = 'Metadata'
-        doc = replace_links(get_env(template_dir=template_dir, fallback_template_dir=fallback_template_dir), doc, cldf, prefix, table_map)
+        if env is None:
+            env_ = get_env(template_dir=template_dir, fallback_template_dir=fallback_template_dir)
+        else:
+            env_ = env
+        doc = replace_links(env_, doc, cldf, prefix, table_map)
     return doc
 
 
