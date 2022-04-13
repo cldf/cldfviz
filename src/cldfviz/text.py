@@ -204,6 +204,7 @@ def replace_links(env, md, cldf, prefix, table_map, func_dict=None):
                         'cited_only' in ml.parsed_url_query:
                     ctx = get_tmpl_context(ml, cldf.bibname)
                     ctx['ctx'] = [v for k, v in datadict[cldf.bibname].items() if k in cited]
+                    ctx["with_anchor"] = True
                     return render_template(env, 'Source', ctx, index=True, func_dict=func_dict)
             return ml
 
