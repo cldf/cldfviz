@@ -17,9 +17,9 @@ __all__ = ['iter_templates', 'render', 'iter_cldf_image_links', 'CLDFMarkdownLin
 TEMPLATE_DIR = cldfviz.PKG_DIR.joinpath('templates', 'text')
 
 
-def get_env(template_dir=None, fallback_template_dir=None):
+def get_env(template_dir=None):
     loader = jinja2.FileSystemLoader(
-        searchpath=[str(d) for d in nfilter([template_dir, fallback_template_dir, TEMPLATE_DIR])])
+        searchpath=[str(d) for d in nfilter([template_dir, TEMPLATE_DIR])])
     env = jinja2.Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
 
     def paragraphs(s):
@@ -67,7 +67,7 @@ def pad_ex(obj, gloss):
     return "  ".join(out_obj).strip(), "  ".join(out_gloss).strip()
 
 
-def render(doc, cldf_dict, template_dir=None, fallback_template_dir=None, loader=None):
+def render(doc, cldf_dict, template_dir=None, loader=None):
     if isinstance(cldf_dict, Dataset):
         cldf_dict = {None: cldf_dict}
     for prefix, cldf in cldf_dict.items():
@@ -81,11 +81,11 @@ def render(doc, cldf_dict, template_dir=None, fallback_template_dir=None, loader
                     table_map[fname] = None
         table_map[cldf.bibname] = 'Source'
         table_map[cldf.tablegroup._fname.name] = 'Metadata'
-        folder_env = get_env(template_dir=template_dir, fallback_template_dir=fallback_template_dir)
+        folder_env = get_env(template_dir=template_dir)
         if loader is None:
             env = folder_env
         else:
-            env = jinja2.Environment(loader=jinja2.ChoiceLoader([loader, folder_env.loader]))
+            env = jinja2.Environment(loader=jinja2.ChoiceLoader([loader, folder_env.loader]), trim_blocks=True, lstrip_blocks=True)
         doc = replace_links(env, doc, cldf, prefix, table_map)
     return doc
 
@@ -209,6 +209,7 @@ def replace_links(env, md, cldf, prefix, table_map, func_dict=None):
                         'cited_only' in ml.parsed_url_query:
                     ctx = get_tmpl_context(ml, cldf.bibname)
                     ctx['ctx'] = [v for k, v in datadict[cldf.bibname].items() if k in cited]
+                    ctx["with_anchor"] = True
                     return render_template(env, 'Source', ctx, index=True, func_dict=func_dict)
             return ml
 
