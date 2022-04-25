@@ -17,9 +17,9 @@ __all__ = ['iter_templates', 'render', 'iter_cldf_image_links', 'CLDFMarkdownLin
 TEMPLATE_DIR = cldfviz.PKG_DIR.joinpath('templates', 'text')
 
 
-def get_env(template_dir=None):
+def get_env(template_dir=None, fallback_template_dir=None):
     loader = jinja2.FileSystemLoader(
-        searchpath=[str(d) for d in nfilter([template_dir, TEMPLATE_DIR])])
+        searchpath=[str(d) for d in nfilter([template_dir, fallback_template_dir, TEMPLATE_DIR])])
     env = jinja2.Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
 
     def paragraphs(s):
@@ -40,8 +40,7 @@ def iter_templates():
         yield p, doc, [v for v in vars if v != 'ctx']
 
 
-def render_template(env, fname_or_component, ctx, index=False, fmt='md', func_dict=None):
-    func_dict = func_dict or {}
+def render_template(env, fname_or_component, ctx, func_dict, index=False, fmt='md'):
     # Determine the template to use ...
     tmpl_fname = ctx.pop(
         '__template__',  # ... by looking for an explicit name ...
@@ -67,7 +66,9 @@ def pad_ex(obj, gloss):
     return "  ".join(out_obj).strip(), "  ".join(out_gloss).strip()
 
 
-def render(doc, cldf_dict, template_dir=None, loader=None):
+def render(doc, cldf_dict, template_dir=None, loader=None, func_dict=None):
+    func_dict = func_dict or {}
+    func_dict.update({"pad_ex": pad_ex})
     if isinstance(cldf_dict, Dataset):
         cldf_dict = {None: cldf_dict}
     for prefix, cldf in cldf_dict.items():
@@ -154,7 +155,8 @@ def iter_cldf_image_links(md):
 
 
 def replace_links(env, md, cldf, prefix, table_map, func_dict=None):
-    func_dict = func_dict or {"pad_ex": pad_ex}
+    func_dict = func_dict or {}
+    func_dict.update({"pad_ex": pad_ex})
     datadict = {}
     datadict[cldf.bibname] = {src.id: src for src in cldf.sources}
     datadict[cldf.tablegroup._fname.name] = cldf.tablegroup.asdict(omit_defaults=True)
