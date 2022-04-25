@@ -87,7 +87,7 @@ def render(doc, cldf_dict, template_dir=None, loader=None, func_dict=None):
             env = folder_env
         else:
             env = jinja2.Environment(loader=jinja2.ChoiceLoader([loader, folder_env.loader]), trim_blocks=True, lstrip_blocks=True)
-        doc = replace_links(env, doc, cldf, prefix, table_map)
+        doc = replace_links(env, doc, cldf, prefix, table_map, func_dict=func_dict)
     return doc
 
 
