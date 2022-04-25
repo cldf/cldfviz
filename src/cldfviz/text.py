@@ -82,7 +82,7 @@ def render(doc, cldf_dict, template_dir=None, fallback_template_dir=None, func_d
                     table_map[fname] = None
         table_map[cldf.bibname] = 'Source'
         table_map[cldf.tablegroup._fname.name] = 'Metadata'
-        doc = replace_links(get_env(template_dir=template_dir, fallback_template_dir=fallback_template_dir), doc, cldf, prefix, table_map)
+        doc = replace_links(get_env(template_dir=template_dir, fallback_template_dir=fallback_template_dir), doc, cldf, prefix, table_map, func_dict=func_dict)
     return doc
 
 
