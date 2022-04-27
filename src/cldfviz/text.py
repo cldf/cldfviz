@@ -66,7 +66,7 @@ def pad_ex(obj, gloss):
     return "  ".join(out_obj).strip(), "  ".join(out_gloss).strip()
 
 
-def render(doc, cldf_dict, template_dir=None, fallback_template_dir=None, func_dict=None):
+def render(doc, cldf_dict, template_dir=None, loader=None, func_dict=None):
     func_dict = func_dict or {}
     func_dict.update({"pad_ex": pad_ex})
     if isinstance(cldf_dict, Dataset):
@@ -82,7 +82,12 @@ def render(doc, cldf_dict, template_dir=None, fallback_template_dir=None, func_d
                     table_map[fname] = None
         table_map[cldf.bibname] = 'Source'
         table_map[cldf.tablegroup._fname.name] = 'Metadata'
-        doc = replace_links(get_env(template_dir=template_dir, fallback_template_dir=fallback_template_dir), doc, cldf, prefix, table_map, func_dict=func_dict)
+        folder_env = get_env(template_dir=template_dir)
+        if loader is None:
+            env = folder_env
+        else:
+            env = jinja2.Environment(loader=jinja2.ChoiceLoader([loader, folder_env.loader]), trim_blocks=True, lstrip_blocks=True)
+        doc = replace_links(env, doc, cldf, prefix, table_map, func_dict=func_dict)
     return doc
 
 
