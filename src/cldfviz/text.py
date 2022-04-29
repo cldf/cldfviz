@@ -9,7 +9,7 @@ import jinja2.meta
 import jmespath
 from clldutils.misc import nfilter
 from clldutils.markup import MarkdownLink, MarkdownImageLink
-
+import unicodedata
 import cldfviz
 
 __all__ = ['iter_templates', 'render', 'iter_cldf_image_links', 'CLDFMarkdownLink']
@@ -56,7 +56,7 @@ def pad_ex(obj, gloss):
     out_obj = []
     out_gloss = []
     for o, g in zip(obj, gloss):
-        diff = len(o) - len(g)
+        diff = len(''.join(c for c in o if unicodedata.combining(c)==0)) - len(g)
         if diff < 0:
             o += " "*-diff  # noqa E225
         else:
