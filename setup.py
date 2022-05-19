@@ -25,7 +25,7 @@ setup(
     python_requires='>=3.7',
     install_requires=[
         'clldutils>=3.11.1',
-        'pycldf>=1.25.1',
+        'pycldf>=1.26',
         'cldfbench>=1.5.0',
         'attrs',
         'termcolor',

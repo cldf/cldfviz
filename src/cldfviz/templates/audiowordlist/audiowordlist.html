@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<body>
+<h1>Forms for concept <em>{{ parameter.cldf.name }}</em></h1>
+{% if ds.properties['dc:title'] %}
+<p>In
+    {% if ds.properties['dc:identifier'] and ds.properties['dc:identifier'].startswith('http') %}
+        <a href="{{ ds.properties['dc:identifier'] }}">
+            {{ ds.properties['dc:title'] }}
+        </a>
+    {% else %}
+        {{ ds.properties['dc:title'] }}
+    {% endif %}
+</p>
+{% endif %}
+<table>
+    <thead>
+    <tr>
+        <th>Form</th>
+        <th>Audio</th>
+        <th>Language</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for form in forms %}
+        <tr>
+            <td>{{ form.cldf.form }}</td>
+            <td>
+                {% if form.audio %}
+                    <audio controls {% if local %}preload="metadata"{% endif %} src="{{ form.audio }}"></audio>
+                {% endif %}
+            </td>
+            <td>
+                {% if form.language.cldf.glottocode %}
+                    <a href="https://glottolog.org/resource/languoid/id/{{ form.language.cldf.glottocode }}">
+                        {{ form.language.cldf.name }}
+                    </a>
+                {% else %}
+                    {{ form.language.cldf.name }}
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>
