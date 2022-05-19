@@ -20,7 +20,7 @@ def register(parser):
         help='Specify a concept in the form COLNAME=VALUE or cldf:PROPNAME=VALUE, e.g. '
              '"Name=hand" or "cldf:id=10", using column names used in ParameterTable or '
              'CLDF properties available in ParameterTable.')
-    #parser.add_argument('--mimetype', default=None)
+    # parser.add_argument('--mimetype', default=None)
     parser.add_argument(
         '--media-dir',
         help="If media files are available locally (downloaded via pycldf's `cldf downloadmedia` "
@@ -44,7 +44,7 @@ def run(args):
 
     for row in ds.iter_rows('ParameterTable', 'id', 'name'):
         if row[colname] == match:
-            pid, concept = row['id'], row['name']
+            pid = row['id']
             break
     else:
         raise ValueError(args.concept)
