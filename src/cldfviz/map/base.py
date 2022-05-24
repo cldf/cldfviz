@@ -2,6 +2,10 @@ import webbrowser
 
 from cldfviz.colormap import SHAPES
 
+# For pacific-centered maps we chose 154°E as central longitude. This is particularly suitable,
+# because the cut at 26°W does not cut through any macroareas.
+# see https://en.wikipedia.org/wiki/154th_meridian_east and
+# https://en.wikipedia.org/wiki/26th_meridian_west
 PACIFIC_CENTERED = 154
 
 

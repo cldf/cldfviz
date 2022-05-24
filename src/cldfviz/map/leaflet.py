@@ -5,7 +5,7 @@ import attr
 import yattag
 from clldutils import svg
 
-from .base import Map
+from .base import Map, PACIFIC_CENTERED
 import cldfviz
 
 SHAPE_MAP = {
@@ -105,7 +105,8 @@ class MapLeaflet(Map):
 
     def _lonlat(self, language):
         lon, lat = language.lon, language.lat
-        if self.args.pacific_centered and lon <= -26:
+        if self.args.pacific_centered and lon <= PACIFIC_CENTERED - 180:
+            # Anything west of 26°W is moved by 360°.
             lon += 360  # make the map pacific-centered.
         return [lon, lat]
 
