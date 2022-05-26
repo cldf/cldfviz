@@ -32,6 +32,14 @@ ID,Language_ID,Parameter_ID,Value
 
 
 @pytest.fixture
+def md_path_factory():
+    def mdpath(dirname):
+        return pathlib.Path(__file__).parent / dirname / '{}-metadata.json'.format(
+            dirname.split('_')[0])
+    return mdpath
+
+
+@pytest.fixture
 def StructureDataset():
     return Dataset.from_metadata(
         pathlib.Path(__file__).parent / 'StructureDataset' / 'StructureDataset-metadata.json')

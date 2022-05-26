@@ -22,7 +22,12 @@ class Language:
     @classmethod
     def from_object(cls, obj, glottolog=None):
         lonlat = obj.lonlat
-        glang = (glottolog or {}).get(getattr(obj.cldf, 'glottocode', obj.id))
+        gcode = getattr(obj.cldf, 'glottocode', obj.id)
+        # FIXME: If a language is mapped to multiple glottocodes, we could try to take the midpoint
+        # of these as coordinate. (If longitudes have different signs, transform back and forth
+        # appropriately, i.e. lon < 0 => lon = 360 - abs(lon))
+        # shapely.geometry.MultiPoint([(0, 0), (1, 1)]).convex_hull.centroid
+        glang = None if isinstance(gcode, list) else (glottolog or {}).get(gcode)
         if (not lonlat) and glang and glang.latitude is not None:
             lonlat = (glang.longitude, glang.latitude)
         if lonlat and lonlat[0] is not None:

@@ -54,7 +54,7 @@ class MF(MarkerFactory):
         return mpl.MPLMarkerSpec(text='text')
 
 
-def test_map(glottolog_dir, tmp_path, capsys, ds_arg):
+def test_map(glottolog_dir, tmp_path, capsys, ds_arg, md_path_factory):
     values = tmp_path.joinpath('values.csv')
     values.write_text("""\
 ID,Language_ID,Parameter_ID,Value
@@ -117,7 +117,7 @@ ID,Language_ID,Parameter_ID,Value
         colormaps='viridis,tol',
         language_properties='Family_name',
         pacific_centered=None,
-        data=sd)
+        data=str(md_path_factory('StructureDataset_listvalued_glottocode')))
     assert tmp_path.joinpath('testmap.html').exists()
 
     run(marker_factory='cldfviz.map', data=sd)
