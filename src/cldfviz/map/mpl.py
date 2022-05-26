@@ -98,7 +98,8 @@ class MapPlot(Map):
             ax.coastlines(resolution='50m', color='darkgrey')
             ax.add_feature(cartopy.feature.LAND, color='beige', zorder=1)
             ax.add_feature(cartopy.feature.OCEAN, color='#97B5E1', zorder=2)
-            ax.add_feature(cartopy.feature.BORDERS, linestyle=':', zorder=4)
+            if not self.args.no_borders:
+                ax.add_feature(cartopy.feature.BORDERS, linestyle=':', zorder=4)
             ax.add_feature(cartopy.feature.LAKES, color="#97B5E1", alpha=0.5, zorder=3)
             ax.add_feature(cartopy.feature.RIVERS, color="#97B5E1", zorder=3)
         self.ax = ax
@@ -172,6 +173,12 @@ class MapPlot(Map):
         parser.add_argument(
             '--with-stock-img',
             help="Add a map underlay (using cartopy's `stock_img` method). {}".format(help_suffix),
+            action="store_true",
+            default=False,
+        )
+        parser.add_argument(
+            '--no-borders',
+            help="Do not add country borders to the map. {}".format(help_suffix),
             action="store_true",
             default=False,
         )
