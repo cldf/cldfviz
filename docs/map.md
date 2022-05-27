@@ -48,7 +48,7 @@ it is possible to supplement a dataset with geo data from Glottolog to locate it
 To do so,
 - the dataset must have a column specified as [glottocode](https://cldf.clld.org/v1.0/terms.rdf#glottocode) in
   its `LanguageTable` (or Glottocodes as values of the `Language_ID` column for [metadata-free datasets](https://github.com/cldf/cldf#metadata-free-conformance))
-- the path to a clone or export of the [glottolog/glottolog](https://github.com/glottolog/glottolog) repository
+- the path to a clone or download of the [glottolog/glottolog](https://github.com/glottolog/glottolog) repository
   must be specified for the `--glottolog` option
 - optionally - if the repository has been cloned - a particular version of Glottolog can be specified using the
   `--glottolog-version` option. (See the [`cldfbench` docs](https://github.com/cldf/cldfbench/#catalogs) for details 
@@ -187,13 +187,21 @@ aba,abau1245,-4,latitude
 abb,chad1249,13.8333333333,latitude
 ```
 
+Mapping metadata-free CLDF data **always** relies on Glottolog data for the geo-coordinates. Thus,
+we must clone or download a release of [glottolog/glottolog](https://github.com/glottolog/glottolog).
+The latter can be done via
+```shell
+curl -OL https://github.com/glottolog/glottolog/archive/refs/tags/v4.6.zip
+unzip v4.6.zip
+```
+
 Now we can run
 ```shell
-cldfbench cldfviz.map values.csv --parameters latitude --glottolog PATH/TO/GLOTTOLOG
+cldfbench cldfviz.map values.csv --parameters latitude --glottolog glottolog-4.6/
 ```
 ![WALS latitudes](wals_latitude.jpg)
 
-Note that for metadata-free datasets, `cldfviz.map` needs to lookup coordinates in Glottolog. Thus, languages
+Note that since we looked up coordinates in Glottolog, languages
 may be displayed at slightly different locations than above (when the coordinates in WALS differ).
 
 Now we could have done this in a simpler way, too, because `cldfviz.map` has a special option to display language

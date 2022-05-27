@@ -26,7 +26,7 @@ setup(
     install_requires=[
         'clldutils>=3.11.1',
         'pycldf>=1.26',
-        'cldfbench>=1.5.0',
+        'cldfbench>=1.11.0',
         'attrs',
         'termcolor',
         'jinja2',

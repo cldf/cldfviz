@@ -21,7 +21,7 @@ import pathlib
 
 from pycldf.cli_util import get_dataset, add_dataset
 from clldutils.clilib import PathType, ParserError
-from cldfbench.cli_util import add_catalog_spec
+from cldfbench.cli_util import add_catalog_spec, IGNORE_MISSING
 
 from cldfviz.colormap import Colormap, COLORMAPS
 from cldfviz.multiparameter import MultiParameter, CONTINUOUS, CATEGORICAL
@@ -41,7 +41,7 @@ def join_quoted(items):
 def register(parser):
     add_testable(parser)
     add_dataset(parser)
-    add_catalog_spec(parser, 'glottolog')
+    add_catalog_spec(parser, 'glottolog', default=IGNORE_MISSING)
     add_listvalued(
         parser,
         '--parameters',
@@ -134,7 +134,7 @@ def run(args):
         assert args.output.suffix[1:] == args.format
 
     glottolog = {lg.id: lg for lg in args.glottolog.api.languoids() if lg.latitude is not None} \
-        if args.glottolog else {}
+        if args.glottolog and args.glottolog != IGNORE_MISSING else {}
     data = MultiParameter(
         ds,
         args.parameters,
