@@ -202,7 +202,7 @@ def replace_links(env, md, cldf, prefix, table_map, func_dict=None):
         # We need a second pass.
         # 1. Determine which sources have been referenced:
         cited = set(
-            MarkdownLink.from_match(ml).url.split('-')[-1]
+            MarkdownLink.from_match(ml).url.split('-', maxsplit=1)[-1]
             for ml in MarkdownLink.pattern.finditer(md)
             if MarkdownLink.from_match(ml).url.startswith('#source-'))
 
