@@ -21,7 +21,7 @@ With `cldfviz.text` we want to make it easier to "pull data back into text".
 
 ## Syntax
 
-"CLDF markdown" is just plain markdown where URLs specified in [markdown links](https://www.markdownguide.org/basic-syntax/#links)
+"CLDF markdown" is just [regular markdown](https://commonmark.org/) where URLs specified in [markdown links](https://www.markdownguide.org/basic-syntax/#links)
 may be interpreted as references to objects in a CLDF dataset.
 
 The link syntax to reference a single object, i.e. a row in a CLDF table looks as follows:
@@ -49,6 +49,14 @@ the reference data expanded to a full citation according to the Unified Styleshe
 
 To reference objects in multiple datasets, the fragment identifier must start with `cldf-dsid:`, where `dsid` is
 an identifier that can be mapped to a dataset by the processing application.
+
+
+### Passing additional info to processors
+
+CLDF Markdown processors may accept input to customize rendering of CLDF objects. This additional information can
+be passed in the [query string](https://en.wikipedia.org/wiki/Query_string) of the URL. CLDF Markdown must ignore
+unknown parameters (to make CLDF Markdown documents renderable with multiple processors) - but may issue a warning about this
+(to give the user feedback about accepted parameters).
 
 
 ### Metadata
