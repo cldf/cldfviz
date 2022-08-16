@@ -45,6 +45,12 @@ a service like GitHub, while the enhanced document created from `cldfviz.text` w
 the reference data expanded to a full citation according to the Unified Stylesheet for Linguistics.
 
 
+### Referencing data from multiple datasets
+
+To reference objects in multiple datasets, the fragment identifier must start with `cldf-dsid:`, where `dsid` is
+an identifier that can be mapped to a dataset by the processing application.
+
+
 ### Metadata
 
 CLDF datasets may come with rich metadata, serialized as JSON. To reference (and insert) bits and pieces of this
