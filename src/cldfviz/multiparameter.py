@@ -200,6 +200,9 @@ class MultiParameter:
                     p.domain = collections.OrderedDict([
                         (v, v) for v in sorted(set(vv.v for vv in vals), key=lambda vv: str(vv))])
 
+    def __str__(self):  # pragma: no cover
+        return str(self.parameters)
+
     def iter_languages(self) \
             -> typing.Iterator[typing.Tuple[Language, typing.Dict[str, typing.List[Value]]]]:
         for lid, values in itertools.groupby(sorted(self.values), lambda v: v.lid):

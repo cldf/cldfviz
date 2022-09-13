@@ -102,6 +102,11 @@ class MapLeaflet(Map):
             help='Create clickable Leaflet layers for each combination of parameter values. '
                  '{}'.format(help_suffix),
         )
+        parser.add_argument(
+            '--value-template',
+            default='{parameter}: {code}',
+            help='A format string specifying how to format values as text labels.',
+        )
 
     def _lonlat(self, language):
         lon, lat = language.lon, language.lat
@@ -122,7 +127,8 @@ class MapLeaflet(Map):
             "name": language.name,
             "tooltip": language.name,
             "values": ' / '.join(
-                ['{}: {}'.format(pid, vals[0].v) for pid, vals in values.items() if vals]),
+                [self.args.value_template.format(
+                    parameter=pid, code=vals[0].v) for pid, vals in values.items() if vals]),
             "icon": svg.data_url(icon),
             "markersize": self.args.markersize,
             "tooltip_class": "tt",
