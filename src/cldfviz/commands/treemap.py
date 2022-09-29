@@ -21,9 +21,12 @@ import collections
 from pycldf.cli_util import add_dataset, get_dataset
 from cldfbench.cli_util import add_catalog_spec, IGNORE_MISSING
 
-import pandas as pd
-from Bio import Phylo
-import lingtreemaps
+try:
+    import pandas as pd
+    from Bio import Phylo
+    import lingtreemaps
+except ImportError:
+    lingtreemaps = None
 
 
 class DF:
@@ -64,6 +67,10 @@ def register(parser):
 
 
 def run(args):
+    if lingtreemaps is None:
+        args.log.error(
+            'install cldfviz with lingtreemaps, running "pip install cldfviz[lingtreemaps]"')
+        return
     ds = get_dataset(args)
 
     # 1. Get the Glottolog family tree, and its set of node names (Glottocodes).
