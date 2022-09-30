@@ -3,7 +3,7 @@ Plot values for a parameter of the dataset against a Glottolog family tree.
 
 FIXME:
 Make configurable:
-- tree (from file? from string?)
+- tree (from file? from string? from phlorest phylogeny!)
 - tree labels (which property from LanguageTable?)
 - value labels and order
 - config file?
@@ -67,18 +67,19 @@ def yaml_type(s):
 
 def iter_ltm_options():
     h = []
-    for line in pathlib.Path(lingtreemaps.__file__).parent\
-            .joinpath('data', 'default_config.yaml').read_text(encoding='utf8').split('\n'):
-        line = line.strip()
-        if line.startswith('#'):
-            h.append(line[1:].strip())
-        elif line:
-            opt, _, default = line.partition(':')
-            opt, val, help = opt.strip(), yaml_type(default.strip()), ' '.join(h)
-            if opt == 'filename':
-                help = "The filename. If unspecified, the parameter ID will be used."
-            yield opt, val, help
-            h = []
+    if lingtreemaps:
+        for line in pathlib.Path(lingtreemaps.__file__).parent\
+                .joinpath('data', 'default_config.yaml').read_text(encoding='utf8').split('\n'):
+            line = line.strip()
+            if line.startswith('#'):
+                h.append(line[1:].strip())
+            elif line:
+                opt, _, default = line.partition(':')
+                opt, val, help = opt.strip(), yaml_type(default.strip()), ' '.join(h)
+                if opt == 'filename':
+                    help = "The filename. If unspecified, the parameter ID will be used."
+                yield opt, val, help
+                h = []
 
 
 def register(parser):
