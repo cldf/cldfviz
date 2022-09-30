@@ -140,7 +140,7 @@ ID,Language_ID,Parameter_ID,Value
         run(format='png', projection='Robinson', parameters='param1', with_stock_img=None)
         run(format='png', projection='Robinson', parameters='param1', extent='"-150,150,50,-50"')
         run(format='png', projection='Robinson', parameters='param1', zorder='{"v":5}')
-        run(format='png', projection='Robinson', parameters='param1,param2', no_borders=None)
+        run(format='png', parameters='param1,param2', no_borders=None)
         run(format='png', marker_factory='cldfviz.map', data=sd)
         run(format='png', marker_factory='{},test'.format(__file__), data=sd)
         run(format='png',
