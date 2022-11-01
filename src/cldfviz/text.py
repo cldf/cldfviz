@@ -56,6 +56,7 @@ def pad_ex(obj, gloss):
     out_obj = []
     out_gloss = []
     for o, g in zip(obj, gloss):
+        g = g or ""
         diff = len(o) - len(g)
         if diff < 0:
             o += " "*-diff  # noqa E225
