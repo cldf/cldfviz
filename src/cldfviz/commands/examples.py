@@ -1,9 +1,9 @@
 """
-Build an HTML file to display exmaples in a CLDF dataset.
+Build an HTML file to display examples in a CLDF dataset.
 """
-from clldutils.clilib import PathType
-from pycldf.cli_util import get_dataset, add_dataset
 import jinja2
+from clldutils.clilib import PathType
+from pycldf.cli_util import add_dataset, get_dataset
 
 import cldfviz
 
