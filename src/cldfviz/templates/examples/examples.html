@@ -1,0 +1,68 @@
+<!doctype html>
+    <html lang="en">
+    <head>
+        <style type="text/css">
+            .primary-text { font-style: italic;}
+            .interlinear-gloss {float: left; margin: 0.25em;}
+            .analyzed-word, .gloss, .interlinear {display: block; margin: 2px 0;}
+            .translated-text { clear: both; }
+            .example::marker {content: "(" attr(value) ") \a0"; }
+        </style>
+    </head>
+    <body>
+        <h1>Examples
+            {% if ds.properties['dc:title'] %}
+            in
+            {% if ds.properties['dc:identifier'] and ds.properties['dc:identifier'].startswith('http') %}
+            "<a href="{{ ds.properties['dc:identifier'] }}">
+                {{ ds.properties['dc:title'] }}
+            </a>""
+            {% else %}
+            "{{ ds.properties['dc:title'] }}"
+            {% endif %}
+            {% endif %}
+        </h1>
+        {% set lspace = namespace(current = None) %}
+        {% for example in examples %}
+
+        {% if example.references %}
+        {% set ref = example.references[0] %}
+        {% set bibkey, pages = split_ref(ref.__str__()) %}
+        {% endif %}
+
+        {% set language = example.related("languageReference") %}
+        <ol class="example">
+            <li class=example id ="{{ example_id or example.id }}">
+                <div class="interlinear">
+                    {% if (lspace.current is defined and lspace.current.id != language.id)%}
+                    {{ language.name }}
+                    {% endif %}{% if example.cldf.primaryText != None %} {% if ref%}(<a href="#source-{{ref.source.id}}">{{ref.source.refkey(year_brackets=None)}}</a>{%if ref.description%}: {{ref.description}}{%endif%})
+                    {%endif%}
+                    <div class="primary-text">{{ example.cldf.primaryText }}</div>
+                    {% endif %}
+                    {% if example.cldf.analyzedWord != [] %}
+                    {% for obj in example.cldf.analyzedWord %}
+                    <div class="interlinear-gloss">
+                      <span class="analyzed-word">{{ obj }}</span>
+                      <span class="gloss">{{ example.cldf.gloss[loop.index-1] }}</span>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    <div class="translated-text">‘{{ example.cldf.translatedText }}’</div>
+                </div>
+            </li>
+        </ol>
+  {% set lspace.current = language %}
+  {% endfor %}
+    </body>
+    <script>
+        function number_examples() {
+            var examples = document.querySelectorAll("li.example");
+            for (var exc = 0; exc < examples.length; exc++) {
+                ex = examples[exc]
+                ex.setAttribute("value", exc + 1)
+            }
+        }
+        number_examples()
+    </script>
+</html>
