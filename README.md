@@ -47,3 +47,11 @@ in descriptive texts, most obviously perhaps as examples formatted as **I**nterl
 The `cldfviz.text` subcommand allows you "render" documents written in "CLDF markdown", i.e. converting
 such documents to plain markdown by inserting suitable representations of the referenced data.
 For details see [docs/text.md](docs/text.md).
+
+
+### `cldfviz.erd`
+
+CLDF datasets typically contain multiple, related tables. The most common visualization of such a data model
+are "entity-relationship diagrams", i.e. diagramy of the [entitty-relationship model](https://en.wikipedia.org/wiki/Entity%E2%80%93relationship_model)
+of the dataset. Such a diagram can be created via `cldfviz.erd` (if a Java runtime is installed).
+For details see [docs/text.md](docs/erd.md).
