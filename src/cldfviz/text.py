@@ -82,7 +82,7 @@ def render(doc, cldf_dict, template_dir=None, loader=None, func_dict=None):
                 except ValueError:
                     table_map[fname] = None
         table_map[cldf.bibname] = 'Source'
-        table_map[cldf.tablegroup._fname.name] = 'Metadata'
+        table_map[cldf.filename] = 'Metadata'
         folder_env = get_env(template_dir=template_dir)
         if loader is None:
             env = folder_env
@@ -163,7 +163,7 @@ def replace_links(env, md, cldf, prefix, table_map, func_dict=None):
     func_dict.update({"pad_ex": pad_ex})
     datadict = {}
     datadict[cldf.bibname] = {src.id: src for src in cldf.sources}
-    datadict[cldf.tablegroup._fname.name] = cldf.tablegroup.asdict(omit_defaults=True)
+    datadict[cldf.filename] = cldf.tablegroup.asdict(omit_defaults=True)
     reverse_table_map = {v: k for k, v in table_map.items()}
     with_partial_local_reflist = False  # Only cited references are to be included.
 

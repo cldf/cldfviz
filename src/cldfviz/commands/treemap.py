@@ -4,6 +4,8 @@ Plot values for a parameter of the dataset against a Glottolog family tree.
 FIXME:
 Make configurable:
 - tree (from file? from string? from phlorest phylogeny!)
+  - get the summary tree from a CLDF Phylogeny dataset
+  - match nodes by Glottocode
 - tree labels (which property from LanguageTable?)
 - value labels and order
 - config file?

@@ -6,6 +6,7 @@ import argparse
 
 from clldutils.clilib import PathType
 from pycldf import Dataset
+from pycldf.cli_util import UrlOrPathType
 from termcolor import colored
 
 from cldfviz.text import iter_templates, render, iter_cldf_image_links
@@ -15,7 +16,7 @@ from . import map
 
 def get_dataset(p):
     try:
-        return Dataset.from_metadata(p) if p.suffix == '.json' else Dataset.from_data(p)
+        return Dataset.from_metadata(p) if pathlib.Path(p).suffix == '.json' else Dataset.from_data(p)
     except ValueError:
         raise argparse.ArgumentTypeError('Invalid CLDF dataset spec: {0}!'.format(p))
 
@@ -25,7 +26,7 @@ def register(parser):
     parser.add_argument(
         'datasets',
         type=lambda s: (
-            get_dataset(PathType(must_exist=True, type='file')(s.split('#')[0])),
+            get_dataset(UrlOrPathType(must_exist=True, type='file')(s.split('#')[0])),
             s.partition('#')[2] or None),
         nargs='+',
     )

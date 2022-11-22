@@ -99,6 +99,7 @@ class MultiParameter:
     def __init__(self,
                  ds: pycldf.Dataset,
                  pids: typing.Iterable[str],
+                 datatypes: typing.Iterable[str] = None,
                  include_missing: bool = False,
                  glottolog: typing.Optional[typing.Dict[str, Languoid]] = None,
                  language_properties: typing.Optional[typing.Iterable[str]] = None):
@@ -188,12 +189,12 @@ class MultiParameter:
                             lid=lang['id'],
                             code='language'))
 
-        for p in self.parameters.values():
+        for i, p in enumerate(self.parameters.values()):
             if p.id in codes:
                 p.domain = codes[p.id]
             else:
                 vals = [v for v in self.values if v.pid == p.id]
-                if all(v.float is not None for v in vals) and len(set(v.v for v in vals)) > 8:
+                if all(v.float is not None for v in vals) and (len(set(v.v for v in vals)) > 8 or (datatypes and datatypes[i] == 'number')):
                     p.type = CONTINUOUS
                     p.domain = (min(v.float for v in vals), max(v.float for v in vals))
                 else:

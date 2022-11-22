@@ -50,6 +50,11 @@ def register(parser):
     )
     add_listvalued(
         parser,
+        '--datatypes',
+        help="Explicit datatypes for parameters",
+    )
+    add_listvalued(
+        parser,
         '--colormaps',
         help="Comma-separated names of colormaps to use for the respective parameter. Choose from "
              "{} for categorical and from {} for continuous parameters."
@@ -120,6 +125,12 @@ def register(parser):
         default=False,
         help="Don't add a legend to the map (e.g. because it would be too big).",
     )
+    parser.add_argument(
+        '--no-open',
+        action='store_true',
+        default=False,
+        help="Don't open the created file.",
+    )
 
     for cls in Map.__subclasses__():
         cls.add_options(
@@ -138,6 +149,7 @@ def run(args):
     data = MultiParameter(
         ds,
         args.parameters,
+        datatypes=args.datatypes,
         glottolog=glottolog,
         include_missing=args.missing_value is not None,
         language_properties=args.language_properties)
@@ -187,5 +199,6 @@ def run(args):
 
         args.log.info('Writing output to: {}'.format(args.output))
         args.log.info('For non-html maps this may take a while.')
-        if not args.test:
-            fig.open()  # pragma: no cover
+        if args.test or args.no_open:
+            return
+        fig.open()  # pragma: no cover
