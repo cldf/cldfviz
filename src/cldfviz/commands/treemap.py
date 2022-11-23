@@ -111,7 +111,6 @@ def run(args):
             'install cldfviz with lingtreemaps, running "pip install cldfviz[lingtreemaps]"')
         return
 
-
     ds = get_dataset(args)
 
     # 1. Get the tree ...

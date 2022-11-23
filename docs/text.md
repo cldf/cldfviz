@@ -21,56 +21,9 @@ With `cldfviz.text` we want to make it easier to "pull data back into text".
 
 ## Syntax
 
-"CLDF markdown" is just [regular markdown](https://commonmark.org/) where URLs specified in [markdown links](https://www.markdownguide.org/basic-syntax/#links)
-may be interpreted as references to objects in a CLDF dataset.
-
-The link syntax to reference a single object, i.e. a row in a CLDF table looks as follows:
-```
-[An arbitrary label](some/path/<component-name-or-csv-filename>#cldf:<obect-id>)
-```
-
-To reference all rows in a table, use
-```
-[An arbitrary label](some/path/<component-name-or-csv-filename>#cldf:__all__)
-```
-
-Note: Only the last component of the URL path is used to determine a CLDF component or table of the dataset, while
-the first part is ignored. This allows using URLs that are even somewhat functional in the unrendered
-document. E.g.
-```
-[Meier 2020](cldf/sources.bib#cldf:Meier2020)
-```
-will render as `Meier 2020`, linking to the BibTeX file when the document is simply rendered as markdown by
-a service like GitHub, while the enhanced document created from `cldfviz.text` will replace the link with
-the reference data expanded to a full citation according to the Unified Stylesheet for Linguistics.
-
-
-### Referencing data from multiple datasets
-
-To reference objects in multiple datasets, the fragment identifier must start with `cldf-dsid:`, where `dsid` is
-an identifier that can be mapped to a dataset by the processing application.
-
-
-### Passing additional info to processors
-
-CLDF Markdown processors may accept input to customize rendering of CLDF objects. This additional information can
-be passed in the [query string](https://en.wikipedia.org/wiki/Query_string) of the URL. CLDF Markdown must ignore
-unknown parameters (to make CLDF Markdown documents renderable with multiple processors) - but may issue a warning about this
-(to give the user feedback about accepted parameters).
-
-
-### Metadata
-
-CLDF datasets may come with rich metadata, serialized as JSON. To reference (and insert) bits and pieces of this
-metadata in CLDF markdown documents, the special component name `Metadata` (or the name of the JSON metadata
-file) may be used in the URL. The particular piece of metadata must be selected using [JMESPath](https://jmespath.org/)
-syntax.
-
-So in the simplest case this could be `[](Metadata#cldf:"dc:license")`. A more complex example would be
-```
-[](Metadata#cldf:tables[?"dc:conformsTo"=='http://cldf.clld.org/v1.0/terms.rdf#LanguageTable'].url | [0])
-```
-to select the filename used for the `LanguageTable` component of the dataset.
+[CLDF Markdown](https://github.com/cldf/cldf/blob/master/extensions/markdown.md) is specified as CLDF extension
+since CLDF 1.2. `cldfviz.text` provides a customizable CLDF Markdown renderer, which converts CLDF Markdown
+to regular markdown, with CLDF Markdown links replaced by rendering Jinja templates.
 
 
 ## Rendering
@@ -149,6 +102,17 @@ optional arguments:
   - 2: 2
   ```
 
+- LGR
+  ```shell
+  $ cldfbench cldfviz.text https://raw.githubusercontent.com/cldf-datasets/lgr/main/cldf/Generic-metadata.json --text-string "[](ExampleTable#cldf:1)"
+  
+  > (1) Indonesian (Sneddon 1996: 237)
+  <pre>
+  Mereka  di  Jakarta  sekarang.  
+  They    in  Jakarta  now  
+  ‘They are in Jakarta now.’</pre>
+  ```
+
 
 ## Referencing data from multiple CLDF datasets
 
@@ -163,7 +127,7 @@ references, the URL fragment in reference links must also specify the dataset
 So for example, you can print sources from two CLDF datasets via
 ```shell
 $ cldfbench cldfviz.text \
-  tests/StructureDataset/StructureDataset-metadata.json#peterson tests/Wordlist/Wordlist-metadata.json#list \
+  peterson:tests/StructureDataset/StructureDataset-metadata.json list:tests/Wordlist/Wordlist-metadata.json \
   --text-string "[](Source#cldf-peterson:Peterson2017) [](Source#cldf-list:List2014e)"
 Peterson, John. 2017. Fitting the pieces together - Towards a linguistic prehistory of eastern-central South Asia (and beyond). Journal of South Asian Languages and Linguistics 4. Walter de Gruyter {GmbH}.
 List, J.-M. and Prokić, J. 2014. A benchmark database of phonetic alignments in historical linguistics and dialectology. In Calzolari, Nicoletta and Choukri, Khalid and Declerck, Thierry and Loftsson, Hrafn and Maegaard, Bente and Mariani, Joseph and Moreno, Asuncion and Odijk, Jan and Piperidis, Stelios (eds.), Proceedings of the Ninth International Conference on Language Resources and Evaluation, 288-294. Reykjavik, Iceland: European Language Resources Association (ELRA).

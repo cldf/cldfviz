@@ -4,9 +4,9 @@
 import pathlib
 import argparse
 
-from clldutils.clilib import PathType
-from pycldf import Dataset
-from pycldf.cli_util import UrlOrPathType
+from clldutils.clilib import PathType, ParserError
+from pycldf.ext import discovery
+from pycldf.ext.markdown import DatasetMapping
 from termcolor import colored
 
 from cldfviz.text import iter_templates, render, iter_cldf_image_links
@@ -14,34 +14,30 @@ from cldfviz.cli_util import add_testable
 from . import map
 
 
-def get_dataset(p):
-    try:
-        return Dataset.from_metadata(p) if pathlib.Path(p).suffix == '.json' else Dataset.from_data(p)
-    except ValueError:
-        raise argparse.ArgumentTypeError('Invalid CLDF dataset spec: {0}!'.format(p))
+def get_dataset(locator):
+    prefix = None
+    if ':' in locator and not locator.startswith('http'):
+        prefix, _, locator = locator.partition(':')
+        if not DatasetMapping.key_pattern.fullmatch(prefix):
+            raise ParserError('Invalid dataset prefix: {}'.format(prefix))
+    return prefix, locator
 
 
 def register(parser):
     add_testable(parser)
-    parser.add_argument(
-        'datasets',
-        type=lambda s: (
-            get_dataset(UrlOrPathType(must_exist=True, type='file')(s.split('#')[0])),
-            s.partition('#')[2] or None),
-        nargs='+',
-    )
+    parser.add_argument('datasets', type=get_dataset, nargs='+')
     parser.add_argument('-l', '--list', help='list templates', default=False, action='store_true')
     parser.add_argument('--text-string', default=None)
     parser.add_argument('--text-file', type=PathType(type='file', must_exist=True), default=None)
     parser.add_argument('--templates', type=PathType(type='dir'), default=None)
     parser.add_argument('--output', type=PathType(type='file', must_exist=False), default=None)
+    parser.add_argument('--download-dir', type=PathType(type='dir'), default=None)
 
 
 def run(args):
-    if len(args.datasets) > 1:
-        dss = {prefix or str(i): ds for i, (ds, prefix) in enumerate(args.datasets, start=1)}
-    else:
-        dss = {args.datasets[0][1]: args.datasets[0][0]}
+    dss = {
+        prefix: discovery.get_dataset(locator, args.download_dir)
+        for prefix, locator in args.datasets}
 
     if args.list:
         print(colored('Available templates:', attrs=['bold', 'underline']) + '\n')

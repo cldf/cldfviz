@@ -5,27 +5,6 @@ from pycldf import Generic
 from cldfviz.text import *
 
 
-@pytest.mark.parametrize(
-    'md,comp',
-    [
-        ('[](languages.csv#cldf:1)', 'LanguageTable'),
-        ('[](p/LanguageTable#cldf:1)', 'LanguageTable'),
-        ('[](cldf/sources.bib#cldf:1)', 'Source'),
-        ('[](Source#cldf:1)', 'Source'),
-        ('[](langs.tsv#cldf:1)', None),
-    ]
-)
-def test_CLDFMarkdownLink(StructureDataset, md, comp):
-    assert CLDFMarkdownLink.from_string(md).component(StructureDataset) == comp
-
-
-def test_CLDFMarkdownLink_roundtrip():
-    ml = CLDFMarkdownLink.from_component('LanguageTable', objid='l')
-    assert ml.component() == 'LanguageTable' and ml.objid == 'l'
-    ml = CLDFMarkdownLink.from_component('Source', objid='l')
-    assert ml.component() == 'Source' and ml.objid == 'l'
-
-
 def test_iter_templates():
     assert len(list(iter_templates())) > 17
 

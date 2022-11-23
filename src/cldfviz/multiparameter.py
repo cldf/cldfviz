@@ -194,7 +194,9 @@ class MultiParameter:
                 p.domain = codes[p.id]
             else:
                 vals = [v for v in self.values if v.pid == p.id]
-                if all(v.float is not None for v in vals) and (len(set(v.v for v in vals)) > 8 or (datatypes and datatypes[i] == 'number')):
+                if all(v.float is not None for v in vals) and \
+                        (len(set(v.v for v in vals)) > 8 or  # noqa: W504
+                         (datatypes and datatypes[i] == 'number')):
                     p.type = CONTINUOUS
                     p.domain = (min(v.float for v in vals), max(v.float for v in vals))
                 else:
