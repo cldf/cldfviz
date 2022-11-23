@@ -52,8 +52,9 @@ def run(args):
                 setattr(args, attrib, download_file(url, tmp / target))
         get_database(args.dataset_locator, download_dir=tmp, fname=tmp / 'db.sqlite')
 
+        # Note: This exact way of calling java must be kept to keep tests working.
         subprocess.check_call(shlex.split(
-            "{} -jar {} -t sqlite-xerial -db {} -sso -s public -o {} -dp {} -cat % -vizjs".format(
+            "{} -jar {} -t sqlite-xerial -db {} -sso -s public -dp {} -o {} -cat % -vizjs".format(
                 args.java,
                 args.schemaspy_jar,
                 tmp / 'db.sqlite',
@@ -63,4 +64,6 @@ def run(args):
         shutil.copy(
             tmp / 'diagrams' / 'summary' / 'relationships.real.{}'.format(args.format), args.output)
 
-    webbrowser.open(args.output.resolve().as_uri())
+    args.log.info('ER diagram in format {} written to {}'.format(args.format, args.output))
+    if not args.test:
+        webbrowser.open(args.output.resolve().as_uri())  # pragma: no cover

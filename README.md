@@ -12,7 +12,7 @@ Run
 ```shell
 pip install cldfviz
 ```
-If you want create maps in image formats (PNG, JPG, PDF), the `cartopy` package is needed,
+If you want to create maps in image formats (PNG, JPG, PDF), the `cartopy` package is needed,
 which will be installed with
 ```shell
 pip install cldfviz[cartopy]

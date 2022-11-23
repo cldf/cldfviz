@@ -33,29 +33,31 @@ BASE_LAYERS = {
                 'Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> '
                 '(<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'}
     ),
-    'Esri_WorldImagery': (
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/'
-        'tile/{z}/{y}/{x}',
+    'USGS.USTopo': (
+        'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
         {
+            'maxZoom': 20,
             'attribution':
-                'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, '
-                'Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'}
+                'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>'
+        }
     ),
-    'Esri_WorldPhysical': (
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/'
-        'tile/{z}/{y}/{x}',
+    'USGS.USImagery': (
+        'https://basemap.nationalmap.gov/arcgis/rest/services/'
+        'USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',
         {
-            'attribution': 'Tiles &copy; Esri &mdash; Source: US National Park Service',
-            'maxZoom': 8}
-    ),
-    'Esri_NatGeoWorldMap': (
-        'https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/'
-        'tile/{z}/{y}/{x}',
-        {
+            'maxZoom': 20,
             'attribution':
-                'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, '
-                'USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
-            'maxZoom': 16}
+                'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>'
+        }
+    ),
+    'USGS.USImageryTopo': (
+        'https://basemap.nationalmap.gov/arcgis/rest/services/'
+        'USGSImageryTopo/MapServer/tile/{z}/{y}/{x}',
+        {
+            'maxZoom': 20,
+            'attribution':
+                'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>'
+        }
     ),
 }
 

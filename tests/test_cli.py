@@ -1,6 +1,8 @@
 import logging
+import pathlib
 
 import pytest
+import requests_mock
 
 from cldfbench.__main__ import main
 
@@ -10,6 +12,35 @@ from cldfviz.map import WITH_CARTOPY, MarkerFactory, leaflet, mpl
 @pytest.fixture
 def ds_arg(StructureDataset):
     return str(StructureDataset.directory / 'StructureDataset-metadata.json')
+
+
+def test_examples(ds_arg, tmp_path):
+    main(['cldfviz.examples', ds_arg, '-o', str(tmp_path / 'ex.html')])
+    assert tmp_path.joinpath('ex.html').exists()
+
+
+def test_erd(ds_arg, tmp_path, mocker):
+    with pytest.raises(SystemExit):
+        main(['cldfviz.erd', '-h'])
+
+    with requests_mock.Mocker() as m:
+        class Subprocess:
+            @staticmethod
+            def check_call(cmd, *args, **kw):
+                out = None
+                for i, token in enumerate(cmd):
+                    if token == '-o':
+                        out = cmd[i + 1]
+                        break
+                o = pathlib.Path(out) / 'diagrams' / 'summary' / 'relationships.real.large.svg'
+                o.parent.mkdir(parents=True)
+                o.write_text('a', encoding='utf8')
+
+        mocker.patch('cldfviz.commands.erd.subprocess', Subprocess())
+        o = tmp_path / 'res.svg'
+        m.get(requests_mock.ANY, text='abc')
+        main(['cldfviz.erd', ds_arg, str(o), '--test'])
+        assert o.exists()
 
 
 def test_text(ds_arg, capsys):
