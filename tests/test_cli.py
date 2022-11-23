@@ -14,9 +14,13 @@ def ds_arg(StructureDataset):
     return str(StructureDataset.directory / 'StructureDataset-metadata.json')
 
 
-def test_examples(ds_arg, tmp_path):
+def test_examples(ds_arg, tmp_path, capsys):
     main(['cldfviz.examples', ds_arg, '-o', str(tmp_path / 'ex.html')])
     assert tmp_path.joinpath('ex.html').exists()
+
+    main(['cldfviz.examples', ds_arg])
+    out, _ = capsys.readouterr()
+    assert '<h1>Examples' in out
 
 
 def test_erd(ds_arg, tmp_path, mocker):

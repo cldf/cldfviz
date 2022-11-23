@@ -1,5 +1,5 @@
 """
-
+Visualize a dataset's data model as entity-relationship diagram of the corresponding CLDF SQL.
 """
 import shlex
 import shutil
@@ -26,16 +26,33 @@ def download_file(url, target):
 
 
 def register(parser):
-    parser.add_argument('dataset_locator')
     add_testable(parser)
-    parser.add_argument('--java', type=ensure_cmd, default='java')
-    parser.add_argument('--schemaspy-jar', type=PathType(type='file'), default=None)
-    parser.add_argument('--sqlite-jar', type=PathType(type='file'), default=None)
+    parser.add_argument('dataset_locator')
+    parser.add_argument(
+        '--java',
+        type=ensure_cmd,
+        help='Path to the Java runtime.',
+        default='java')
+    parser.add_argument(
+        '--schemaspy-jar',
+        type=PathType(type='file'),
+        help='Path to a suitable version of the SchemaSpy jar file.',
+        default=None)
+    parser.add_argument(
+        '--sqlite-jar',
+        type=PathType(type='file'),
+        help='Path to a suitable version of the Xerial SQLite JDBC Driver jar file.',
+        default=None)
     parser.add_argument(
         '--format',
         choices=['compact.dot', 'compact.svg', 'large.dot', 'large.svg'],
+        help="`large` diagrams include all fields of an entity, `compact` ones do not. Diagrams "
+             "are available in SVG or Graphviz' DOT language.",
         default='large.svg')
-    parser.add_argument('output', type=PathType(must_exist=False))
+    parser.add_argument(
+        'output',
+        help='Path to which to write the diagram file.',
+        type=PathType(must_exist=False))
 
 
 def run(args):

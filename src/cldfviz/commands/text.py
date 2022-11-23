@@ -1,5 +1,5 @@
 """
-
+Render CLDF Markdown to common markdown.
 """
 import pathlib
 import argparse
@@ -19,7 +19,7 @@ def get_dataset(locator):
     if ':' in locator and not locator.startswith('http'):
         prefix, _, locator = locator.partition(':')
         if not DatasetMapping.key_pattern.fullmatch(prefix):
-            raise ParserError('Invalid dataset prefix: {}'.format(prefix))
+            raise ParserError('Invalid dataset prefix: {}'.format(prefix))  # pragma: no cover
     return prefix, locator
 
 

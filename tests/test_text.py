@@ -1,6 +1,7 @@
 import pytest
 
 from pycldf import Generic
+from jinja2 import BaseLoader, TemplateNotFound
 
 from cldfviz.text import *
 
@@ -20,6 +21,12 @@ def test_custom_templates(StructureDataset, tmp_path):
     tmpl.joinpath('LanguageTable_detail.md').write_text(
         '{{ "stuff" | paragraphs }}', encoding='utf8')
     assert 'stuff' in render('[](LanguageTable#cldf:Juang_SM)', StructureDataset, template_dir=tmpl)
+
+    class Loader(BaseLoader):
+        def get_source(self, environment, template):
+            path = tmpl / template
+            return path.read_text(encoding='utf8'), path, lambda: 1
+    assert 'stuff' in render('[](LanguageTable#cldf:Juang_SM)', StructureDataset, loader=Loader())
 
 
 def test_non_standard_table(tmp_path):

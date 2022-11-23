@@ -14,15 +14,18 @@ __all__ = ['iter_templates', 'render', 'iter_cldf_image_links']
 TEMPLATE_DIR = cldfviz.PKG_DIR.joinpath('templates', 'text')
 
 
-def get_env(template_dir=None, fallback_template_dir=None):
-    loader = jinja2.FileSystemLoader(
-        searchpath=[str(d) for d in nfilter([template_dir, fallback_template_dir, TEMPLATE_DIR])])
-    env = jinja2.Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
-
+def _add_filters(env):
     def paragraphs(s):
         return '\n\n'.join(s.split('\n'))
 
     env.filters['paragraphs'] = paragraphs
+
+
+def get_env(template_dir=None, fallback_template_dir=None):
+    loader = jinja2.FileSystemLoader(
+        searchpath=[str(d) for d in nfilter([template_dir, fallback_template_dir, TEMPLATE_DIR])])
+    env = jinja2.Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
+    _add_filters(env)
     return env
 
 
@@ -81,6 +84,7 @@ def render(doc, cldf_dict, template_dir=None, loader=None, func_dict=None):
             loader=jinja2.ChoiceLoader([loader, folder_env.loader]),
             trim_blocks=True,
             lstrip_blocks=True)
+        _add_filters(env)
 
     proc = TemplateRenderer(
         env, func_dict, doc, cldf_dict,
