@@ -1,8 +1,9 @@
 """
 Build an HTML file to display a wordlist for a particular concept with associated audio.
 
-Assumes that forms are linked to media files via a column with propertyUrl "mediaReference"
-in FormTable.
+Assumes that
+- the dataset is a CLDF Wordlist, coding concepts as parameters,
+- forms are linked to media files via a column with propertyUrl "mediaReference" in FormTable.
 """
 from clldutils.clilib import PathType
 from pycldf.terms import term_uri

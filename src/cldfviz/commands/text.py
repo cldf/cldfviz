@@ -1,5 +1,10 @@
 """
 Render CLDF Markdown to common markdown.
+
+The CLDF Markdown text can be read
+- from a parameter, via `--text-string`
+- from a file, specified as `--text-file`
+- from a media item associated with a CLDF dataset via `--media-id`.
 """
 import pathlib
 import argparse
@@ -7,6 +12,7 @@ import argparse
 from clldutils.clilib import PathType, ParserError
 from pycldf.ext import discovery
 from pycldf.ext.markdown import DatasetMapping
+from pycldf.media import MediaTable
 from termcolor import colored
 
 from cldfviz.text import iter_templates, render, iter_cldf_image_links
@@ -27,8 +33,12 @@ def register(parser):
     add_testable(parser)
     parser.add_argument('datasets', type=get_dataset, nargs='+')
     parser.add_argument('-l', '--list', help='list templates', default=False, action='store_true')
-    parser.add_argument('--text-string', default=None)
-    parser.add_argument('--text-file', type=PathType(type='file', must_exist=True), default=None)
+    parser.add_argument(
+        '--media-id', default=None)
+    parser.add_argument(
+        '--text-string', default=None)
+    parser.add_argument(
+        '--text-file', type=PathType(type='file', must_exist=True), default=None)
     parser.add_argument('--templates', type=PathType(type='dir'), default=None)
     parser.add_argument('--output', type=PathType(type='file', must_exist=False), default=None)
     parser.add_argument('--download-dir', type=PathType(type='dir'), default=None)
@@ -56,9 +66,22 @@ def run(args):
                     print(doc)
         return
 
-    assert args.text_string or args.text_file
-    res = render(
-        args.text_string or args.text_file.read_text(encoding='utf8'), dss, args.templates)
+    assert args.text_string or args.text_file or args.media_id
+    text = args.text_string
+    if (not text) and args.text_file:
+        text = args.text_file.read_text(encoding='utf8')
+    if not text:
+        prefix, _, mid = args.media_id.partition(':')
+        if not mid:
+            mid, prefix = prefix, None
+        for media in MediaTable(dss[prefix]):
+            if media.id == mid:
+                assert media.mimetype == 'text/markdown'
+                # FIXME: Also check for conformsTo == CLDF Markdown column?
+                text = media.read()
+                break
+
+    res = render(text, dss, args.templates)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(res, encoding='utf8')
@@ -69,7 +92,7 @@ def run(args):
         res,
         dss,
         args.output.parent if args.output
-        else (pathlib.Path('.') if args.text_string else args.text_file.parent))
+        else (pathlib.Path('.') if args.text_string or (not args.text_file) else args.text_file.parent))
 
     if not args.output:
         print(res)
