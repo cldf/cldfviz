@@ -62,15 +62,15 @@ def run(args):
 
                 if tree.tree_branch_length_unit:
                     legend += ' with branches in {}'.format(tree.tree_branch_length_unit)
-            glangs =  {}
+            glangs = {}
             if args.glottolog and args.glottolog_links:  # pragma: no cover
                 glangs = {lg.id: lg.name for lg in args.glottolog.api.languoids()}
             render(
                 tree,
                 args.output,
                 glottolog_mapping={
-                    r['id']: (r['glottocode'], glangs.get(r['glottocode']) or '')
-                    for r in cldf.iter_rows('LanguageTable', 'id', 'glottocode') if r['glottocode']},
+                    r['id']: (r['glottocode'], glangs.get(r['glottocode']) or '') for r in
+                    cldf.iter_rows('LanguageTable', 'id', 'glottocode') if r['glottocode']},
                 legend=legend,
                 width=args.width,
                 styles=eval(args.styles),

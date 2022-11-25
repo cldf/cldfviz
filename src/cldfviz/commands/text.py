@@ -91,8 +91,8 @@ def run(args):
         args,
         res,
         dss,
-        args.output.parent if args.output
-        else (pathlib.Path('.') if args.text_string or (not args.text_file) else args.text_file.parent))
+        args.output.parent if args.output else
+        (pathlib.Path('.') if args.text_string or (not args.text_file) else args.text_file.parent))
 
     if not args.output:
         print(res)
