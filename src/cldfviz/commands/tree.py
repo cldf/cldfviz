@@ -6,7 +6,7 @@ import webbrowser
 from clldutils.clilib import PathType
 from pycldf.cli_util import add_dataset, get_dataset
 from pycldf.trees import TreeTable
-from cldfbench.cli_util import add_catalog_spec
+from cldfbench.cli_util import add_catalog_spec, IGNORE_MISSING
 
 from cldfviz.cli_util import add_testable
 from cldfviz.tree import render
@@ -15,7 +15,7 @@ from cldfviz.tree import render
 def register(parser):
     add_testable(parser)
     add_dataset(parser)
-    add_catalog_spec(parser, 'glottolog')
+    add_catalog_spec(parser, 'glottolog', default=IGNORE_MISSING)
     parser.add_argument(
         '--glottolog-links',
         help="Turn language labels into links to Glottolog (where possible).",
