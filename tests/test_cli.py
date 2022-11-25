@@ -14,6 +14,19 @@ def ds_arg(StructureDataset):
     return str(StructureDataset.directory / 'StructureDataset-metadata.json')
 
 
+def test_tree(ds_arg, tmp_path, capsys):
+    main(['cldfviz.tree', ds_arg, str(tmp_path / 'test.svg'), '--ascii-art'])
+    out, _ = capsys.readouterr()
+    assert 'Marathi' in out
+
+    o = tmp_path / 'test2.svg'
+    main(['cldfviz.tree', ds_arg, str(o), '--test'])
+    assert o.exists()
+
+    main(['cldfviz.tree', ds_arg, str(o), '--test', '--title', 'The Title'])
+    assert 'The Title' in o.read_text(encoding='utf8')
+
+
 def test_examples(ds_arg, tmp_path, capsys):
     main(['cldfviz.examples', ds_arg, '-o', str(tmp_path / 'ex.html')])
     assert tmp_path.joinpath('ex.html').exists()

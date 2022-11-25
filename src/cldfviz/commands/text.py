@@ -15,7 +15,7 @@ from pycldf.ext.markdown import DatasetMapping
 from pycldf.media import MediaTable
 from termcolor import colored
 
-from cldfviz.text import iter_templates, render, iter_cldf_image_links
+from cldfviz.text import iter_templates, render, iter_cldfviz_links
 from cldfviz.cli_util import add_testable
 from . import map
 
@@ -100,7 +100,7 @@ def run(args):
 
 def create_maps(oargs, md, dss, base_dir):
     for prefix, ds in dss.items():
-        for ml in iter_cldf_image_links(md):
+        for ml in iter_cldfviz_links(md):
             if prefix is None or (ml.parsed_url.fragment.partition('-')[2] == prefix):
                 p = base_dir.joinpath(ml.parsed_url.path)
                 p.parent.mkdir(parents=True, exist_ok=True)

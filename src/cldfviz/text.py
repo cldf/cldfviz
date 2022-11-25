@@ -9,7 +9,7 @@ from clldutils.markup import MarkdownLink, MarkdownImageLink
 
 import cldfviz
 
-__all__ = ['iter_templates', 'render', 'iter_cldf_image_links']
+__all__ = ['iter_templates', 'render', 'iter_cldfviz_links']
 
 TEMPLATE_DIR = cldfviz.PKG_DIR.joinpath('templates', 'text')
 
@@ -93,10 +93,10 @@ def render(doc, cldf_dict, template_dir=None, loader=None, func_dict=None):
     return proc.render()
 
 
-def iter_cldf_image_links(md):
+def iter_cldfviz_links(md):
     for match in MarkdownImageLink.pattern.finditer(md):
         ml = MarkdownImageLink.from_match(match)
-        if ml.parsed_url.fragment.startswith('cldfviz.map'):
+        if re.match(r'cldfviz\.(map|tree)', ml.parsed_url.fragment):
             yield ml
 
 
