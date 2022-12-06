@@ -6,6 +6,7 @@ import collections
 
 import attr
 import pycldf
+from pycldf import orm
 from pyglottolog.languoids import Languoid
 
 CONTINUOUS = 1
@@ -102,12 +103,16 @@ class MultiParameter:
                  datatypes: typing.Iterable[str] = None,
                  include_missing: bool = False,
                  glottolog: typing.Optional[typing.Dict[str, Languoid]] = None,
-                 language_properties: typing.Optional[typing.Iterable[str]] = None):
+                 language_properties: typing.Optional[typing.Iterable[str]] = None,
+                 language_filter: typing.Optional[typing.Callable[[orm.Object], bool]] = None):
         self.include_missing = include_missing
         language_properties = language_properties or []
         if 'LanguageTable' in ds:
+            print('...')
             langs = {lg.id: Language.from_object(lg, glottolog=glottolog)
-                     for lg in ds.objects('LanguageTable')}
+                     for lg in ds.objects('LanguageTable')
+                     if language_filter is None or language_filter(lg)}
+            print('done')
         else:
             langs = {gc: Language.from_glottolog(gc, glottolog=glottolog)
                      for gc in set(r['languageReference'] for r in

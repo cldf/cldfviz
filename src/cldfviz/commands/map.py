@@ -17,6 +17,8 @@ Colors: Colors can be specified as
 - hex-triplets ("#a00", "AA0000")
 - name (see https://www.w3.org/TR/css-color-4/#named-colors)
 """
+import re
+import json
 import pathlib
 
 from pycldf.cli_util import get_dataset, add_dataset
@@ -26,7 +28,8 @@ from cldfbench.cli_util import add_catalog_spec, IGNORE_MISSING
 from cldfviz.colormap import Colormap, COLORMAPS
 from cldfviz.multiparameter import MultiParameter, CONTINUOUS, CATEGORICAL
 from cldfviz.map import Map, MarkerFactory
-from cldfviz.cli_util import add_testable, add_listvalued, import_subclass
+from cldfviz.cli_util import (
+    add_testable, add_listvalued, import_subclass, add_language_filter, get_language_filter)
 
 FORMATS = {}
 for cls in Map.__subclasses__():
@@ -41,6 +44,7 @@ def join_quoted(items):
 def register(parser):
     add_testable(parser)
     add_dataset(parser)
+    add_language_filter(parser)
     add_catalog_spec(parser, 'glottolog', default=IGNORE_MISSING)
     add_listvalued(
         parser,
@@ -131,28 +135,33 @@ def register(parser):
         default=False,
         help="Don't open the created file.",
     )
-
     for cls in Map.__subclasses__():
         cls.add_options(
             parser, help_suffix='(Only for FORMATs {})'.format(join_quoted(cls.__formats__)))
 
 
 def run(args):
+    print('starting')
     ds = get_dataset(args)
     if not args.output.suffix:
         args.output = args.output.parent / "{}.{}".format(args.output.name, args.format)
     else:
         assert args.output.suffix[1:] == args.format
 
+    print('... gl')
     glottolog = {lg.id: lg for lg in args.glottolog.api.languoids() if lg.latitude is not None} \
         if args.glottolog and args.glottolog != IGNORE_MISSING else {}
+    print('gl done')
+
     data = MultiParameter(
         ds,
         args.parameters,
         datatypes=args.datatypes,
         glottolog=glottolog,
         include_missing=args.missing_value is not None,
-        language_properties=args.language_properties)
+        language_properties=args.language_properties,
+        language_filter=get_language_filter(args),
+    )
     if args.parameters and not args.colormaps:
         args.colormaps = [None] * len(args.parameters)
     if args.language_properties and not args.language_properties_colormaps:

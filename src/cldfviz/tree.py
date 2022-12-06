@@ -6,8 +6,16 @@ import xml.etree.cElementTree as ElementTree
 import toytree
 import toyplot.svg
 from pycldf.trees import Tree
+from newick import RESERVED_PUNCTUATION
 
 __all__ = ['render']
+
+
+
+def clean_node_label(s):
+    for c in RESERVED_PUNCTUATION:
+        s = s.replace(c, '_')
+    return s
 
 
 def render(tree: Tree,
@@ -16,7 +24,9 @@ def render(tree: Tree,
            legend: typing.Optional[str] = None,
            width: typing.Optional[int] = 500,
            styles: typing.Optional[dict] = None,
-           with_glottolog_links: bool = False) -> pathlib.Path:
+           with_glottolog_links: bool = False,
+           labels: typing.Optional[dict] = None,
+           leafs: typing.Optional[list] = None) -> pathlib.Path:
     glottolog_mapping = glottolog_mapping or {}
 
     def rename(n):
@@ -25,9 +35,16 @@ def render(tree: Tree,
         if not n.is_leaf:
             n.name = None
 
+    def rename2(n):
+        n.name = clean_node_label(labels[n.name])
+
     nwk = tree.newick(strip_comments=True)
+    if leafs:
+        nwk.prune_by_names(leafs, inverse=True)
     if with_glottolog_links:
         nwk.visit(rename)
+    if labels:
+        nwk.visit(rename2)
 
     style = dict(
         width=width,
@@ -43,7 +60,7 @@ def render(tree: Tree,
         scalebar=bool(tree.tree_branch_length_unit) or bool(legend),
     )
     style.update(styles or {})
-    canvas, axes, mark = toytree.tree(nwk.newick + ";").draw(**style)
+    canvas, axes, mark = toytree.tree(nwk.newick + ";", tree_format=1).draw(**style)
     if legend:
         axes.label.text = legend
     toyplot.svg.render(canvas, str(output))

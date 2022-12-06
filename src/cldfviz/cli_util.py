@@ -1,3 +1,5 @@
+import re
+import json
 import inspect
 import pathlib
 import argparse
@@ -5,6 +7,29 @@ import importlib
 
 from clldutils.text import split_text_with_context
 from clldutils import path
+
+
+def add_language_filter(parser):
+    parser.add_argument(
+        '--language-filters',
+        default=None,
+    )
+
+
+def get_language_filter(args):
+    if args.language_filters is None:
+        return
+
+    def language_filter(lg):
+        for k, v in json.loads(args.language_filters).items():
+            if isinstance(v, str):
+                if not re.search(v, lg.data[k] or ''):
+                    return False
+            else:
+                if lg.data[k] != v:
+                    return False
+        return True
+    return language_filter
 
 
 def add_testable(parser):
