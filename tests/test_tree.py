@@ -1,9 +1,14 @@
-from pycldf.trees import TreeTable
-
-from cldfviz.tree import *
+import warnings
 
 
 def test_render(StructureDataset, tmp_path):
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore', category=DeprecationWarning, module='importlib._bootstrap')
+        from pycldf.trees import TreeTable
+
+        from cldfviz.tree import render
+
     out = tmp_path / 'tree.svg'
     _ = render(
         list(TreeTable(StructureDataset))[0],

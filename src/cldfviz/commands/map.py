@@ -17,8 +17,6 @@ Colors: Colors can be specified as
 - hex-triplets ("#a00", "AA0000")
 - name (see https://www.w3.org/TR/css-color-4/#named-colors)
 """
-import re
-import json
 import pathlib
 
 from pycldf.cli_util import get_dataset, add_dataset

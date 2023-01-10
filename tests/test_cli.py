@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import warnings
 
 import pytest
 import requests_mock
@@ -15,16 +16,20 @@ def ds_arg(StructureDataset):
 
 
 def test_tree(ds_arg, tmp_path, capsys):
-    main(['cldfviz.tree', ds_arg, str(tmp_path / 'test.svg'), '--ascii-art'])
-    out, _ = capsys.readouterr()
-    assert 'Marathi' in out
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore', category=DeprecationWarning, module='importlib._bootstrap')
 
-    o = tmp_path / 'test2.svg'
-    main(['cldfviz.tree', ds_arg, str(o), '--test'])
-    assert o.exists()
+        main(['cldfviz.tree', ds_arg, str(tmp_path / 'test.svg'), '--ascii-art'])
+        out, _ = capsys.readouterr()
+        assert 'Marathi' in out
 
-    main(['cldfviz.tree', ds_arg, str(o), '--test', '--title', 'The Title'])
-    assert 'The Title' in o.read_text(encoding='utf8')
+        o = tmp_path / 'test2.svg'
+        main(['cldfviz.tree', ds_arg, str(o), '--test'])
+        assert o.exists()
+
+        main(['cldfviz.tree', ds_arg, str(o), '--test', '--title', 'The Title'])
+        assert 'The Title' in o.read_text(encoding='utf8')
 
 
 def test_examples(ds_arg, tmp_path, capsys):

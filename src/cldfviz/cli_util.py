@@ -3,7 +3,6 @@ import json
 import inspect
 import pathlib
 import argparse
-import importlib
 
 from clldutils.text import split_text_with_context
 from clldutils import path
@@ -43,10 +42,11 @@ def add_listvalued(parser, *args, **kw):
 
 
 def import_module(dotted_name_or_path):
+    import importlib
     p = pathlib.Path(dotted_name_or_path)
     if p.exists():
         return path.import_module(p.resolve())
-    return importlib.import_module(dotted_name_or_path)  # pragma: no cover
+    return importlib.import_module(dotted_name_or_path)
 
 
 def import_subclass(dotted_name_or_path, cls):
