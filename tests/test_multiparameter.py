@@ -1,13 +1,27 @@
-import argparse
-
+import pytest
 from pycldf import Dataset
 
 from cldfviz.multiparameter import MultiParameter, Language, Value, CONTINUOUS
 
 
+def test_Language(glottolog, StructureDataset):
+    from pycldf import orm
+    for row in StructureDataset['LanguageTable']:
+        row['Glottocode'] = 'abcd1234'
+        row['Latitude'] = None
+        lang = Language(orm.Language(StructureDataset, row), glottolog)
+        assert lang.lat == pytest.approx(10.0)
+        break
+
+    with pytest.raises(TypeError):
+        _ = Language({})
+
+
 def test_MultiParameter(metadatafree_dataset, StructureDataset, glottolog, tmp_path):
-    _ = MultiParameter(
-        metadatafree_dataset, ['param1'], glottolog={lg.id: lg for lg in glottolog.languoids()})
+    with pytest.raises(ValueError):
+        _ = MultiParameter(StructureDataset, ['A'])
+
+    _ = MultiParameter(metadatafree_dataset, ['param1'], glottolog=glottolog)
     mp = MultiParameter(StructureDataset, ['B', 'C'])
     for lang, values in mp.iter_languages():
         assert lang.name == 'Bengali'
@@ -33,16 +47,10 @@ ID,Language_ID,Parameter_ID,Value
 9,abcd1235,param1,9
 10,abcd1234,param1,10""", encoding='utf8')
     ds = Dataset.from_data(values)
-    mp = MultiParameter(ds, ['param1'], glottolog={lg.id: lg for lg in glottolog.languoids()})
+    mp = MultiParameter(ds, ['param1'], glottolog=glottolog)
     assert list(mp.parameters.values())[0].type == CONTINUOUS
-    mp = MultiParameter(ds, [], glottolog={lg.id: lg for lg in glottolog.languoids()})
+    mp = MultiParameter(ds, [], glottolog=glottolog)
     assert len(mp.languages) == 2
-
-
-def test_Language(glottolog):
-    Language.from_object(
-        argparse.Namespace(id='l', lonlat=None, cldf=argparse.Namespace(glottocode='abcd1235')),
-        glottolog={lg.id: lg for lg in glottolog.languoids()})
 
 
 def test_Value():

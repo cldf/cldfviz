@@ -18,7 +18,8 @@ def glottolog_dir(tmp_path):
 
 @pytest.fixture
 def glottolog(glottolog_dir):
-    return Glottolog(glottolog_dir)
+    from cldfviz.glottolog import Glottolog as AnyGlottolog
+    return AnyGlottolog(Glottolog(glottolog_dir))
 
 
 @pytest.fixture
@@ -27,7 +28,8 @@ def metadatafree_dataset(tmp_path):
     values.write_text("""\
 ID,Language_ID,Parameter_ID,Value
 1,abcd1235,param1,val1
-2,abcd1234,param1,val2""", encoding='utf8')
+2,abcd1234,param1,val2
+3,abcd1237,param1,val1""", encoding='utf8')
     return Dataset.from_data(values)
 
 

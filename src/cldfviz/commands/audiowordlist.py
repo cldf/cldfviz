@@ -3,15 +3,25 @@ Build an HTML file to display a wordlist for a particular concept with associate
 
 Assumes that
 - the dataset is a CLDF Wordlist, coding concepts as parameters,
-- forms are linked to media files via a column with propertyUrl "mediaReference" in FormTable.
+- forms are linked to media files
+  - via a column with propertyUrl "mediaReference" in FormTable or
+  - a column with propertyUrl "formReference" in MediaTable.
 """
+import collections
+
 from clldutils.clilib import PathType
 from pycldf.terms import term_uri
 from pycldf.cli_util import get_dataset, add_dataset
-from pycldf.media import Media
+from pycldf.media import MediaTable
 import jinja2
 
 import cldfviz
+
+
+def as_list(obj):
+    if isinstance(obj, list):
+        return obj
+    return [obj]
 
 
 def register(parser):
@@ -38,48 +48,67 @@ def run(args):
     ds = get_dataset(args)
 
     # Determine the relevant concept (aka parameter):
-    colspec, _, match = args.concept.partition('=')
-    cldfprop = colspec.startswith('cldf:')
-    colspec = colspec.replace('cldf:', '')
-    colname = ds['ParameterTable', term_uri(colspec)].name if cldfprop else colspec
-
-    for row in ds.iter_rows('ParameterTable', 'id', 'name'):
-        if row[colname] == match:
-            pid = row['id']
-            break
+    colspec, sep, match = args.concept.partition('=')
+    colname = None
+    if not sep:
+        match = colspec
     else:
-        raise ValueError(args.concept)
+        cldfprop = colspec.startswith('cldf:')
+        colspec = colspec.replace('cldf:', '')
+        colname = ds['ParameterTable', term_uri(colspec)].name if cldfprop else colspec
 
-    # Get relevant forms:
-    forms, media = [], {}
-    for form in ds.objects('FormTable'):
-        if form.parameter.id == pid:
-            if not isinstance(form.cldf.mediaReference, list):
-                form.cldf.mediaReference = [form.cldf.mediaReference]
-            for mid in form.cldf.mediaReference:
-                media[mid] = form
-            forms.append(form)
+    if 'ParameterTable' in ds:
+        for row in ds.iter_rows('ParameterTable', 'id', 'name'):
+            if (colname and row[colname] == match) or row['id'] == match:
+                pid = row['id']
+                break
+        else:
+            raise ValueError(args.concept)  # pragma: no cover
+    else:
+        assert colname is None
+        pid = match
+
+    # Get relevant forms and linked media:
+    forms, media = [], set()
+    if ('FormTable', 'mediaReference') in ds:
+        for form in ds.objects('FormTable'):
+            if form.cldf.parameterReference == pid:
+                mrefs = as_list(form.cldf.mediaReference)
+                media |= set(mrefs)
+                forms.append((form, mrefs))
+    elif ('MediaTable', 'formReference') in ds:
+        media_by_fid = collections.defaultdict(list)
+        for row in ds.iter_rows('MediaTable', 'id', 'formReference'):
+            for fid in as_list(row['formReference']):
+                media_by_fid[fid].append(row['id'])
+        for form in ds.objects('FormTable'):
+            if form.cldf.parameterReference == pid:
+                mrefs = media_by_fid.get(form.id, [])
+                media |= set(mrefs)
+                forms.append((form, mrefs))
+
+    media = {mid: None for mid in media}
 
     # Retrieve relevant media - filtered by media type:
-    for file in Media(ds):
-        if file.id in media:  # Anything linked to one of our forms.
-            if file.mimetype.type == 'audio':  # filter!
-                if args.media_dir:
-                    if file.local_path(args.media_dir).exists():
-                        # Read audio from the file system:
-                        media[file.id].audio = 'file://{}'.format(
-                            file.local_path(args.media_dir).resolve())
-                else:
-                    # Read audio from the URL:
-                    media[file.id].audio = file.url
+    for file in MediaTable(ds):
+        if file.id in media and file.mimetype.type == 'audio':  # filter!
+            if args.media_dir:
+                if file.local_path(args.media_dir).exists():
+                    # Read audio from the file system:
+                    media[file.id] = 'file://{}'.format(
+                        file.local_path(args.media_dir).resolve())
+            else:
+                # Read audio from the URL:
+                media[file.id] = file.url
 
     loader = jinja2.FileSystemLoader(
         searchpath=[str(cldfviz.PKG_DIR / 'templates' / 'audiowordlist')])
     env = jinja2.Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
     res = env.get_template('audiowordlist.html').render(
         ds=ds,
-        parameter=forms[0].parameter,
-        forms=forms,
+        pid=pid,
+        parameter=forms[0][0].parameter,
+        forms=[(form, [media[mid] for mid in mrefs if media[mid]]) for form, mrefs in forms],
         local=bool(args.media_dir))
     if args.output:
         args.output.write_text(res, encoding='utf8')

@@ -9,41 +9,37 @@ import pycldf
 from pycldf import orm
 from pyglottolog.languoids import Languoid
 
+from cldfviz.glottolog import Glottolog
+
 CONTINUOUS = 1
 CATEGORICAL = 2
 
 
-@attr.s
 class Language:
-    id = attr.ib()
-    name = attr.ib()
-    lat = attr.ib()
-    lon = attr.ib()
-
-    @classmethod
-    def from_object(cls, obj, glottolog=None):
-        lonlat = obj.lonlat
-        gcode = getattr(obj.cldf, 'glottocode', obj.id)
-        # FIXME: If a language is mapped to multiple glottocodes, we could try to take the midpoint
-        # of these as coordinate. (If longitudes have different signs, transform back and forth
-        # appropriately, i.e. lon < 0 => lon = 360 - abs(lon))
-        # shapely.geometry.MultiPoint([(0, 0), (1, 1)]).convex_hull.centroid
-        glang = None if isinstance(gcode, list) else (glottolog or {}).get(gcode)
-        if (not lonlat) and glang and glang.latitude is not None:
-            lonlat = (glang.longitude, glang.latitude)
-        if lonlat and lonlat[0] is not None:
-            return cls(
-                id=obj.id,
-                name=getattr(obj.cldf, 'name', obj.id),
-                lon=float(lonlat[0]),
-                lat=float(lonlat[1]))
-
-    @classmethod
-    def from_glottolog(cls, lid, glottolog):
-        if glottolog:
-            glang = glottolog.get(lid)
-            if glang and glang.latitude is not None:
-                return cls(id=glang.id, name=glang.name, lat=glang.latitude, lon=glang.longitude)
+    def __init__(self, obj, glottolog: typing.Optional[Glottolog] = None):
+        glottolog = glottolog or {}
+        if isinstance(obj, str):
+            obj = glottolog[obj]
+            self.id = obj.id
+            self.name = obj.name
+            self.lat = obj.lat
+            self.lon = obj.lon
+        elif isinstance(obj, orm.Language):
+            self.id = obj.id
+            self.name = obj.name
+            self.lat = obj.cldf.latitude
+            self.lon = obj.cldf.longitude
+            if self.lat is None and obj.cldf.glottocode in glottolog:
+                # FIXME: If a language is mapped to multiple glottocodes, we could try to take the
+                # midpoint of these as coordinate. (If longitudes have different signs, transform
+                # back and forth appropriately, i.e. lon < 0 => lon = 360 - abs(lon))
+                # shapely.geometry.MultiPoint([(0, 0), (1, 1)]).convex_hull.centroid
+                self.lat = glottolog[obj.cldf.glottocode].lat
+                self.lon = glottolog[obj.cldf.glottocode].lon
+        else:
+            raise TypeError(obj)
+        self.lat = float(self.lat) if self.lat is not None else self.lat
+        self.lon = float(self.lon) if self.lon is not None else self.lon
 
 
 @attr.s
@@ -102,22 +98,22 @@ class MultiParameter:
                  pids: typing.Iterable[str],
                  datatypes: typing.Iterable[str] = None,
                  include_missing: bool = False,
-                 glottolog: typing.Optional[typing.Dict[str, Languoid]] = None,
+                 glottolog: typing.Optional[typing.Dict[str, typing.Union[dict, Languoid]]] = None,
                  language_properties: typing.Optional[typing.Iterable[str]] = None,
                  language_filter: typing.Optional[typing.Callable[[orm.Object], bool]] = None):
         self.include_missing = include_missing
         language_properties = language_properties or []
+
         if 'LanguageTable' in ds:
-            print('...')
-            langs = {lg.id: Language.from_object(lg, glottolog=glottolog)
+            langs = {lg.id: Language(lg, glottolog=glottolog)
                      for lg in ds.objects('LanguageTable')
                      if language_filter is None or language_filter(lg)}
-            print('done')
         else:
-            langs = {gc: Language.from_glottolog(gc, glottolog=glottolog)
+            langs = {gc: Language(gc, glottolog=glottolog)
                      for gc in set(r['languageReference'] for r in
                                    ds.iter_rows('ValueTable', 'languageReference'))}
-        langs = {k: v for k, v in langs.items() if v}
+
+        langs = {k: v for k, v in langs.items() if v and v.lat is not None}
         params = {p.id: Parameter.from_object(p)
                   for p in ds.objects('ParameterTable')} if 'ParameterTable' in ds else {}
         # For each pid, we add a parameter:
@@ -153,8 +149,10 @@ class MultiParameter:
         if codes:
             colmap.append('codeReference')
         if pids:
+            seen = {pid: False for pid in pids}
             comp = 'ValueTable' if ds.module == 'StructureDataset' else 'FormTable'
             for val in ds.iter_rows(comp, *colmap):
+                seen[val['parameterReference']] = True
                 if ((val['value'] is not None) or self.include_missing) and \
                         val['parameterReference'] in self.parameters:
                     lang = langs.get(val['languageReference'])
@@ -164,6 +162,8 @@ class MultiParameter:
                         self.parameters[val['parameterReference']] \
                             .value_to_code[str(val['value'])] = \
                             val.get('codeReference') or val['Value']
+            if not all(seen[pid] for pid in pids):
+                raise ValueError('Invalid parameter ID')
         for language_property in language_properties:
             for lang in language_rows:
                 if (lang['id'] in langs) and lang[language_property] is not None:

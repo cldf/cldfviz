@@ -11,7 +11,6 @@ from newick import RESERVED_PUNCTUATION
 __all__ = ['render']
 
 
-
 def clean_node_label(s):
     for c in RESERVED_PUNCTUATION:
         s = s.replace(c, '_')
@@ -36,7 +35,7 @@ def render(tree: Tree,
             n.name = None
 
     def rename2(n):
-        n.name = clean_node_label(labels[n.name])
+        n.name = clean_node_label(labels[n.name]) if n.name else n.name
 
     nwk = tree.newick(strip_comments=True)
     if leafs:

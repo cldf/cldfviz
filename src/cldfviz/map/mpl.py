@@ -67,7 +67,8 @@ class MapPlot(Map):
 
     def __init__(self, languages, args):
         Map.__init__(self, languages, args)
-        lats, lons = [k.lat for k in languages], [k.lon for k in languages]
+        lats = [k.lat for k in languages if k.lat is not None]
+        lons = [k.lon for k in languages if k.lon is not None]
         self.central_longitude = PACIFIC_CENTERED if args.pacific_centered else 0
 
         if args.extent:
@@ -94,7 +95,7 @@ class MapPlot(Map):
             pass
         if self.args.with_stock_img:
             ax.stock_img()
-        if not self.args.test:  # pragma: no cover
+        if (not self.args.test) and (not self.args.with_stock_img):  # pragma: no cover
             ax.coastlines(resolution='50m', color='darkgrey')
             ax.add_feature(cartopy.feature.LAND, color='beige', zorder=1)
             ax.add_feature(cartopy.feature.OCEAN, color='#97B5E1', zorder=2)

@@ -205,6 +205,10 @@
           {
             "datatype": "string",
             "name": "Family_name"
+          },
+          {
+            "datatype": "boolean",
+            "name": "Filtered"
           }
         ],
         "primaryKey": [

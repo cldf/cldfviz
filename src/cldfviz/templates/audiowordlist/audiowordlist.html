@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <body>
-<h1>Forms for concept <em>{{ parameter.cldf.name }}</em></h1>
+<h1>Forms for concept <em>{{ parameter.cldf.name if parameter else pid }}</em></h1>
 {% if ds.properties['dc:title'] %}
 <p>In
     {% if ds.properties['dc:identifier'] and ds.properties['dc:identifier'].startswith('http') %}
@@ -24,19 +24,24 @@
     <tbody>
     {% for form in forms %}
         <tr>
-            <td>{{ form.cldf.form }}</td>
+            <td>{{ form[0].cldf.form }}</td>
             <td>
-                {% if form.audio %}
-                    <audio controls {% if local %}preload="metadata"{% endif %} src="{{ form.audio }}"></audio>
+                {% if form[1] %}
+                    <audio controls {% if local %}preload="metadata"{% endif %} src="{{ form[1][0] }}"></audio>
                 {% endif %}
             </td>
             <td>
-                {% if form.language.cldf.glottocode %}
-                    <a href="https://glottolog.org/resource/languoid/id/{{ form.language.cldf.glottocode }}">
-                        {{ form.language.cldf.name }}
-                    </a>
+                <!-- FIXME: should work if there's no LanguageTable! -->
+                {% if form[0].language %}
+                    {% if form[0].language.cldf.glottocode %}
+                        <a href="https://glottolog.org/resource/languoid/id/{{ form[0].language.cldf.glottocode }}">
+                            {{ form[0].language.cldf.name }}
+                        </a>
+                    {% else %}
+                        {{ form[0].language.cldf.name }}
+                    {% endif %}
                 {% else %}
-                    {{ form.language.cldf.name }}
+                    {{ form[0].cldf.languageReference }}
                 {% endif %}
             </td>
         </tr>

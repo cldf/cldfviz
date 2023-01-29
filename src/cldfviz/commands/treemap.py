@@ -1,12 +1,8 @@
 """
 Plot values for a parameter of the dataset against a Glottolog family tree.
 
-FIXME:
-Make configurable:
-- tree (from file? from string? from phlorest phylogeny!)
-  - get the summary tree from a CLDF Phylogeny dataset
-  - match nodes by Glottocode
-- tree labels (which property from LanguageTable?)
+Tree specification:
+
 - value labels and order
 - config file?
 
@@ -15,6 +11,7 @@ Make this work with
 
 """
 import io
+import logging
 import pathlib
 import webbrowser
 import collections
@@ -22,14 +19,18 @@ import collections
 import newick
 from pyglottolog.objects import Glottocode
 from pycldf.cli_util import add_dataset, get_dataset
-from cldfbench.cli_util import add_catalog_spec, IGNORE_MISSING
+from pycldf.ext import discovery
+from pycldf.trees import TreeTable
+
+from cldfviz.cli_util import add_testable
+from cldfviz.glottolog import Glottolog
 
 try:
     import pandas as pd
     from Bio import Phylo
     import yaml
     import lingtreemaps
-except ImportError:
+except ImportError:  # pragma: no cover
     lingtreemaps = None
 
 
@@ -59,10 +60,6 @@ def df_from_dicts(dicts):
     return df.df
 
 
-def newick_safe_name(s):
-    return s.replace(' ', '_').replace('(', '').replace(')', '').replace("'", '')
-
-
 def yaml_type(s):
     return yaml.load(io.StringIO(s), yaml.SafeLoader)
 
@@ -85,14 +82,28 @@ def iter_ltm_options():
 
 
 def register(parser):
+    add_testable(parser)
     add_dataset(parser)
-    add_catalog_spec(parser, 'glottolog', default=IGNORE_MISSING)
+    Glottolog.add(parser)
     parser.add_argument('parameter')
     parser.add_argument(
-        'tree',
+        '--tree',
         help="Tree specified as Glottocode (interpreted as the root of the Glottolog tree), "
              "Newick formatted string or path to a file containing the Newick formatted "
              "tree.")
+    parser.add_argument(
+        '--tree-dataset', default=None,
+    )
+    parser.add_argument(
+        '--tree-id', default=None,
+    )
+    parser.add_argument(
+        '--glottocodes-as-tree-labels',
+        action='store_true',
+        default=False,
+        help="If a tree in a TreeTable of a CLDF dataset is used, the nodes will be renamed "
+             "using the corresponding Glottocodes."
+    )
     parser.add_argument(
         '--tree-label-property',
         help="Name of the language property used to identify languages in the tree.",
@@ -106,80 +117,141 @@ def register(parser):
 
 
 def run(args):
-    if lingtreemaps is None:
+    if lingtreemaps is None:  # pragma: no cover
         args.log.error(
             'install cldfviz with lingtreemaps, running "pip install cldfviz[lingtreemaps]"')
         return
 
+    assert args.tree or args.tree_dataset
+    glottolog = Glottolog.from_args(args)
+
     ds = get_dataset(args)
 
-    # 1. Get the tree ...
-    if Glottocode.pattern.match(args.tree):
-        tree = args.glottolog.api.languoid(args.tree).newick_node(template="{l.id}")
-    elif pathlib.Path(args.tree).exists():
-        tree = newick.read(args.tree)[0]
+    # 1. Get all values for the selected parameter:
+    cols = ['parameterReference', 'languageReference', 'value']
+    if ds.get(('ValueTable', 'codeReference')):
+        cols.append('codeReference')
+    values = {
+        v['languageReference']: v for v in ds.iter_rows('ValueTable', *cols)
+        if v['parameterReference'] == args.parameter}
+
+    # 2. Get the tree ...
+    if args.tree:
+        if Glottocode.pattern.match(args.tree):
+            tree = glottolog.newick(args.tree)
+        elif pathlib.Path(args.tree).exists():
+            tree = newick.read(args.tree)[0]
+        else:
+            tree = newick.loads(args.tree)[0]
     else:
-        tree = newick.loads(args.tree)
+        treeds = discovery.get_dataset(args.tree_dataset, args.download_dir)
+        for tree in TreeTable(treeds):
+            if (args.tree_id and tree.id == args.tree_id) or \
+                    ((not args.tree_id) and tree.tree_type == 'summary'):
+                tree = tree.newick()
+                break
+        else:
+            raise ValueError('No matching tree found')  # pragma: no cover
+        # Rename tree nodes:
+        if args.glottocodes_as_tree_labels:
+            name_map = {
+                r['id']: r['glottocode']
+                for r in treeds.iter_rows('LanguageTable', 'id', 'glottocode')}
+
+            def rename(n):
+                n.name = name_map.get(n.name)
+                return n
+            tree.visit(rename)
+
     # ... and its set of node labels.
     nodes = {n.name for n in tree.walk()}
 
-    # 2. Get the set of matching languages in the dataset.
-    id2name = {}
-    treelabel2name = {}
-    languages = []
-    for lang in ds.iter_rows('LanguageTable', 'id', 'glottocode', 'name', 'latitude', 'longitude'):
-        treelabel = lang[args.tree_label_property]
-        if treelabel in nodes:  # The language is in the tree.
-            name = newick_safe_name(lang['name'])
-            languages.append(dict(ID=name, Latitude=lang['latitude'], Longitude=lang['longitude']))
-            id2name[lang['id']] = name
-            treelabel2name[treelabel] = name
+    # 3. Get the set of matching languages in the dataset.
+    treelabel2id = {}  # Maps tree label to language ID for languages in both, dataset and tree.
+    languages = {}  # A dict of language-data dicts
+    if 'LanguageTable' in ds:
+        for lang in ds.iter_rows(
+                'LanguageTable', 'id', 'glottocode', 'name', 'latitude', 'longitude'):
+            if lang['id'] in values:
+                # Determine which tree node name corresponds to the language:
+                treelabel = lang[args.tree_label_property]
+                if treelabel and treelabel in nodes:  # The language is in the tree.
+                    languages[lang['id']] = lang
+                    treelabel2id[treelabel] = lang['id']
+    else:
+        assert glottolog
+        for lid in values:
+            if lid in nodes:
+                glang = glottolog[lid]
+                languages[lid] = dict(name=lid, latitude=glang.lat, longitude=glang.lon)
+                treelabel2id[lid] = lid
 
-    # 3. Get the set of values.
+    for lid in list(values.keys()):
+        if lid not in languages:
+            del values[lid]
+
+    # Now all values correspond to languages which are in the tree!
+    assert set(values) == set(languages)
+
+    # 4. Now we prune the tree to contain just leafs for which we have data.
+    keep = {n.name for n in tree.walk() if n.name in treelabel2id}
+    tree.prune_by_names(list(keep), inverse=True)
+    if sum(1 for _ in tree.walk()) == 1:  # pragma: no cover
+        raise ValueError('No overlap between dataset and tree')
+
+    # 5. Rename the tree nodes
+    def rename(n):
+        if n.is_leaf:
+            # FIXME: only quote if necessary!?
+            n.name = "'{}'".format(languages[treelabel2id[n.name]]['name'])
+        else:
+            n.name = None
+        return n
+    tree.visit(rename)
+
+    leafs = {n.unquoted_name for n in tree.walk() if n.is_leaf}
+    assert leafs.issubset(set(languages[v]['name'] for v in values))
+    # lingtreemaps cannot handle the case where we have values for both a language and a dialect
+    # of this language. Thus, we only keep data for actual leafs.
+    nonleafs = []
+    for lid, lang in languages.items():
+        if lang['name'] not in leafs:
+            nonleafs.append(lid)
+    for lid in nonleafs:
+        del languages[lid]
+        del values[lid]
+
+    # 6. Turn languages and values into the appropriate data structures for lingtreemaps:
     if 'CodeTable' in ds:
         codes = collections.OrderedDict([
             (c['id'], c['name'])
             for c in ds.iter_rows('CodeTable', 'id', 'name', 'parameterReference')
             if c['parameterReference'] == args.parameter])
-    else:
+    else:  # pragma: no cover
         codes = None
-    values = []
-    for val in ds.iter_rows('ValueTable', 'parameterReference', 'languageReference', 'codeReference', 'value'):
-        if val['parameterReference'] == args.parameter and val['languageReference'] in id2name:
-            values.append(dict(
-                Clade=id2name[val['languageReference']],
-                Value=val['value'] if not codes else codes[val['codeReference']]))
+
     # Sort values by value/code. ltm will just use this order.
-    values = sorted(values, key=lambda v: v['Value'] if not codes else list(codes.values()).index(v['Value']))
+    values = sorted(
+        values.values(), key=lambda v: v['value'] if not codes else codes[v['codeReference']])
+    values = [dict(Clade=languages[v['languageReference']]['name'],
+                   Value=v['value'] if not codes else codes[v['codeReference']]) for v in values]
 
-    # 4. Prune the tree to only the languages in the dataset.
-    tree.prune_by_names(list(treelabel2name), inverse=True)
+    languages = [dict(ID=lg['name'], Latitude=lg['latitude'], Longitude=lg['longitude'])
+                 for lg in languages.values()]
 
-    # 5. Rename the tree nodes
-    def rename(n):
-        if n.name in treelabel2name:
-            n.name = treelabel2name[n.name]
-        return n
-    tree.visit(rename)
-
-    # We have to restrict languages and values to what is now a leaf node!
-    # I.e. when a language and one of its dialects is in the dataset, we remove the language.
-    nodes = set()
-    tree.visit(lambda n: nodes.add(n.name if n.is_leaf else None))
-    leafs = set(n for n in nodes if n is not None)
-    tree.prune_by_names(list(leafs - {v['Clade'] for v in values}))
-    languages = df_from_dicts([l for l in languages if l['ID'] in leafs])
-    values = df_from_dicts([v for v in values if v['Clade'] in leafs])
-
-    if 1:
-        print(tree)
-        print(languages)
-        print(values)
+    languages = df_from_dicts(languages)
+    values = df_from_dicts(values)
 
     kwargs = {k.replace('ltm_', ''): v for k, v in args.__dict__.items() if k.startswith('ltm_')}
     kwargs['filename'] = kwargs['filename'] or args.parameter
     fname = pathlib.Path(
-        kwargs['filename'] if '.' in kwargs['filename'] else '{filename}.{file_format}'.format(**kwargs))
+        kwargs['filename'] if '.' in kwargs['filename']
+        else '{filename}.{file_format}'.format(**kwargs))
+
+    logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
     lingtreemaps.plot(languages, Phylo.read(io.StringIO(tree.newick), 'newick'), values, **kwargs)
+
     args.log.info('Output written to: {}'.format(fname))
-    webbrowser.open(fname.resolve().as_uri())
+    if args.test:
+        return
+    webbrowser.open(fname.resolve().as_uri())  # pragma: no cover
