@@ -6,10 +6,12 @@ The CLDF Markdown text can be read
 - from a file, specified as `--text-file`
 - from a media item associated with a CLDF dataset via `--media-id`.
 """
+import re
 import pathlib
 import argparse
 
 from clldutils.clilib import PathType, ParserError
+from clldutils.markup import MarkdownImageLink
 from pycldf.ext import discovery
 from pycldf.ext.markdown import DatasetMapping
 from pycldf.media import MediaTable
@@ -93,6 +95,13 @@ def run(args):
         dss,
         args.output.parent if args.output else
         (pathlib.Path('.') if args.text_string or (not args.text_file) else args.text_file.parent))
+
+    def clean(ml):
+        if re.match(r'cldfviz\.(map|tree)', ml.parsed_url.fragment):
+            ml.update_url(query='')
+        return ml
+
+    res = MarkdownImageLink.replace(res, clean)
 
     if not args.output:
         print(res)
