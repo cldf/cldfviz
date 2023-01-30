@@ -81,8 +81,10 @@ def run(args):
                 width=args.width,
                 styles=eval(args.styles),
                 with_glottolog_links=args.glottolog_links,
-                labels={r['id']: r['name'] for r in cldf.iter_rows('LanguageTable', 'id', 'name')}
-                if args.name_as_label else None,
+                labels={
+                    r['id']: r['name']
+                    for r in cldf.iter_rows('LanguageTable', 'id', 'name')
+                } if args.name_as_label else None,
                 leafs=[lg.id for lg in cldf.objects('LanguageTable') if lf(lg)] if lf else None,
             )
             break

@@ -17,7 +17,7 @@ from termcolor import colored
 
 from cldfviz.text import iter_templates, render, iter_cldfviz_links
 from cldfviz.cli_util import add_testable
-from . import map
+from . import map, tree
 
 
 def get_dataset(locator):
@@ -87,7 +87,7 @@ def run(args):
         args.output.write_text(res, encoding='utf8')
         args.log.info('{} written'.format(args.output))
 
-    create_maps(
+    create_images(
         args,
         res,
         dss,
@@ -98,7 +98,7 @@ def run(args):
         print(res)
 
 
-def create_maps(oargs, md, dss, base_dir):
+def create_images(oargs, md, dss, base_dir):
     for prefix, ds in dss.items():
         for ml in iter_cldfviz_links(md):
             if prefix is None or (ml.parsed_url.fragment.partition('-')[2] == prefix):
@@ -107,16 +107,24 @@ def create_maps(oargs, md, dss, base_dir):
                 args = [str(ds.tablegroup._fname)]
                 kw = ml.parsed_url_query
                 kw['output'] = [str(p)]
-                kw['format'] = [p.suffix[1:].lower()]
                 for k, v in kw.items():
-                    if k in ['pacific-centered', 'language-labels', 'no-legend']:
-                        args.append('--' + k)
-                    else:
+                    if v[0]:
                         args.extend(['--' + k, v[0]])
+                    else:
+                        args.append('--' + k)
+
+                if 'tree' in ml.parsed_url.fragment:
+                    cmd = tree
+                elif 'map' in ml.parsed_url.fragment:
+                    kw['format'] = [p.suffix[1:].lower()]
+                    cmd = map
+                else:
+                    raise NotImplementedError(ml.parsed_url.fragment)  # pragma: no cover
+
                 p = argparse.ArgumentParser()
-                map.register(p)
+                cmd.register(p)
                 args = p.parse_args(args)
                 if oargs.test:
                     args.test = True
                 args.log = oargs.log
-                map.run(args)
+                cmd.run(args)

@@ -1,14 +1,25 @@
 """
-Plot values for a parameter of the dataset against a Glottolog family tree.
+Plot values for a parameter of a CLDF dataset on a map linked to a tree.
 
-Tree specification:
+The tree can be specified in various ways:
 
-- value labels and order
-- config file?
+1. Using the `--tree` option which accepts
+   - a Glottocode - in which the Glottolog sub-classification tree for the languoid specified by
+     `--tree` is used,
+   - a Newick-formatted string,
+   - a path name to an existing file containing the Newick-formatted tree.
+2. Using the `--tree-dataset` (and `--tree-id`) options to select a tree provided in the `TreeTable`
+   of a CLDF dataset.
 
-Make this work with
-- metadata-free datasets (i.e. values.csv only, metadata from Glottolog)
+Linking the languages in the parameter's dataset to languages in the tree can be configured via the
+`--glottocodes-as-tree-labels` and `--tree-label-property` options. The former will re-name tree
+labels to Glottocodes using the mapping given in the `--tree-dataset`'s `LanguageTable`. The latter
+specifies a column in the parameter's `LanguageTable` values of which are used to match languages to
+tree node labels.
 
+The actual map rendering is done by `lingtreemaps.plot` and all options prefixed with `--ltm-` are
+passed into this function as keyword arguments. Thus, for map customization consult the docs at
+https://lingtreemaps.readthedocs.io/en/latest/config.html
 """
 import io
 import logging

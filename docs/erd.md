@@ -4,7 +4,7 @@
 
 Running
 ```shell
-$ cldfbench cldfviz.erd https://zenodo.org/record/7322688 wacl.svg --format compact.svg
+$ cldfbench cldfviz.erd https://zenodo.org/record/7322688 --format compact.svg --output wacl.svg --open
 ```
 creates
 ![WACL ERD](wacl.svg)
@@ -22,7 +22,7 @@ download these jar files yourself and point `cldfviz.erd` to their locations:
 
 ## Limitations
 
-The ER diagramy created by `cldfviz.erd` do **not** reflect the dataset's schema **as literally described** in
+The ER diagrams created by `cldfviz.erd` do **not** reflect the dataset's schema **as literally described** in
 the JSON metadata, but instead visualize the [CLDF SQL](https://github.com/cldf/cldf/blob/master/extensions/sql.md) schema.
 
 Thus,

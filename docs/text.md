@@ -28,7 +28,7 @@ to regular markdown, with CLDF Markdown links replaced by rendering Jinja templa
 
 ## Rendering
 
-Rendering of data objects is controled with [templates](../src/cldfviz/templates/text) using the
+Rendering of data objects is controlled with [templates](../src/cldfviz/templates/text) using the
 [Jinja](https://jinja.palletsprojects.com/) template language. Sometimes, templates can be parametrized,
 e.g. to choose only cognates belonging to the same cognate set from a `CognateTable`. These parameters can
 be specified as [query string](https://en.wikipedia.org/wiki/Query_string) of the reference URL, e.g.
@@ -36,8 +36,11 @@ be specified as [query string](https://en.wikipedia.org/wiki/Query_string) of th
 [cognateset X](some/path/CognateTable?cognatesetReference=X#cldf:__all__)
 ```
 
-In addition to data objects you can also specify maps to be created with `cldfviz.map` and included in the
-resulting markdown document; e.g.:
+In addition to data objects you can also specify
+- maps to be created with `cldfviz.map` and 
+- trees to be created with `cldfviz.tree`
+
+for inclusion in the resulting markdown document; e.g.:
 ```
 ![](map.jpg?parameters=1A#cldfviz.map)
 ```
@@ -112,6 +115,12 @@ optional arguments:
   They    in  Jakarta  now  
   ‘They are in Jakarta now.’</pre>
   ```
+
+- Maps and trees: Including maps and trees in CLDF Markdown can be very powerful.
+  But as soon as it comes to customization, the nested formatting - e.g. passing
+  a `toytree` styles dictionary as URL parameter - makes the process fragile.
+  But as a proof-of-concept example you may look at the markdown source of
+  [`wals_algic.md`](wals_algic.md) to see how this would be done.
 
 
 ## Referencing data from multiple CLDF datasets

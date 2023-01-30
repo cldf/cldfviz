@@ -21,7 +21,7 @@ With `cldfviz.map` you can create
   [cartopy](https://pypi.org/project/Cartopy/) library.
 
 Since installation of cartopy is somewhat complex, it isn't installed with `cldfviz` by default, but has to
-be explicitly specified as extra, running
+be explicitly [specified as extra](https://peps.python.org/pep-0508/#extras), running
 ```shell
 pip install cldfviz[cartopy]
 ```
@@ -48,11 +48,13 @@ it is possible to supplement a dataset with geo data from Glottolog to locate it
 To do so,
 - the dataset must have a column specified as [glottocode](https://cldf.clld.org/v1.0/terms.rdf#glottocode) in
   its `LanguageTable` (or Glottocodes as values of the `Language_ID` column for [metadata-free datasets](https://github.com/cldf/cldf#metadata-free-conformance))
-- the path to a clone or download of the [glottolog/glottolog](https://github.com/glottolog/glottolog) repository
-  must be specified for the `--glottolog` option
-- optionally - if the repository has been cloned - a particular version of Glottolog can be specified using the
-  `--glottolog-version` option. (See the [`cldfbench` docs](https://github.com/cldf/cldfbench/#catalogs) for details 
-  on reference catalog maintenance.)
+- the Glottolog data must be specified
+  - either as [dataset locator](https://github.com/cldf/cldf/blob/master/extensions/discovery.md) locating
+    [glottolog-cldf]() for the `--glottolog-cldf` option
+  - or as path to a clone or download of the [glottolog/glottolog](https://github.com/glottolog/glottolog) repository
+    for the `--glottolog` option (if the repository has been cloned - a particular version of Glottolog can be specified using the
+    `--glottolog-version` option. See the [`cldfbench` docs](https://github.com/cldf/cldfbench/#catalogs) for details
+    on reference catalog maintenance.)
 
 
 ## What to map
@@ -128,7 +130,7 @@ The following options are only relevant for image (aka printable) maps:
 - `--projection`: Map projection. For available projections, see 
   https://scitools.org.uk/cartopy/docs/latest/crs/projections.html
 - `--with-stock-img`: Add a map underlay (using cartopy's 
-  [`stock_img`](https://scitools.org.uk/cartopy/docs/v0.15/matplotlib/intro.html) method).
+  [`stock_img`](https://scitools.org.uk/cartopy/docs/latest/matplotlib/intro.html) method).
 - `--zorder`: Specify explit drawing order (i.e. specify what's plotted on top) by giving a JSON dictionary mapping
   parameter values to integers (the higher, the more on top).
 
@@ -138,8 +140,25 @@ The following options are only relevant for image (aka printable) maps:
 We'll explain the usage of the command by using it with the [WALS CLDF data](https://github.com/cldf-datasets/wals/releases/tag/v2020.1).
 You can download the WALS data - for example - using another `cldfbench` plugin: [cldfzenodo](https://github.com/cldf/cldfzenodo/#cli):
 ```shell
-cldfbench zenodo.download 10.5281/zenodo.4683137 --directory wals-2020.1/
+cldfbench zenodo.download 10.5281/zenodo.7385533 --full-deposit
 ```
+
+
+### A minimal example
+
+If you have data about languages linked to Glottolog via Glottocode and can format this data in a file
+called `values.csv` looking as follows:
+```csv
+ID,Language_ID,Parameter_ID,Value
+1,stan1295,romance,false
+2,stan1290,romance,true
+3,ital1282,romance,true
+```
+you can "put it on a map" using the geo-data from Glottolog by running
+```shell
+$ cldfbench cldfviz.map values.csv --parameters romance --glottolog-cldf https://raw.githubusercontent.com/glottolog/glottolog-cldf/v4.7/cldf/cldf-metadata.json
+```
+
 
 ### HTML maps
 
@@ -147,28 +166,28 @@ With the [leaflet](https://leafletjs.com) library, we can create interactive map
 
 Running
 ```shell
-cldfbench cldfviz.map wals-2020.1/StructureDataset-metadata.json --base-layer Esri_WorldPhysical --pacific-centered
+cldfbench cldfviz.map wals-2020.3/ --base-layer USGS.USTopo --pacific-centered
 ```
 will create an HTML page `map.html` and open it in the browser, thus rendering an interactive
 map of the languages in the dataset.
 
-![WALS languages](wals_languages.jpg)
+![WALS languages](wals_languages.png)
 
 For smaller language samples, it may be suitable to display the language names on the map, too.
 Here's [WALS' feature 10B](https://wals.info/feature/10B):
 ```shell
-cldfbench cldfviz.map wals-2020.1/StructureDataset-metadata.json --parameters 10B --colormaps tol --markersize 20 --language-labels
+cldfbench cldfviz.map wals-2020.3/ --parameters 10B --colormaps tol --markersize 20 --language-labels
 ```
-![WALS 10B](wals_10B.jpg)
+![WALS 10B](wals_10B.png)
 
 `cldfviz.map` can detect and display continuous variables, too. There are no continuous features in WALS, but since
 `cldfviz.map` also works with
 [metadata-free CLDF datasets](https://github.com/cldf/cldf/blob/master/README.md#metadata-free-conformance), let's
 quickly create one. Using the [UNIX shell](https://swcarpentry.github.io/shell-novice/) tools `sed` and `awk` and the
-tools of the[csvkit](https://csvkit.readthedocs.io/en/latest/) toolbox, we
+tools of the [csvkit](https://csvkit.readthedocs.io/en/latest/) toolbox, we
 can run
 ```shell
-csvgrep -c Latitude,Glottocode -r".+" wals-2020.1/languages.csv | \
+csvgrep -c Latitude,Glottocode -r".+" wals-2020.3/languages.csv | \
 csvcut -c ID,Glottocode,Latitude | \
 awk '{if(NR==1){print $0",Parameter_ID"}else{print $0",latitude"}}' | \
 sed 's/ID,Glottocode,Latitude,Parameter_ID/ID,Language_ID,Value,Parameter_ID/g' > values.csv
@@ -187,22 +206,18 @@ aba,abau1245,-4,latitude
 abb,chad1249,13.8333333333,latitude
 ```
 
-Mapping metadata-free CLDF data **always** relies on Glottolog data for the geo-coordinates. Thus,
-we must clone or download a release of [glottolog/glottolog](https://github.com/glottolog/glottolog).
-The latter can be done via
+Mapping metadata-free CLDF data **always** relies on Glottolog data for the geo-coordinates.
+Thus, we must point to it, when running
 ```shell
-curl -OL https://github.com/glottolog/glottolog/archive/refs/tags/v4.6.zip
-unzip v4.6.zip
+$ cldfbench cldfviz.map values.csv --parameters latitude \
+--glottolog-cldf https://raw.githubusercontent.com/glottolog/glottolog-cldf/v4.7/cldf/cldf-metadata.json
 ```
-
-Now we can run
-```shell
-cldfbench cldfviz.map values.csv --parameters latitude --glottolog glottolog-4.6/
-```
-![WALS latitudes](wals_latitude.jpg)
+![WALS latitudes](wals_latitude.png)
 
 Note that since we looked up coordinates in Glottolog, languages
 may be displayed at slightly different locations than above (when the coordinates in WALS differ).
+It may also be the case that languages are mapped to invalid Glottocodes (e.g.
+in this case [Jugli](https://wals.info/languoid/lect/wals_code_jug)).
 
 Now we could have done this in a simpler way, too, because `cldfviz.map` has a special option to display language
 properties encoded as columns in the `LanguageTable` as if they were parameters of the dataset. We can use this
@@ -211,7 +226,7 @@ option to visualize a claim from [WALS' chapter 129](https://wals.info/chapter/1
 > strong correlation between values [for feature 129] and latitudinal location
 
 ```shell
-cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --parameters 129A --colormaps tol \
+cldfbench cldfviz.map wals-2020.3/ --parameters 129A --colormaps tol \
 --markersize 20 --language-properties Latitude --pacific-centered
 ```
 ![WALS 129A and latitude](wals_latitude_handandarm.jpg)
@@ -219,7 +234,7 @@ cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --paramete
 As seen above, `cldfviz.map` can visualize multiple parameters at once. E.g. we can explore the related WALS
 features 129A, 130A and 130B, selecting suitable colormaps for the two boolean parameters:
 ```shell
-cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --parameters 129A,130A,130B \
+cldfbench cldfviz.map wals-2020.3/ --parameters 129A,130A,130B \
 --colormaps base,base,tol --pacific-centered --markersize 30 
 ```
 
@@ -231,7 +246,7 @@ cldfbench cldfviz.map wals-2020.1/cldf/StructureDataset-metadata.json --paramete
 If `cldfviz` is installed with `cartopy` similar maps to the ones shown above can also be created
 in various image formats:
 ```shell
-cldfbench cldfviz.map wals-2020.1/StructureDataset-metadata.json --parameters 129A --colormaps tol \
+cldfbench cldfviz.map wals-2020.3/ --parameters 129A --colormaps tol \
 --language-properties Latitude --pacific-centered \
 --format jpg --width 20 --height 10 --dpi 300 --markersize 40
 ```
@@ -250,19 +265,24 @@ for the WALS languages:
 
 Since we will alter the WALS CLDF data, we make a copy of it first:
 ```shell
-cp -r wals-2020.1 wals-copy
+cp -r wals-2020.3 wals-copy
+```
+
+And since we want to extract data from `glottolog-cldf`, we download this, too:
+```shell
+cldfbench zenodo.download 10.5281/zenodo.7398887 --full-deposit
 ```
 
 Now we extract the AES data from Glottolog ...
 ```shell
-csvgrep -c Parameter_ID -m"aes" glottolog-cldf-4.4/cldf/values.csv |\
+csvgrep -c Parameter_ID -m"aes" glottolog-cldf-4.7/cldf/values.csv |\
 csvgrep -c Value -m"NA" -i |\
 csvcut -c Language_ID,Parameter_ID,Code_ID  > aes1.csv
 ```
 
 ... and massage it into a form that can be appended to the WALS `ValueTable`:
 ```shell
-csvjoin -y 0 -c Glottocode,Language_ID wals-2020.1/cldf/languages.csv aes1.csv |\
+csvjoin -y 0 -c Glottocode,Language_ID wals-2020.3/cldf/languages.csv aes1.csv |\
 csvcut -c Parameter_ID,Code_ID,ID |\
 awk '{if(NR==1){print $0",ID"}else{print $0",aes-"NR}}' |\
 sed 's/Parameter_ID,Code_ID,ID,ID/Parameter_ID,Value,Language_ID,ID/g' |\
@@ -288,11 +308,11 @@ cp parameters.csv wals-copy/cldf
 
 ... and make sure the resulting dataset is valid:
 ```shell
-cldf validate wals-copy/cldf/StructureDataset-metadata.json
+cldf validate wals-copy/
 ```
 
 Finally, we can plot the map:
 ```shell
-cldfbench cldfviz.map wals-copy/cldf/StructureDataset-metadata.json --pacific-centered --colormaps seq --parameters aes
+cldfbench cldfviz.map wals-copy/ --pacific-centered --colormaps seq --parameters aes
 ```
 ![WALS AES](wals_aes.jpg)

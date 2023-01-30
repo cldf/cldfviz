@@ -12,7 +12,7 @@ __all__ = ['render']
 
 
 def clean_node_label(s):
-    for c in RESERVED_PUNCTUATION:
+    for c in RESERVED_PUNCTUATION + ' ':
         s = s.replace(c, '_')
     return s
 

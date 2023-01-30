@@ -111,7 +111,8 @@ class MultiParameter:
         else:
             langs = {gc: Language(gc, glottolog=glottolog)
                      for gc in set(r['languageReference'] for r in
-                                   ds.iter_rows('ValueTable', 'languageReference'))}
+                                   ds.iter_rows('ValueTable', 'languageReference'))
+                     if gc in glottolog}
 
         langs = {k: v for k, v in langs.items() if v and v.lat is not None}
         params = {p.id: Parameter.from_object(p)

@@ -209,6 +209,10 @@
           {
             "datatype": "boolean",
             "name": "Filtered"
+          },
+          {
+            "separator": " ",
+            "name": "ListFiltered"
           }
         ],
         "primaryKey": [

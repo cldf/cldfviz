@@ -56,8 +56,12 @@ def get_language_filter(args):
 
     def language_filter(lg):
         for k, v in json.loads(args.language_filters).items():
+            val = lg.data[k]
             if isinstance(v, str):
-                if not re.search(v, lg.data[k] or ''):
+                if isinstance(val, list):
+                    if v not in val:
+                        return False
+                elif not re.search(v, val or ''):
                     return False
             else:
                 if lg.data[k] != v:

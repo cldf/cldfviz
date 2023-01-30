@@ -138,9 +138,11 @@ def test_erd(ds_arg, tmp_path, mocker):
                 o.write_text('a', encoding='utf8')
 
         mocker.patch('cldfviz.commands.erd.subprocess', Subprocess())
+        jar = tmp_path / 'jar'
+        jar.write_text('abc', encoding='utf8')
         o = tmp_path / 'res.svg'
         m.get(requests_mock.ANY, text='abc')
-        main(['cldfviz.erd', ds_arg, '--output', str(o), '--test'])
+        main(['cldfviz.erd', ds_arg, '--output', str(o), '--test', '--sqlite-jar', str(jar)])
         assert o.exists()
 
 
@@ -173,13 +175,16 @@ def test_text_multi_ds(ds_arg, capsys):
     assert 'Gender' in out and 'Oblique' in out
 
 
-def test_text_with_map(ds_arg, capsys, tmp_path):
+def test_text_with_images(ds_arg, capsys, tmp_path):
     tmpl = tmp_path / 'templ.md'
     tmpl.write_text('![](map.html?parameters=B&pacific-centered#cldfviz.map-pref)')
     main(
         ['cldfviz.text', '--text-file', str(tmpl), '--test', '--output', str(tmp_path / 'test.md'), 'pref:' + ds_arg],
         log=logging.getLogger(__name__))
     assert tmp_path.joinpath('map.html').exists()
+
+    main(['cldfviz.text', ds_arg, '--text-string', '![](tree.svg#cldfviz.tree)', '--test', '--output', str(tmp_path / 'test.md')])
+    assert tmp_path.joinpath('tree.svg').exists()
 
 
 class MF(MarkerFactory):
@@ -269,6 +274,12 @@ ID,Language_ID,Parameter_ID,Value
         language_filters='{"Filtered":true}')
     html = tmp_path.joinpath('testmap.html').read_text(encoding='utf8')
     assert 'Kharia' in html and 'Telugu' not in html
+
+    run(data=sd,
+        parameters='C',
+        language_filters='{"ListFiltered":"a"}')
+    html = tmp_path.joinpath('testmap.html').read_text(encoding='utf8')
+    assert 'Kharia' in html and 'Ho' not in html
 
     run(marker_factory='cldfviz.map', data=sd)
     run(marker_factory='{},test'.format(__file__), data=sd)

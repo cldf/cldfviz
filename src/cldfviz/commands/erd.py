@@ -2,6 +2,7 @@
 Visualize a dataset's data model as entity-relationship diagram of the corresponding CLDF SQL.
 """
 import shlex
+import shutil
 import pathlib
 import tempfile
 import subprocess
@@ -20,6 +21,11 @@ def download_file(url, target):
         with target.open('wb') as f:
             for chunk in r.iter_content(chunk_size=8192):
                 f.write(chunk)
+    return target
+
+
+def copy_file(dest, target):
+    shutil.copy(dest, target)
     return target
 
 
@@ -62,6 +68,8 @@ def run(args):
             attrib = target.replace('.', '_')
             if not getattr(args, attrib):
                 setattr(args, attrib, download_file(url, tmp / target))
+            else:
+                setattr(args, attrib, copy_file(getattr(args, attrib), tmp / target))
         get_database(args.dataset_locator, download_dir=tmp, fname=tmp / 'db.sqlite')
 
         # Note: This exact way of calling java must be kept to keep tests working.
