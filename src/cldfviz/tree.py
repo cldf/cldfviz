@@ -6,7 +6,7 @@ import xml.etree.cElementTree as ElementTree
 import toytree
 import toyplot.svg
 from pycldf.trees import Tree
-from newick import RESERVED_PUNCTUATION
+from newick import RESERVED_PUNCTUATION, Node
 
 __all__ = ['render']
 
@@ -18,14 +18,15 @@ def clean_node_label(s):
 
 
 def render(tree: Tree,
-           output: pathlib.Path,
+           output: typing.Optional[pathlib.Path] = None,
            glottolog_mapping: typing.Optional[typing.Dict[str, typing.Tuple[str, str]]] = None,
            legend: typing.Optional[str] = None,
            width: typing.Optional[int] = 500,
            styles: typing.Optional[dict] = None,
            with_glottolog_links: bool = False,
-           labels: typing.Optional[dict] = None,
-           leafs: typing.Optional[list] = None) -> pathlib.Path:
+           labels: typing.Optional[typing.Union[typing.Callable[[Node], str], dict]] = None,
+           leafs: typing.Optional[typing.Union[typing.Callable[[Node], bool], list]] = None,
+           ) -> typing.Union[pathlib.Path, str]:
     glottolog_mapping = glottolog_mapping or {}
 
     def rename(n):
@@ -35,10 +36,13 @@ def render(tree: Tree,
             n.name = None
 
     def rename2(n):
-        n.name = clean_node_label(labels[n.name]) if n.name else n.name
+        n.name = clean_node_label(labels(n) if callable(labels) else labels[n.name]) \
+            if n.name else n.name
 
     nwk = tree.newick(strip_comments=True)
     if leafs:
+        if callable(leafs):
+            leafs = [n.name for n in nwk.walk() if n.name and leafs(n)]
         nwk.prune_by_names(leafs, inverse=True)
     if with_glottolog_links:
         nwk.visit(rename)
@@ -62,16 +66,19 @@ def render(tree: Tree,
     canvas, axes, mark = toytree.tree(nwk.newick + ";", tree_format=1).draw(**style)
     if legend:
         axes.label.text = legend
-    toyplot.svg.render(canvas, str(output))
+    res = ElementTree.tostring(toyplot.svg.render(canvas, None)).decode('utf8')
     if with_glottolog_links:
-        add_glottolog_links(output, glottolog_mapping)
-    return output
+        res = add_glottolog_links(res, glottolog_mapping)
+    if output:
+        output.write_text(res, encoding='utf8')
+        return output
+    return res
 
 
-def add_glottolog_links(in_, gcodes, out=None):
+def add_glottolog_links(svg, gcodes, out=None):
     "Post-process the SVG to turn leaf names with Glottocodes into links"""
     ns = '{http://www.w3.org/2000/svg}'
-    svg = ElementTree.fromstring(in_.read_text(encoding='utf8'))
+    svg = ElementTree.fromstring(svg)
     for t in svg.findall('*.//{0}g[@class="toytree-TipLabels"]/{0}g/{0}text'.format(ns)):
         lid, _, gcode = t.text.strip().partition('--')
         if gcode:
@@ -89,4 +96,4 @@ def add_glottolog_links(in_, gcodes, out=None):
                 'title': 'The glottolog name',
             }
             t.text = None
-    (out or in_).write_bytes(ElementTree.tostring(svg))
+    return ElementTree.tostring(svg).decode('utf8')

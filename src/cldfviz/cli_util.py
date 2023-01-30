@@ -3,9 +3,39 @@ import json
 import inspect
 import pathlib
 import argparse
+import webbrowser
 
 from clldutils.text import split_text_with_context
+from clldutils.clilib import PathType
 from clldutils import path
+
+
+def add_open(parser):
+    parser.add_argument(
+        "--open", action='store_true', default=False,
+        help="Open the output file in the browser. (Requires specifying --output as well.)"
+    )
+    try:
+        parser.add_argument(
+            "-o", "--output", type=PathType(type="file", must_exist=False), default=False,
+            help="(non-existing) path name to write the result to.",
+        )
+    except argparse.ArgumentError:  # pragma: no cover
+        pass  # output option already added.
+
+
+def open_output(args):
+    if args.output and args.open and not getattr(args, 'test', False):  # pragma: no cover
+        webbrowser.open(args.output.resolve().as_uri(), new=1)
+
+
+def write_output(args, res):
+    if args.output:
+        args.output.write_text(res, encoding="utf8")
+        print("Output written to {}".format(args.output))
+        open_output(args)
+    else:
+        print(res)
 
 
 def add_language_filter(parser):

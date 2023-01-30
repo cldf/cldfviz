@@ -13,9 +13,9 @@ from clldutils.clilib import PathType
 from pycldf.terms import term_uri
 from pycldf.cli_util import get_dataset, add_dataset
 from pycldf.media import MediaTable
-import jinja2
 
-import cldfviz
+from cldfviz.cli_util import add_open, write_output
+from cldfviz.template import render_jinja_template
 
 
 def as_list(obj):
@@ -38,10 +38,7 @@ def register(parser):
              "command), the media directory can be passed to access the audio files on disk.",
         type=PathType(type='dir'),
         default=None)
-    parser.add_argument(
-        '-o', '--output',
-        type=PathType(type='file', must_exist=False),
-        default=False)
+    add_open(parser)
 
 
 def run(args):
@@ -101,17 +98,11 @@ def run(args):
                 # Read audio from the URL:
                 media[file.id] = file.url
 
-    loader = jinja2.FileSystemLoader(
-        searchpath=[str(cldfviz.PKG_DIR / 'templates' / 'audiowordlist')])
-    env = jinja2.Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
-    res = env.get_template('audiowordlist.html').render(
+    res = render_jinja_template(
+        'audiowordlist.html',
         ds=ds,
         pid=pid,
         parameter=forms[0][0].parameter,
         forms=[(form, [media[mid] for mid in mrefs if media[mid]]) for form, mrefs in forms],
         local=bool(args.media_dir))
-    if args.output:
-        args.output.write_text(res, encoding='utf8')
-        print('HTML written to {}'.format(args.output))
-    else:
-        print(res)
+    write_output(args, res)

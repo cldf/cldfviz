@@ -62,18 +62,19 @@ def test_tree(ds_arg, tmp_path, capsys):
         warnings.filterwarnings(
             'ignore', category=DeprecationWarning, module='importlib._bootstrap')
 
-        main(['cldfviz.tree', ds_arg, str(tmp_path / 'test.svg'), '--ascii-art'])
+        main(['cldfviz.tree', ds_arg, '--ascii-art'])
         out, _ = capsys.readouterr()
         assert 'Marathi' in out
 
         styles = tmp_path / 's.json'
         styles.write_text('{}', encoding='utf8')
         o = tmp_path / 'test2.svg'
-        main(['cldfviz.tree', ds_arg, str(o), '--test', '--styles', str(styles)])
+        main(['cldfviz.tree', ds_arg, '--output', str(o), '--test', '--styles', str(styles)])
         assert o.exists()
 
-        main(['cldfviz.tree', ds_arg, str(o), '--test', '--title', 'The Title'])
-        assert 'The Title' in o.read_text(encoding='utf8')
+        main(['cldfviz.tree', ds_arg, '--test', '--title', 'The Title'])
+        out, _ = capsys.readouterr()
+        assert 'The Title' in out
 
 
 def test_treemap(ds_arg, tmp_path, glottolog_dir, metadatafree_dataset):
@@ -139,7 +140,7 @@ def test_erd(ds_arg, tmp_path, mocker):
         mocker.patch('cldfviz.commands.erd.subprocess', Subprocess())
         o = tmp_path / 'res.svg'
         m.get(requests_mock.ANY, text='abc')
-        main(['cldfviz.erd', ds_arg, str(o), '--test'])
+        main(['cldfviz.erd', ds_arg, '--output', str(o), '--test'])
         assert o.exists()
 
 

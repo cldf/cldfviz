@@ -2,18 +2,16 @@
 Visualize a dataset's data model as entity-relationship diagram of the corresponding CLDF SQL.
 """
 import shlex
-import shutil
 import pathlib
 import tempfile
 import subprocess
-import webbrowser
 
 import requests
 from pycldf.ext.sql import get_database
 from clldutils.clilib import PathType
 from clldutils.path import ensure_cmd
 
-from cldfviz.cli_util import add_testable
+from cldfviz.cli_util import add_testable, add_open, write_output
 
 
 def download_file(url, target):
@@ -49,10 +47,7 @@ def register(parser):
         help="`large` diagrams include all fields of an entity, `compact` ones do not. Diagrams "
              "are available in SVG or Graphviz' DOT language.",
         default='large.svg')
-    parser.add_argument(
-        'output',
-        help='Path to which to write the diagram file.',
-        type=PathType(must_exist=False))
+    add_open(parser)
 
 
 def run(args):
@@ -78,9 +73,8 @@ def run(args):
                 tmp,
                 args.sqlite_jar.parent,
             )))
-        shutil.copy(
-            tmp / 'diagrams' / 'summary' / 'relationships.real.{}'.format(args.format), args.output)
+        res = tmp\
+            .joinpath('diagrams', 'summary', 'relationships.real.{}'.format(args.format))\
+            .read_text(encoding='utf8')
 
-    args.log.info('ER diagram in format {} written to {}'.format(args.format, args.output))
-    if not args.test:
-        webbrowser.open(args.output.resolve().as_uri())  # pragma: no cover
+    write_output(args, res)

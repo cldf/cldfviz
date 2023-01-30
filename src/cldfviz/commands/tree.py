@@ -2,14 +2,14 @@
 Plots a phylogeny as SVG.
 """
 import pathlib
-import webbrowser
 
-from clldutils.clilib import PathType
 from pycldf.cli_util import add_dataset, get_dataset
 from pycldf.trees import TreeTable
 from cldfbench.cli_util import add_catalog_spec, IGNORE_MISSING
 
-from cldfviz.cli_util import add_testable, add_language_filter, get_language_filter
+from cldfviz.cli_util import (
+    add_testable, add_language_filter, get_language_filter, add_open, write_output,
+)
 from cldfviz.tree import render
 
 
@@ -44,15 +44,12 @@ def register(parser):
              "containing such a dict). "
              "See https://toytree.readthedocs.io/en/latest/8-styling.html#",
         default='{}')
-    parser.add_argument(
-        'output',
-        type=PathType(must_exist=False),
-        help="Path to which to write the SVG file.",
-    )
+    add_open(parser)
 
 
 def run(args):
     cldf = get_dataset(args)
+    res = None
 
     for tree in TreeTable(cldf):
         if args.tree_id is None or (args.tree_id == tree.id):
@@ -75,9 +72,8 @@ def run(args):
             if pathlib.Path(args.styles).exists():
                 args.styles = pathlib.Path(args.styles).read_text(encoding='utf8')
             lf = get_language_filter(args)
-            render(
+            res = render(
                 tree,
-                args.output,
                 glottolog_mapping={
                     r['id']: (r['glottocode'], glangs.get(r['glottocode']) or '') for r in
                     cldf.iter_rows('LanguageTable', 'id', 'glottocode') if r['glottocode']},
@@ -92,5 +88,4 @@ def run(args):
             break
     else:
         raise ValueError('no matching tree found!')  # pragma: no cover
-    if not args.test:  # pragma: no cover
-        webbrowser.open(args.output.resolve().as_uri())
+    write_output(args, res)

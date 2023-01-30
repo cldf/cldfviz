@@ -13,7 +13,6 @@ Make this work with
 import io
 import logging
 import pathlib
-import webbrowser
 import collections
 
 import newick
@@ -22,42 +21,16 @@ from pycldf.cli_util import add_dataset, get_dataset
 from pycldf.ext import discovery
 from pycldf.trees import TreeTable
 
-from cldfviz.cli_util import add_testable
+from cldfviz.cli_util import add_testable, add_open, open_output
 from cldfviz.glottolog import Glottolog
+from cldfviz.pdutils import df_from_dicts
 
 try:
-    import pandas as pd
     from Bio import Phylo
     import yaml
     import lingtreemaps
 except ImportError:  # pragma: no cover
     lingtreemaps = None
-
-
-class DF:
-    def __init__(self):
-        self.df = None
-        self.acc = collections.defaultdict(list)
-
-    def __enter__(self):
-        return self
-
-    def add(self, item):
-        if self.df is None:
-            self.df = pd.DataFrame(columns=list(item))
-        for k, v in item.items():
-            self.acc[k].append(v)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        for k, v in self.acc.items():
-            self.df[k] = v
-
-
-def df_from_dicts(dicts):
-    with DF() as df:
-        for d in dicts:
-            df.add(d)
-    return df.df
 
 
 def yaml_type(s):
@@ -114,6 +87,7 @@ def register(parser):
             default=default,
             type=yaml_type,
             help=help)
+    add_open(parser)
 
 
 def run(args):
@@ -233,25 +207,20 @@ def run(args):
     # Sort values by value/code. ltm will just use this order.
     values = sorted(
         values.values(), key=lambda v: v['value'] if not codes else codes[v['codeReference']])
-    values = [dict(Clade=languages[v['languageReference']]['name'],
-                   Value=v['value'] if not codes else codes[v['codeReference']]) for v in values]
-
-    languages = [dict(ID=lg['name'], Latitude=lg['latitude'], Longitude=lg['longitude'])
-                 for lg in languages.values()]
-
-    languages = df_from_dicts(languages)
-    values = df_from_dicts(values)
+    values = df_from_dicts(
+        dict(
+            Clade=languages[v['languageReference']]['name'],
+            Value=v['value'] if not codes else codes[v['codeReference']]) for v in values)
+    languages = df_from_dicts(
+        dict(ID=lg['name'], Latitude=lg['latitude'], Longitude=lg['longitude'])
+        for lg in languages.values())
 
     kwargs = {k.replace('ltm_', ''): v for k, v in args.__dict__.items() if k.startswith('ltm_')}
-    kwargs['filename'] = kwargs['filename'] or args.parameter
-    fname = pathlib.Path(
+    kwargs['filename'] = kwargs['filename'] or str(args.output) or args.parameter
+    args.output = pathlib.Path(
         kwargs['filename'] if '.' in kwargs['filename']
         else '{filename}.{file_format}'.format(**kwargs))
 
     logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
     lingtreemaps.plot(languages, Phylo.read(io.StringIO(tree.newick), 'newick'), values, **kwargs)
-
-    args.log.info('Output written to: {}'.format(fname))
-    if args.test:
-        return
-    webbrowser.open(fname.resolve().as_uri())  # pragma: no cover
+    open_output(args)
