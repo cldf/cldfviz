@@ -2,8 +2,8 @@ import json
 import string
 
 import attr
-import yattag
 from clldutils import svg
+from clldutils.html import HTML
 
 from .base import Map, PACIFIC_CENTERED
 import cldfviz
@@ -149,56 +149,50 @@ class MapLeaflet(Map):
         })
 
     def add_legend(self, parameters, colormaps):
-        doc, tag, text = yattag.Doc().tagtext()
-
         def marker(colors):
-            doc.stag(
-                'img',
+            return HTML.img(
                 src=svg.data_url(self._icon(colors)),
                 width="{}".format(min([20, self.args.markersize * 2])))
 
-        with tag('table', klass="legend"):
-            for i, (pid, parameter) in enumerate(parameters.items()):
-                if i != 0:
-                    with tag('tr'):
-                        with tag('th', colspan=2):
-                            doc.stag('hr')
-                with tag('tr'):
-                    with tag('th'):
-                        marker(['#000000' if j == i else '#ffffff' for j in range(len(parameters))])
-                    with tag('th', style="text-align: left;"):
-                        text(parameter.name)
-                if isinstance(parameter.domain, tuple):
-                    min_, max_ = parameter.domain
-                    with tag('tr'):
-                        with tag('td', colspan=2):
-                            with tag('table'):
-                                with tag('tr'):
-                                    with tag('td'):
-                                        text(str(round(min_, 2)))
-                                    for _ in range(9):
-                                        with tag('td'):
-                                            text(' ')
-                                    with tag('td', style="text-align: right;"):
-                                        text(str(round(max_, 2)))
-                                with tag('tr'):
-                                    for j in range(11):
-                                        with tag(
-                                            'td',
-                                            style='height: 20px; width: 1em; background-color: '
-                                                  '{};'.format(
-                                                colormaps[pid](min_ + j * (max_ - min_) / 10))
-                                        ):
-                                            text(' ')
-                else:
-                    for v, label in parameter.domain.items():
-                        with tag('tr'):
-                            with tag('td'):
-                                marker([colormaps[pid](v) if j == i else '#ffffff'
-                                        for j in range(len(parameters))])
-                            with tag('td'):
-                                text(str(label))
-        self.legend = doc.getvalue()
+        trs = []
+        for i, (pid, parameter) in enumerate(parameters.items()):
+            if i != 0:
+                trs.append(HTML.tr(HTML.th(HTML.hr(), colspan='2')))
+            trs.append(HTML.tr(
+                HTML.th(
+                    marker(['#000000' if j == i else '#ffffff' for j in range(len(parameters))])),
+                HTML.th(parameter.name, style="text-align: left;")
+            ))
+            if isinstance(parameter.domain, tuple):
+                # Create an HTML color bar for a continuous variable, as table with two rows and
+                # 11 columns.
+                min_, max_ = parameter.domain
+                tds_label = []
+                tds_color = []
+                for j in range(11):
+                    if j == 0:
+                        tds_label.append(HTML.td(str(round(min_, 2))))
+                    elif j == 10:
+                        tds_label.append(HTML.td(str(round(max_, 2)), style="text-align: right;"))
+                    else:
+                        tds_label.append(HTML.td(' '))
+                    tds_color.append(HTML.td(
+                        ' ',
+                        style='height: 20px; width: 1em; background-color: {};'.format(
+                            colormaps[pid](min_ + j * (max_ - min_) / 10))))
+                trs.append(HTML.tr(HTML.td(HTML.table(
+                    HTML.tr(*tds_label),
+                    HTML.tr(*tds_color)
+                ), colspan='2')))
+            else:
+                for v, label in parameter.domain.items():
+                    trs.append(HTML.tr(
+                        HTML.td(marker([
+                            colormaps[pid](v) if j == i else '#ffffff'
+                            for j in range(len(parameters))])),
+                        HTML.td(str(label))
+                    ))
+        self.legend = HTML.table(*trs, **{'class': 'legend'})
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """write files"""

@@ -62,4 +62,4 @@ class Map:
 
     def open(self):  # pragma: no cover
         if self.args.format == 'html':
-            webbrowser.open(self.args.output.resolve().as_uri())
+            webbrowser.open(self.args.output.resolve().as_uri(), new=1)
