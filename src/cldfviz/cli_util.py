@@ -3,6 +3,7 @@ import json
 import inspect
 import pathlib
 import argparse
+import typing
 import webbrowser
 
 from clldutils.text import split_text_with_context
@@ -79,6 +80,18 @@ def get_language_filter(args):
                     return False
         return True
     return language_filter
+
+
+def get_filtered_languages(args, ds) -> typing.Union[None, typing.List[str]]:
+    language_filter = get_language_filter(args)
+    if language_filter:
+        res = []
+        if 'LanguageTable' not in ds:  # pragma: no cover
+            raise ValueError('Language filters only work on datasets with a LanguageTable')
+        for lg in ds.objects('LanguageTable'):
+            if language_filter(lg):
+                res.append(lg.id)
+        return res
 
 
 def add_testable(parser):

@@ -7,21 +7,14 @@ Assumes that
   - via a column with propertyUrl "mediaReference" in FormTable or
   - a column with propertyUrl "formReference" in MediaTable.
 """
-import collections
-
 from clldutils.clilib import PathType
+from clldutils.misc import nfilter
 from pycldf.terms import term_uri
 from pycldf.cli_util import get_dataset, add_dataset
-from pycldf.media import MediaTable
 
 from cldfviz.cli_util import add_open, write_output, add_jinja_template
+from cldfviz.media import get_objects_and_media, get_media_url
 from cldfviz.template import render_jinja_template, TEMPLATE_DIR
-
-
-def as_list(obj):
-    if isinstance(obj, list):
-        return obj
-    return [obj]
 
 
 def register(parser):
@@ -68,43 +61,18 @@ def run(args):
         pid = match
 
     # Get relevant forms and linked media:
-    forms, media = [], set()
-    if ('FormTable', 'mediaReference') in ds:
-        for form in ds.objects('FormTable'):
-            if form.cldf.parameterReference == pid:
-                mrefs = as_list(form.cldf.mediaReference)
-                media |= set(mrefs)
-                forms.append((form, mrefs))
-    elif ('MediaTable', 'formReference') in ds:
-        media_by_fid = collections.defaultdict(list)
-        for row in ds.iter_rows('MediaTable', 'id', 'formReference'):
-            for fid in as_list(row['formReference']):
-                media_by_fid[fid].append(row['id'])
-        for form in ds.objects('FormTable'):
-            if form.cldf.parameterReference == pid:
-                mrefs = media_by_fid.get(form.id, [])
-                media |= set(mrefs)
-                forms.append((form, mrefs))
-
-    media = {mid: None for mid in media}
-
-    # Retrieve relevant media - filtered by media type:
-    for file in MediaTable(ds):
-        if file.id in media and file.mimetype.type == 'audio':  # filter!
-            if args.media_dir:
-                if file.local_path(args.media_dir).exists():
-                    # Read audio from the file system:
-                    media[file.id] = 'file://{}'.format(
-                        file.local_path(args.media_dir).resolve())
-            else:
-                # Read audio from the URL:
-                media[file.id] = file.url
+    forms = []
+    for form, media in get_objects_and_media(
+            ds, 'FormTable', 'formReference', filter=lambda f: f.cldf.parameterReference == pid):
+        forms.append((
+            form,
+            nfilter(get_media_url(f, args.media_dir) for f in media if f.mimetype.type == 'audio')))
 
     res = render_jinja_template(
         args.template,
         ds=ds,
         pid=pid,
         parameter=forms[0][0].parameter,
-        forms=[(form, [media[mid] for mid in mrefs if media[mid]]) for form, mrefs in forms],
+        forms=forms,
         local=bool(args.media_dir))
     write_output(args, res)

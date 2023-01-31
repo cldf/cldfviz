@@ -16,14 +16,14 @@
             {% if ds.properties['dc:identifier'] and ds.properties['dc:identifier'].startswith('http') %}
             "<a href="{{ ds.properties['dc:identifier'] }}">
                 {{ ds.properties['dc:title'] }}
-            </a>""
+            </a>"
             {% else %}
             "{{ ds.properties['dc:title'] }}"
             {% endif %}
             {% endif %}
         </h1>
         {% set lspace = namespace(current = None) %}
-        {% for example in examples %}
+        {% for example, audio_urls in examples %}
 
         {% if example.references %}
         {% set ref = example.references[0] %}
@@ -50,6 +50,9 @@
                     {% endif %}
                     <div class="translated-text">‘{{ example.cldf.translatedText }}’</div>
                 </div>
+                {% if audio_urls %}
+                    <audio controls src="{{ audio_urls[0] }}"></audio>
+                {% endif %}
             </li>
         </ol>
   {% set lspace.current = language %}

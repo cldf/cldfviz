@@ -118,7 +118,7 @@ def test_examples(ds_arg, tmp_path, capsys):
 
     main(['cldfviz.examples', ds_arg])
     out, _ = capsys.readouterr()
-    assert '<h1>Examples' in out
+    assert '<ol class="example">' in out
 
 
 def test_erd(ds_arg, tmp_path, mocker):
