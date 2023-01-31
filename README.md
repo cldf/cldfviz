@@ -38,7 +38,6 @@ listed when running
 cldfbench -h
 ```
 
-Find a short description of these subcommands below; for more documentation click on the images.
 Help provided by the CLI is sometimes extensive and can be consulted via
 ```shell
 cldfbench <sucommand> -h
@@ -50,6 +49,26 @@ usage: cldfbench cldfviz.map [-h] [--download-dir DOWNLOAD_DIR] [--language-filt
                              [--glottolog GLOTTOLOG] [--glottolog-version GLOTTOLOG_VERSION]
 ...
 ```
+
+
+## Commands
+
+A short description of the `cldfviz` subcommands can be found below; for more documentation click on the images.
+
+
+### Example data
+
+Examples in this documentation sometimes use CLDF data stored in the local filesystem.
+In particular, we'll use 
+- WALS Online from [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7385533.svg)](https://doi.org/10.5281/zenodo.7385533)
+- and Glottolog CLDF from [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7398887.svg)](https://doi.org/10.5281/zenodo.7398887).
+
+If you download these datasets using the `cldfbench` plugin [cldfzenodo](https://github.com/cldf/cldfzenodo/#cli)
+```shell
+cldfbench zenodo.download 10.5281/zenodo.7385533 --full-deposit
+cldfbench zenodo.download 10.5281/zenodo.7398887 --full-deposit
+```
+you should have the respective data in local directories `wals-2020.3/` and `glottolog-cldf-4.7/`.
 
 
 ### `cldfviz.map`

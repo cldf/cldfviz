@@ -137,11 +137,8 @@ The following options are only relevant for image (aka printable) maps:
 
 ## Examples
 
-We'll explain the usage of the command by using it with the [WALS CLDF data](https://github.com/cldf-datasets/wals/releases/tag/v2020.1).
-You can download the WALS data - for example - using another `cldfbench` plugin: [cldfzenodo](https://github.com/cldf/cldfzenodo/#cli):
-```shell
-cldfbench zenodo.download 10.5281/zenodo.7385533 --full-deposit
-```
+We'll explain the usage of the command by using it with the [WALS CLDF data](https://github.com/cldf-datasets/wals/releases/tag/v2020.3).
+See [the README](../README.md#example-data) for instructions how to download this data.
 
 
 ### A minimal example
@@ -268,10 +265,8 @@ Since we will alter the WALS CLDF data, we make a copy of it first:
 cp -r wals-2020.3 wals-copy
 ```
 
-And since we want to extract data from `glottolog-cldf`, we download this, too:
-```shell
-cldfbench zenodo.download 10.5281/zenodo.7398887 --full-deposit
-```
+And since we want to extract data from `glottolog-cldf`, we download this, too, as explained
+in [the README](../README.md#example-data).
 
 Now we extract the AES data from Glottolog ...
 ```shell
