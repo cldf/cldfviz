@@ -38,6 +38,19 @@ listed when running
 cldfbench -h
 ```
 
+Find a short description of these subcommands below; for more documentation click on the images.
+Help provided by the CLI is sometimes extensive and can be consulted via
+```shell
+cldfbench <sucommand> -h
+```
+e.g.
+```shell
+$ cldfbench cldfviz.map -h
+usage: cldfbench cldfviz.map [-h] [--download-dir DOWNLOAD_DIR] [--language-filters LANGUAGE_FILTERS]
+                             [--glottolog GLOTTOLOG] [--glottolog-version GLOTTOLOG_VERSION]
+...
+```
+
 
 ### `cldfviz.map`
 
