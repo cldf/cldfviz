@@ -7,7 +7,7 @@ Running
 $ cldfbench cldfviz.erd https://zenodo.org/record/7322688 --format compact.svg --output wacl.svg --open
 ```
 creates
-![WACL ERD](output/wacl.svg)
+> ![WACL ERD](output/wacl.svg)
 
 
 ## Dependencies

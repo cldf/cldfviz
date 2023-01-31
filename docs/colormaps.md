@@ -16,6 +16,7 @@ Colormaps can be specified in two ways:
    $ cldfbench cldfviz.map https://raw.githubusercontent.com/cldf-datasets/wals/v2020.3/cldf/StructureDataset-metadata.json \
    --colormaps '{"Balanced":"#00D","Balanced/deranked": "#CCC", "Deranked": "#d00"}' --parameters 127A
    ```
+   > ![](output/wals_127A.png)
 
 
 ## Shapes
@@ -37,3 +38,5 @@ $ cldfbench cldfviz.map https://raw.githubusercontent.com/glottolog/glottolog-cl
 --parameters aes,med \
 --colormaps '{"not endangered":"circle","threatened":"square","shifting":"diamond","moribund":"triangle_up","nearly extinct":"triangle_down","extinct":"triangle_down"},tol'
 ```
+
+> ![](output/glottoscope-cameroun.png)

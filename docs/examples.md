@@ -8,4 +8,4 @@ So, running
 $ cldfbench cldfviz.examples --output lgr.html --open https://raw.githubusercontent.com/cldf-datasets/lgr/main/cldf/Generic-metadata.json
 ```
 should open a page in your browser looking roughly as follows:
-![LGR examples](output/lgr_html.png)
+> ![LGR examples](output/lgr_html.png)

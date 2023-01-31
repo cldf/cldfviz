@@ -108,3 +108,10 @@ of the dataset. Such a diagram can be created via `cldfviz.erd` (if a Java runti
 For details see [docs/erd.md](docs/erd.md).
 
 > [<img alt="details" width="350" src="docs/output/wacl.svg" />](docs/erd.md)
+
+
+## Related
+
+Other tools to convert CLDF data to "human-readable" formats:
+- [cldfofflinebrowser](https://github.com/cldf/cldfofflinebrowser)
+- [clld](https://github.com/clld/clld)
