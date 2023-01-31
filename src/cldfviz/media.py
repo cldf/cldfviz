@@ -1,9 +1,11 @@
 import typing
+import pathlib
 import collections
 
 from csvw.datatypes import anyURI
 from pycldf import Dataset
 from pycldf.media import MediaTable, File
+from pycldf.orm import Object
 
 
 def as_list(obj):
@@ -12,7 +14,12 @@ def as_list(obj):
     return [obj]
 
 
-def get_objects_and_media(ds: Dataset, comp: str, refprop: str, filter=None) -> typing.List:
+def get_objects_and_media(
+        ds: Dataset,
+        comp: str,
+        refprop: str,
+        filter: typing.Optional[typing.Callable[[Object], bool]] = None
+) -> typing.List[typing.Tuple[Object, typing.List[File]]]:
     """
     Objects can be related to media via a `mediaReference` on the object's table or via an object
     reference on `MediaTable`.
@@ -45,7 +52,8 @@ def get_objects_and_media(ds: Dataset, comp: str, refprop: str, filter=None) -> 
     return [(obj, [media[mid] for mid in mrefs if media[mid]]) for obj, mrefs in objs]
 
 
-def get_media_url(file: File, media_dir=None) -> typing.Union[None, str]:
+def get_media_url(
+        file: File, media_dir: typing.Optional[pathlib.Path] = None) -> typing.Union[None, str]:
     if media_dir:
         if file.local_path(media_dir).exists():
             # Read audio from the file system:
