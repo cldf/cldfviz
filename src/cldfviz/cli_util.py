@@ -10,6 +10,17 @@ from clldutils.clilib import PathType
 from clldutils import path
 
 
+def add_jinja_template(parser, default):
+    parser.add_argument(
+        "--template",
+        type=PathType(type='file'),
+        default=default,
+        help="Template file using Jinja2 syntax (see https://jinja.palletsprojects.com/). "
+             "To create a custom template, you might want to start out with a copy of the "
+             "default template.",
+    )
+
+
 def add_open(parser):
     parser.add_argument(
         "--open", action='store_true', default=False,

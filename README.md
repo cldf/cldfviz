@@ -45,7 +45,7 @@ A common way to visualize data from a CLDF StructureDataset is as "dots on a map
 i.e. as [WALS](https://wals.info)-like geographic maps, displaying typological variation.
 The `cldfviz.map` subcommand allows you to create such maps. For details see [docs/map.md](docs/map.md).
 
-> [<img alt="details" width="350" src="docs/wals_10B.png" />](docs/map.md)
+> [<img alt="details" width="350" src="docs/output/wals_10B.png" />](docs/map.md)
 
 
 ### `cldfviz.text`
@@ -56,7 +56,7 @@ The `cldfviz.text` subcommand allows you "render" documents written in [CLDF mar
 such documents to plain markdown by inserting suitable representations of the referenced data.
 For details see [docs/text.md](docs/text.md).
 
-> [<img alt="details" width="350" src="docs/wals_exponence.png" />](docs/text.md)
+> [<img alt="details" width="350" src="docs/output/wals_exponence.png" />](docs/text.md)
 
 
 ### `cldfviz.examples`
@@ -65,7 +65,7 @@ While it is possible to (selectively) include IGT formatted examples in [CLDF Ma
 often it is useful to just look at an HTML formatted list of all examples from a dataset. This can
 be done via `cldfviz.examples`. For details see [docs/examples.md](docs/examples.md).
 
-> [<img alt="details" width="350" src="docs/lgr_html.png" />](docs/examples.md)
+> [<img alt="details" width="350" src="docs/output/lgr_html.png" />](docs/examples.md)
 
 
 ### `cldfviz.tree`
@@ -77,14 +77,27 @@ To provide a configurable visualization of trees in [SVG format](https://en.wiki
 `cldfviz.tree` command renders CLDF trees using the powerful [toytree](https://toytree.readthedocs.io/en/latest/)
 package. For details see [docs/tree.md](docs/tree.md).
 
-> [<img alt="details" width="350" src="docs/wals-omotic.svg" />](docs/tree.md)
+> [<img alt="details" width="350" src="docs/output/wals-omotic.svg" />](docs/tree.md)
 
 
 ### `cldfviz.treemap`
 
+Displaying maps and trees is nice, but visualizing how phylogeny relates to geography can also be done
+in a more integrated way as demonstrated by the [lingtreemaps](https://lingtreemaps.readthedocs.io/en/latest/examples.html)
+package. [cldfviz.treemap](docs/treemap.md) provides a front-end for this package, making it possible
+to use its functionality with data and trees in CLDF datasets.
+
+> [<img alt="details" width="350" src="docs/output/treemap_wals88A.svg" />](docs/treemap.md)
 
 
 ### `cldfviz.audiowordlist`
+
+Another case where it is often desirable to aggregate objects from different CLDF components
+for inspection are Wordlists with associated audio files. Displaying forms for a specified
+concept together with the audio as HTML page can be done running
+[cldfviz.audiowordlist](docs/audiowordlist.md).
+
+> [<img alt="details" width="350" src="docs/output/awl_hindukush.png" />](docs/audiowordlist.md)
 
 
 ### `cldfviz.erd`
@@ -94,4 +107,4 @@ are "entity-relationship diagrams", i.e. diagramy of the [entitty-relationship m
 of the dataset. Such a diagram can be created via `cldfviz.erd` (if a Java runtime is installed).
 For details see [docs/erd.md](docs/erd.md).
 
-> [<img alt="details" width="350" src="docs/wacl.svg" />](docs/erd.md)
+> [<img alt="details" width="350" src="docs/output/wacl.svg" />](docs/erd.md)

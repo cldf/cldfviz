@@ -1,5 +1,11 @@
 <!doctype html>
 <html lang="en">
+<head>
+    <title>Forms for concept {{ parameter.cldf.name if parameter else pid }}</title>
+    <style>
+        .primary-text { font-style: italic;}
+    </style>
+</head>
 <body>
 <h1>Forms for concept <em>{{ parameter.cldf.name if parameter else pid }}</em></h1>
 {% if ds.properties['dc:title'] %}
@@ -24,14 +30,13 @@
     <tbody>
     {% for form in forms %}
         <tr>
-            <td>{{ form[0].cldf.form }}</td>
+            <td class="primary-text">{{ form[0].cldf.form }}</td>
             <td>
                 {% if form[1] %}
                     <audio controls {% if local %}preload="metadata"{% endif %} src="{{ form[1][0] }}"></audio>
                 {% endif %}
             </td>
             <td>
-                <!-- FIXME: should work if there's no LanguageTable! -->
                 {% if form[0].language %}
                     {% if form[0].language.cldf.glottocode %}
                         <a href="https://glottolog.org/resource/languoid/id/{{ form[0].language.cldf.glottocode }}">

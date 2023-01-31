@@ -85,6 +85,7 @@ def test_treemap(ds_arg, tmp_path, glottolog_dir, metadatafree_dataset):
         main(['cldfviz.treemap', ds_arg, 'B', '--test',
               '--ltm-filename', str(tmp_path / 'B.pdf'),
               '--tree', str(tp),
+              '--language-filters', '{"Name":".+"}',
               '--tree-label-property', 'ID'])
         assert tmp_path.joinpath('B.pdf').exists()
         main(['cldfviz.treemap', ds_arg, 'B', '--test',

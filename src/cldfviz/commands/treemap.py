@@ -32,7 +32,9 @@ from pycldf.cli_util import add_dataset, get_dataset
 from pycldf.ext import discovery
 from pycldf.trees import TreeTable
 
-from cldfviz.cli_util import add_testable, add_open, open_output
+from cldfviz.cli_util import (
+    add_testable, add_open, open_output, add_language_filter, get_language_filter,
+)
 from cldfviz.glottolog import Glottolog
 from cldfviz.pdutils import df_from_dicts
 
@@ -92,6 +94,7 @@ def register(parser):
         '--tree-label-property',
         help="Name of the language property used to identify languages in the tree.",
         default='glottocode')
+    add_language_filter(parser)
     for opt, default, help in iter_ltm_options():
         parser.add_argument(
             '--ltm-{}'.format(opt.replace('_', '-')),
@@ -111,6 +114,14 @@ def run(args):
     glottolog = Glottolog.from_args(args)
 
     ds = get_dataset(args)
+    filtered_languages = []
+    language_filter = get_language_filter(args)
+    if language_filter:
+        if 'LanguageTable' not in ds:  # pragma: no cover
+            raise ValueError('Language filters only work on datasets with a LanguageTable')
+        for lg in ds.objects('LanguageTable'):
+            if language_filter(lg):
+                filtered_languages.append(lg.id)
 
     # 1. Get all values for the selected parameter:
     cols = ['parameterReference', 'languageReference', 'value']
@@ -118,11 +129,13 @@ def run(args):
         cols.append('codeReference')
     values = {
         v['languageReference']: v for v in ds.iter_rows('ValueTable', *cols)
-        if v['parameterReference'] == args.parameter}
+        if v['parameterReference'] == args.parameter and  # noqa: W504
+        (language_filter is None or (v['languageReference'] in filtered_languages))}
 
     # 2. Get the tree ...
     if args.tree:
         if Glottocode.pattern.match(args.tree):
+            assert glottolog
             tree = glottolog.newick(args.tree)
         elif pathlib.Path(args.tree).exists():
             tree = newick.read(args.tree)[0]

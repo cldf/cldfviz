@@ -14,8 +14,8 @@ from pycldf.terms import term_uri
 from pycldf.cli_util import get_dataset, add_dataset
 from pycldf.media import MediaTable
 
-from cldfviz.cli_util import add_open, write_output
-from cldfviz.template import render_jinja_template
+from cldfviz.cli_util import add_open, write_output, add_jinja_template
+from cldfviz.template import render_jinja_template, TEMPLATE_DIR
 
 
 def as_list(obj):
@@ -32,6 +32,8 @@ def register(parser):
              '"Name=hand" or "cldf:id=10", using column names used in ParameterTable or '
              'CLDF properties available in ParameterTable.')
     # parser.add_argument('--mimetype', default=None)
+    mod = __name__.split('.')[-1]
+    add_jinja_template(parser, TEMPLATE_DIR / mod / '{}.html'.format(mod))
     parser.add_argument(
         '--media-dir',
         help="If media files are available locally (downloaded via pycldf's `cldf downloadmedia` "
@@ -99,7 +101,7 @@ def run(args):
                 media[file.id] = file.url
 
     res = render_jinja_template(
-        'audiowordlist.html',
+        args.template,
         ds=ds,
         pid=pid,
         parameter=forms[0][0].parameter,

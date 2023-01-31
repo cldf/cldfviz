@@ -171,14 +171,14 @@ cldfbench cldfviz.map wals-2020.3/ --base-layer USGS.USTopo --pacific-centered
 will create an HTML page `map.html` and open it in the browser, thus rendering an interactive
 map of the languages in the dataset.
 
-![WALS languages](wals_languages.png)
+![WALS languages](output/wals_languages.png)
 
 For smaller language samples, it may be suitable to display the language names on the map, too.
 Here's [WALS' feature 10B](https://wals.info/feature/10B):
 ```shell
 cldfbench cldfviz.map wals-2020.3/ --parameters 10B --colormaps tol --markersize 20 --language-labels
 ```
-![WALS 10B](wals_10B.png)
+![WALS 10B](output/wals_10B.png)
 
 `cldfviz.map` can detect and display continuous variables, too. There are no continuous features in WALS, but since
 `cldfviz.map` also works with
@@ -212,7 +212,7 @@ Thus, we must point to it, when running
 $ cldfbench cldfviz.map values.csv --parameters latitude \
 --glottolog-cldf https://raw.githubusercontent.com/glottolog/glottolog-cldf/v4.7/cldf/cldf-metadata.json
 ```
-![WALS latitudes](wals_latitude.png)
+![WALS latitudes](output/wals_latitude.png)
 
 Note that since we looked up coordinates in Glottolog, languages
 may be displayed at slightly different locations than above (when the coordinates in WALS differ).
@@ -229,7 +229,7 @@ option to visualize a claim from [WALS' chapter 129](https://wals.info/chapter/1
 cldfbench cldfviz.map wals-2020.3/ --parameters 129A --colormaps tol \
 --markersize 20 --language-properties Latitude --pacific-centered
 ```
-![WALS 129A and latitude](wals_latitude_handandarm.jpg)
+![WALS 129A and latitude](output/wals_latitude_handandarm.jpg)
 
 As seen above, `cldfviz.map` can visualize multiple parameters at once. E.g. we can explore the related WALS
 features 129A, 130A and 130B, selecting suitable colormaps for the two boolean parameters:
@@ -238,7 +238,7 @@ cldfbench cldfviz.map wals-2020.3/ --parameters 129A,130A,130B \
 --colormaps base,base,tol --pacific-centered --markersize 30 
 ```
 
-![WALS 129A, 130A and 130B](wals_129A_130A_130B.jpg)
+![WALS 129A, 130A and 130B](output/wals_129A_130A_130B.jpg)
 
 
 #### Printable maps via cartopy
@@ -250,7 +250,7 @@ cldfbench cldfviz.map wals-2020.3/ --parameters 129A --colormaps tol \
 --language-properties Latitude --pacific-centered \
 --format jpg --width 20 --height 10 --dpi 300 --markersize 40
 ```
-![WALS 129A and latitude](wals_latitude_handandarm_2.jpg)
+![WALS 129A and latitude](output/wals_latitude_handandarm_2.jpg)
 
 While these maps lack the interactivity of the HTML maps, they may be better suited for inclusion in print
 formats than screen shots of maps in the browser. They also provide some additional options like a choice
@@ -315,4 +315,4 @@ Finally, we can plot the map:
 ```shell
 cldfbench cldfviz.map wals-copy/ --pacific-centered --colormaps seq --parameters aes
 ```
-![WALS AES](wals_aes.jpg)
+![WALS AES](output/wals_aes.jpg)

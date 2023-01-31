@@ -120,10 +120,10 @@ optional arguments:
   But as soon as it comes to customization, the nested formatting - e.g. passing
   a `toytree` styles dictionary as URL parameter - makes the process fragile.
   But as a proof-of-concept example you may look at the markdown source of
-  [`wals_algic_tmpl.md`](wals_algic_tmpl.md) and the [markdown file](wals_algic.md)
+  [`wals_algic_tmpl.md`](output/wals_algic_tmpl.md) and the [markdown file](output/wals_algic.md)
   created from it running
   ```shell
-  cldfbench cldfviz.text ../wals-2020.3/ --text-file wals_algic.md
+  cldfbench cldfviz.text wals-2020.3/ --text-file wals_algic.md
   ```
 
 

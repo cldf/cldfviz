@@ -1,0 +1,737 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   class="toyplot-canvas-Canvas"
+   width="800.0px"
+   height="335.0px"
+   viewBox="0 0 800.0 335.0"
+   preserveAspectRatio="xMidYMid meet"
+   style="background-color:transparent;border-color:#292724;border-style:none;border-width:1.0;fill:rgb(16.1%,15.3%,14.1%);fill-opacity:1.0;font-family:Helvetica;font-size:12px;opacity:1.0;stroke:rgb(16.1%,15.3%,14.1%);stroke-opacity:1.0;stroke-width:1.0"
+   id="t87eba2dc673e4d588cec71d6c0aa75c1"
+   version="1.1"
+   sodipodi:docname="gong1255.tree.edited.svg"
+   inkscape:version="1.2.2 (1:1.2.2+202212051550+b0a8486541)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs732" />
+  <sodipodi:namedview
+     id="namedview730"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="1.86875"
+     inkscape:cx="445.75251"
+     inkscape:cy="167.49164"
+     inkscape:window-width="1848"
+     inkscape:window-height="1010"
+     inkscape:window-x="72"
+     inkscape:window-y="33"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="t87eba2dc673e4d588cec71d6c0aa75c1" />
+  <g
+     class="toyplot-coordinates-Cartesian"
+     id="tcc3f1ecbae73474388080cbeb13b768f"
+     transform="matrix(0.72383236,0,0,1.0468726,212.64909,-19.846907)">
+    <clipPath
+       id="t46d497ea04564123bcdbbfeabe92ade1">
+      <rect
+         x="30"
+         y="30"
+         width="740"
+         height="275"
+         id="rect384" />
+    </clipPath>
+    <g
+       clip-path="url(#t46d497ea04564123bcdbbfeabe92ade1)"
+       id="g661">
+      <g
+         class="toytree-mark-Toytree"
+         id="t68c238656d0e43159fb91695c3190636">
+        <g
+           class="toytree-Edges"
+           style="fill:none;stroke:#232323;stroke-width:2;stroke-linecap:round;stroke-opacity:1"
+           id="g413">
+          <path
+             d="M 50,98.9 V 98.7 H 178.8"
+             id="26,25" />
+          <path
+             d="m 50,98.9 v 63.6 h 128.8"
+             id="26,24" />
+          <path
+             d="m 178.8,98.7 v 15.7 h 128.9"
+             id="25,23" />
+          <path
+             d="m 178.8,162.5 v -6.8 h 128.9"
+             id="24,22" />
+          <path
+             d="m 178.8,162.5 v 37.2 h 128.9"
+             id="24,21" />
+          <path
+             d="m 307.7,199.7 v 29.1 h 128.8"
+             id="21,20" />
+          <path
+             d="m 436.5,228.8 v 33 h 128.8"
+             id="20,19" />
+          <path
+             d="M 50,98.9 V 61.4 h 128.8"
+             id="26,18" />
+          <path
+             d="M 50,98.9 V 73.2 h 128.8"
+             id="26,17" />
+          <path
+             d="M 178.8,98.7 V 85 h 128.9"
+             id="25,16" />
+          <path
+             d="M 178.8,98.7 V 96.8 H 307.7"
+             id="25,15" />
+          <path
+             d="m 307.7,114.4 v -5.9 h 128.8"
+             id="23,14" />
+          <path
+             d="m 307.7,114.4 v 5.9 h 128.8"
+             id="23,13" />
+          <path
+             d="M 178.8,162.5 V 132.1 H 307.7"
+             id="24,12" />
+          <path
+             d="M 307.7,155.7 V 143.9 H 436.5"
+             id="22,11" />
+          <path
+             d="m 307.7,155.7 v 0 h 128.8"
+             id="22,10" />
+          <path
+             d="m 307.7,155.7 v 11.8 h 128.8"
+             id="22,9" />
+          <path
+             d="M 307.7,199.7 V 179.3 H 436.5"
+             id="21,8" />
+          <path
+             d="m 307.7,199.7 v -8.6 h 128.8"
+             id="21,7" />
+          <path
+             d="M 436.5,228.8 V 202.9 H 565.3"
+             id="20,6" />
+          <path
+             d="M 436.5,228.8 V 214.7 H 565.3"
+             id="20,5" />
+          <path
+             d="m 436.5,228.8 v -2.3 h 128.8"
+             id="20,4" />
+          <path
+             d="m 436.5,228.8 v 9.4 h 128.8"
+             id="20,3" />
+          <path
+             d="M 565.3,261.8 V 250 h 128.9"
+             id="19,2" />
+          <path
+             d="m 565.3,261.8 v 0 h 128.9"
+             id="19,1" />
+          <path
+             d="m 565.3,261.8 v 11.8 h 128.9"
+             id="19,0" />
+        </g>
+        <g
+           class="toytree-AlignEdges"
+           style="stroke:#a8a8a8;stroke-width:2;stroke-linecap:round;stroke-dasharray:2, 4;stroke-opacity:1"
+           id="g453">
+          <path
+             d="m 694.2,273.6 v 0"
+             id="path415" />
+          <path
+             d="m 694.2,261.8 v 0"
+             id="path417" />
+          <path
+             d="m 694.2,250 v 0"
+             id="path419" />
+          <path
+             d="M 694.2,238.2 H 565.3"
+             id="path421" />
+          <path
+             d="M 694.2,226.5 H 565.3"
+             id="path423" />
+          <path
+             d="M 694.2,214.7 H 565.3"
+             id="path425" />
+          <path
+             d="M 694.2,202.9 H 565.3"
+             id="path427" />
+          <path
+             d="M 694.2,191.1 H 436.5"
+             id="path429" />
+          <path
+             d="M 694.2,179.3 H 436.5"
+             id="path431" />
+          <path
+             d="M 694.2,167.5 H 436.5"
+             id="path433" />
+          <path
+             d="M 694.2,155.7 H 436.5"
+             id="path435" />
+          <path
+             d="M 694.2,143.9 H 436.5"
+             id="path437" />
+          <path
+             d="M 694.2,132.1 H 307.7"
+             id="path439" />
+          <path
+             d="M 694.2,120.3 H 436.5"
+             id="path441" />
+          <path
+             d="M 694.2,108.5 H 436.5"
+             id="path443" />
+          <path
+             d="M 694.2,96.8 H 307.7"
+             id="path445" />
+          <path
+             d="M 694.2,85 H 307.7"
+             id="path447" />
+          <path
+             d="M 694.2,73.2 H 178.8"
+             id="path449" />
+          <path
+             d="M 694.2,61.4 H 178.8"
+             id="path451" />
+        </g>
+        <g
+           class="toytree-Nodes"
+           style="fill:#d1d1d1;fill-opacity:1;stroke:#000000;stroke-width:0.75;stroke-opacity:1"
+           id="g536">
+          <g
+             id="node-0"
+             transform="translate(694.17,273.62)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect455" />
+          </g>
+          <g
+             id="node-1"
+             transform="translate(694.17,261.829)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect458" />
+          </g>
+          <g
+             id="node-2"
+             transform="translate(694.17,250.038)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect461" />
+          </g>
+          <g
+             id="node-3"
+             transform="translate(565.336,238.247)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect464" />
+          </g>
+          <g
+             id="node-4"
+             transform="translate(565.336,226.456)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect467" />
+          </g>
+          <g
+             id="node-5"
+             transform="translate(565.336,214.665)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect470" />
+          </g>
+          <g
+             id="node-6"
+             transform="translate(565.336,202.873)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect473" />
+          </g>
+          <g
+             id="node-7"
+             transform="translate(436.502,191.082)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect476" />
+          </g>
+          <g
+             id="node-8"
+             transform="translate(436.502,179.291)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect479" />
+          </g>
+          <g
+             id="node-9"
+             transform="translate(436.502,167.5)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect482" />
+          </g>
+          <g
+             id="node-10"
+             transform="translate(436.502,155.709)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect485" />
+          </g>
+          <g
+             id="node-11"
+             transform="translate(436.502,143.918)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect488" />
+          </g>
+          <g
+             id="node-12"
+             transform="translate(307.668,132.127)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect491" />
+          </g>
+          <g
+             id="node-13"
+             transform="translate(436.502,120.335)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect494" />
+          </g>
+          <g
+             id="node-14"
+             transform="translate(436.502,108.544)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect497" />
+          </g>
+          <g
+             id="node-15"
+             transform="translate(307.668,96.753)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect500" />
+          </g>
+          <g
+             id="node-16"
+             transform="translate(307.668,84.962)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect503" />
+          </g>
+          <g
+             id="node-17"
+             transform="translate(178.834,73.171)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect506" />
+          </g>
+          <g
+             id="node-18"
+             transform="translate(178.834,61.38)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect509" />
+          </g>
+          <g
+             id="node-19"
+             transform="translate(565.336,261.829)">
+            <rect
+               x="-60"
+               y="-7.5"
+               width="120"
+               height="15"
+               id="rect512" />
+          </g>
+          <g
+             id="node-20"
+             transform="translate(436.502,228.814)">
+            <rect
+               x="-60"
+               y="-7.5"
+               width="120"
+               height="15"
+               id="rect515" />
+          </g>
+          <g
+             id="node-21"
+             transform="translate(307.668,199.729)">
+            <rect
+               x="-60"
+               y="-7.5"
+               width="120"
+               height="15"
+               id="rect518" />
+          </g>
+          <g
+             id="node-22"
+             transform="translate(307.668,155.709)">
+            <rect
+               x="-60"
+               y="-7.5"
+               width="120"
+               height="15"
+               id="rect521" />
+          </g>
+          <g
+             id="node-23"
+             transform="translate(307.668,114.44)">
+            <rect
+               x="-60"
+               y="-7.5"
+               width="120"
+               height="15"
+               id="rect524" />
+          </g>
+          <g
+             id="node-24"
+             transform="translate(178.834,162.522)">
+            <rect
+               x="-60"
+               y="-7.5"
+               width="120"
+               height="15"
+               id="rect527" />
+          </g>
+          <g
+             id="node-25"
+             transform="translate(178.834,98.718)"
+             style="stroke:#000000;stroke-opacity:1;stroke-width:0.75014854;stroke-dasharray:none;fill:#deee83;fill-opacity:1">
+            <rect
+               x="-60"
+               y="-7.5"
+               width="120"
+               height="15"
+               id="rect530"
+               style="stroke:#000000;stroke-opacity:1;stroke-width:0.75014854;stroke-dasharray:none;fill:#deee83;fill-opacity:1" />
+          </g>
+          <g
+             id="node-26"
+             transform="translate(50,98.948)">
+            <rect
+               x="0"
+               y="0"
+               width="0"
+               height="0"
+               id="rect533" />
+          </g>
+        </g>
+        <g
+           class="toytree-NodeLabels"
+           style="font-size:10px;fill:#232323;fill-opacity:1;stroke:none"
+           id="g580">
+          <g
+             transform="translate(523.11,264.38)"
+             id="g542">
+            <title
+               id="title538">idx: 19
+dist: 1.0000
+support: 0.0000
+height: 1.0000
+name: Dawro-Gofa-Gamo</title>
+            <text
+               id="text540">Dawro-Gofa-Gamo</text>
+          </g>
+          <g
+             transform="translate(405.38,231.37)"
+             id="g548">
+            <title
+               id="title544">idx: 20
+dist: 1.0000
+support: 0.0000
+height: 2.0000
+name: CentralOmeto</title>
+            <text
+               id="text546">CentralOmeto</text>
+          </g>
+          <g
+             transform="translate(267.38,202.28)"
+             id="g554">
+            <title
+               id="title550">idx: 21
+dist: 1.0000
+support: 0.0000
+height: 3.0000
+name: North-WestOmeto</title>
+            <text
+               id="text552">North-WestOmeto</text>
+          </g>
+          <g
+             transform="translate(282.66,158.26)"
+             id="g560">
+            <title
+               id="title556">idx: 22
+dist: 1.0000
+support: 0.0000
+height: 3.0000
+name: EastOmeto</title>
+            <text
+               id="text558">EastOmeto</text>
+          </g>
+          <g
+             transform="translate(279.59,116.99)"
+             id="g566">
+            <title
+               id="title562">idx: 23
+dist: 1.0000
+support: 0.0000
+height: 3.0000
+name: SouthGonga</title>
+            <text
+               id="text564">SouthGonga</text>
+          </g>
+          <g
+             transform="translate(163.83,165.08)"
+             id="g572">
+            <title
+               id="title568">idx: 24
+dist: 1.0000
+support: 0.0000
+height: 4.0000
+name: Ometo</title>
+            <text
+               id="text570">Ometo</text>
+          </g>
+          <g
+             transform="translate(164.66,101.27)"
+             id="g578">
+            <title
+               id="title574">idx: 25
+dist: 1.0000
+support: 0.0000
+height: 4.0000
+name: Kefoid</title>
+            <text
+               id="text576">Kefoid</text>
+          </g>
+        </g>
+        <g
+           class="toytree-TipLabels"
+           style="font-weight:normal;font-size:11px;font-family:helvetica;white-space:pre;fill:#232323;fill-opacity:1;stroke:none"
+           id="g658">
+          <g
+             transform="translate(694.17,273.62)"
+             id="g584">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text582">Gofa</text>
+          </g>
+          <g
+             transform="translate(694.17,261.83)"
+             id="g588">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text586">Gamo</text>
+          </g>
+          <g
+             transform="translate(694.17,250.04)"
+             id="g592">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text590">Dawro</text>
+          </g>
+          <g
+             transform="translate(694.17,238.25)"
+             id="g596">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text594">Wolaytta</text>
+          </g>
+          <g
+             transform="translate(694.17,226.46)"
+             id="g600">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text598">Oyda</text>
+          </g>
+          <g
+             transform="translate(694.17,214.66)"
+             id="g604">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text602">Melo</text>
+          </g>
+          <g
+             transform="translate(694.17,202.87)"
+             id="g608">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text606">Dorze</text>
+          </g>
+          <g
+             transform="translate(694.17,191.08)"
+             id="g612">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text610">Male_Ethiopia_</text>
+          </g>
+          <g
+             transform="translate(694.17,179.29)"
+             id="g616">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text614">Basketo</text>
+          </g>
+          <g
+             transform="translate(694.17,167.5)"
+             id="g620">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text618">Zayse-Zergulla</text>
+          </g>
+          <g
+             transform="translate(694.17,155.71)"
+             id="g624">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text622">Koorete</text>
+          </g>
+          <g
+             transform="translate(694.17,143.92)"
+             id="g628">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text626">Kachama-Ganjule-Haro</text>
+          </g>
+          <g
+             transform="translate(694.17,132.13)"
+             id="g632">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text630">Chara</text>
+          </g>
+          <g
+             transform="translate(694.17,120.34)"
+             id="g636">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text634">Shekkacho</text>
+          </g>
+          <g
+             transform="translate(694.17,108.54)"
+             id="g640">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text638">Kafa</text>
+          </g>
+          <g
+             transform="translate(694.17,96.75)"
+             id="g644">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text642">Boro_Ethiopia_</text>
+          </g>
+          <g
+             transform="translate(694.17,84.96)"
+             id="g648">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text646">Anfillo</text>
+          </g>
+          <g
+             transform="translate(694.17,73.17)"
+             id="g652">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text650">Yemsa</text>
+          </g>
+          <g
+             transform="translate(694.17,61.38)"
+             id="g656">
+            <text
+               x="5"
+               y="2.8099999"
+               id="text654">Bench</text>
+          </g>
+        </g>
+      </g>
+    </g>
+    <g
+       transform="translate(400,42)"
+       id="g726">
+      <text
+         x="-264.50201"
+         y="-4.823"
+         style="font-weight:bold;font-size:14px;font-family:helvetica;white-space:pre;fill:#282623;fill-opacity:1;stroke:none"
+         id="text724">gong1255 - Glottolog classification of the languages in the family Ta-Ne-Omotic</text>
+    </g>
+  </g>
+</svg>

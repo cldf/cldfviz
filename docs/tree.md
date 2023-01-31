@@ -31,14 +31,14 @@ dict(
 )
 ```
 will create
-![](gong1255.tree.svg)
+![](output/gong1255.tree.svg)
 
 Note that Glottolog classification trees have no meaningful branch length.
 
 SVG can easily be manipulated (e.g. using tools such as [inkscape](https://inkscape.org/)), e.g. to change aspect ratio, 
 remove the scalebar or colorize individual nodes:
 
-![](gong1255.tree.edited.svg)
+![](output/gong1255.tree.edited.svg)
 
 We can also use `cldfviz.tree` to compare the Glottolog classification with WALS, where Ta-Ne-Omotic is a genus within
 Afro-Asiatic. WALS' Afro-Asiatic genealogy is available in [WALS Online's CLDF dataset, v2020.3](https://github.com/cldf-datasets/wals/releases/tag/v2020.3).
@@ -49,4 +49,4 @@ comparison (and re-use the styles from above for consistent layout):
 $ cldfbench cldfviz.tree PATH/TO/wals/cldf --tree-id  family-afroasiatic wals-omotic.svg --styles styles.py --name-as-label --language-filters '{"Subfamily":"Omotic"}'
 ```
 
-![](wals-omotic.svg)
+![](output/wals-omotic.svg)
