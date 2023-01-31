@@ -73,14 +73,17 @@ def run(args):
         get_database(args.dataset_locator, download_dir=tmp, fname=tmp / 'db.sqlite')
 
         # Note: This exact way of calling java must be kept to keep tests working.
-        subprocess.check_call(shlex.split(
+        out = subprocess.check_output(shlex.split(
             "{} -jar {} -t sqlite-xerial -db {} -sso -s public -dp {} -o {} -cat % -vizjs".format(
                 args.java,
                 args.schemaspy_jar,
                 tmp / 'db.sqlite',
                 tmp,
                 args.sqlite_jar.parent,
-            )))
+            )),
+        )
+        for line in out.decode('utf8').split('\n'):  # pragma: no cover
+            args.log.debug(line)
         res = tmp\
             .joinpath('diagrams', 'summary', 'relationships.real.{}'.format(args.format))\
             .read_text(encoding='utf8')

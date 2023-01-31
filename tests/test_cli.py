@@ -127,7 +127,7 @@ def test_erd(ds_arg, tmp_path, mocker):
     with requests_mock.Mocker() as m:
         class Subprocess:
             @staticmethod
-            def check_call(cmd, *args, **kw):
+            def check_output(cmd, *args, **kw):
                 out = None
                 for i, token in enumerate(cmd):
                     if token == '-o':
@@ -136,6 +136,7 @@ def test_erd(ds_arg, tmp_path, mocker):
                 o = pathlib.Path(out) / 'diagrams' / 'summary' / 'relationships.real.large.svg'
                 o.parent.mkdir(parents=True)
                 o.write_text('a', encoding='utf8')
+                return ''.encode('utf8')
 
         mocker.patch('cldfviz.commands.erd.subprocess', Subprocess())
         jar = tmp_path / 'jar'
