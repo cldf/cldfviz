@@ -133,6 +133,10 @@ def register(parser):
         default=False,
         help="Don't open the created file.",
     )
+    parser.add_argument(
+        '--frequency-col',
+        default=None,
+    )
     for cls in Map.__subclasses__():
         cls.add_options(
             parser, help_suffix='(Only for FORMATs {})'.format(join_quoted(cls.__formats__)))
@@ -154,6 +158,7 @@ def run(args):
         include_missing=args.missing_value is not None,
         language_properties=args.language_properties,
         language_filter=get_language_filter(args),
+        frequency_col=getattr(args, 'frequency_col', None),
     )
     if args.parameters and not args.colormaps:
         args.colormaps = [None] * len(args.parameters)

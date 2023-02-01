@@ -29,11 +29,48 @@ class Map:
         if len(colors_or_shapes) == 2:
             shapes, colors = [], []
             for c in colors_or_shapes:
-                (shapes if c in SHAPES else colors).append(c)
+                try:
+                    (shapes if c in SHAPES else colors).append(c)
+                except TypeError:
+                    return
             if shapes:
                 if len(shapes) > 1:
                     raise ValueError('Only one shape can be specified for a marker')
                 return shapes[0], colors[0]
+
+    @staticmethod
+    def weighted_colors(values, colormaps):
+        colors = []
+        for pid, vals in values.items():
+            cm = colormaps[pid]
+            if len(vals) == 1:
+                colors.append(cm(vals[0].v))
+            else:
+                if vals[0].frequency is not None:
+                    total_frequencies = sum(vv.frequency for vv in vals)
+                    colors.append([(vv.frequency / total_frequencies, cm(vv.v)) for vv in vals])
+                else:
+                    colors.append([(1 / len(vals), cm(vv.v)) for vv in vals])
+        return colors
+
+    @staticmethod
+    def colors_and_ratios(colors):
+        _colors, ratios = [], []
+        for color in colors:
+            if isinstance(color, list):
+                # Multiple values for the same parameter.
+                for c in color:
+                    if isinstance(c, tuple):
+                        # Weighted frequencies.
+                        _colors.append(c[1])
+                        ratios.append((c[0] / len(colors)))
+                    else:
+                        _colors.append(c)
+                        ratios.append((1 / len(color)) / len(colors))
+            else:
+                _colors.append(color)
+                ratios.append(1 / len(colors))
+        return _colors, ratios
 
     @staticmethod
     def add_options(parser, help_suffix):  # pragma: no cover

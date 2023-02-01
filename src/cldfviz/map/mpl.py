@@ -62,7 +62,7 @@ class MapPlot(Map):
     """
     A geographic map, zoomed in to the extent defined by a list of languages.
     """
-    __formats__ = ['jpg', 'png', 'pdf']
+    __formats__ = ['jpg', 'png', 'pdf', 'svg']
     __marker_class__ = MPLMarkerSpec
 
     def __init__(self, languages, args):
@@ -201,8 +201,7 @@ class MapPlot(Map):
 
     def pie_markers(self, colors):
         start = 0.
-        for color in colors:
-            ratio = 1 / len(colors)
+        for color, ratio in zip(*self.colors_and_ratios(colors)):
             x = [0] + \
                 np.cos(np.linspace(2 * np.pi * start, 2 * np.pi * (start + ratio), 30)).tolist() + \
                 [0]
@@ -245,8 +244,9 @@ class MapPlot(Map):
                     **text_kw)
             return
         lon, lat = self._lonlat(language)
+        colors = self.weighted_colors(values, colormaps)
+
         if self.args.projection != 'PlateCarree':
-            colors = [colormaps[pid](vals[0].v) for pid, vals in values.items()]
             res = self.get_shape_and_color(colors)
             if res:
                 self.ax.plot(
@@ -261,9 +261,8 @@ class MapPlot(Map):
                 )
                 return
 
-            if len(values) > 1:
-                for color, marker in self.pie_markers(
-                        [colormaps[pid](vals[0].v) for pid, vals in values.items()]):
+            if (len(values) > 1) or any(isinstance(c, list) for c in colors):
+                for color, marker in self.pie_markers(colors):
                     self.ax.scatter(
                         [language.lon], [language.lat],
                         marker=marker,
@@ -287,7 +286,6 @@ class MapPlot(Map):
             )
             return
 
-        colors = [colormaps[pid](vals[0].v) for pid, vals in values.items()]
         res = self.get_shape_and_color(colors)
         if res:
             self.ax.plot(
@@ -300,14 +298,15 @@ class MapPlot(Map):
                 linewidth=1,
             )
         else:
-            s, angle = 0, 360.0 / len(values)
-            for pid, vals in values.items():
+            s = 0
+            for color, ratio in zip(*self.colors_and_ratios(colors)):
+                angle = 360.0 * ratio
                 self.ax.add_patch(Wedge(
                     [lon, lat],
                     self.args.markersize * self.scaling_factor / 2.0,
                     s,
                     s + angle,
-                    facecolor=colormaps[pid](vals[0].v),
+                    facecolor=color,
                     edgecolor="black",
                     linewidth=1,
                     label=language.name,

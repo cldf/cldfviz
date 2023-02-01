@@ -63,6 +63,7 @@ class Value:
     lid = attr.ib()
     code = attr.ib()
     float = attr.ib(default=None)
+    frequency = attr.ib(default=None)
 
     def __attrs_post_init__(self):
         try:
@@ -77,13 +78,14 @@ class Value:
         return (self.lid, self.pid, self.v) < (other.lid, other.pid, other.v)
 
     @classmethod
-    def from_row(cls, row, codes):
+    def from_row(cls, row, codes, frequency_col=None):
         return cls(
             v=row.get('codeReference') or row['value'],
             lid=row['languageReference'],
             pid=row['parameterReference'],
             code=codes[row['parameterReference']][row['codeReference']]
             if row['parameterReference'] in codes and row['codeReference'] else None,
+            frequency=row[frequency_col] if frequency_col else None,
         )
 
 
@@ -100,7 +102,8 @@ class MultiParameter:
                  include_missing: bool = False,
                  glottolog: typing.Optional[typing.Dict[str, typing.Union[dict, Languoid]]] = None,
                  language_properties: typing.Optional[typing.Iterable[str]] = None,
-                 language_filter: typing.Optional[typing.Callable[[orm.Object], bool]] = None):
+                 language_filter: typing.Optional[typing.Callable[[orm.Object], bool]] = None,
+                 frequency_col=None):
         self.include_missing = include_missing
         language_properties = language_properties or []
 
@@ -159,7 +162,7 @@ class MultiParameter:
                     lang = langs.get(val['languageReference'])
                     if lang:
                         self.languages[val['languageReference']] = lang
-                        self.values.append(Value.from_row(val, codes))
+                        self.values.append(Value.from_row(val, codes, frequency_col=frequency_col))
                         self.parameters[val['parameterReference']] \
                             .value_to_code[str(val['value'])] = \
                             val.get('codeReference') or val['Value']

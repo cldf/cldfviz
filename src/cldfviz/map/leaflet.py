@@ -121,10 +121,12 @@ class MapLeaflet(Map):
         res = self.get_shape_and_color(colors)
         if res:
             return svg.icon(SHAPE_MAP[res[0]] + res[1].replace('#', ''))
-        return svg.pie([1] * len(colors), colors, stroke_circle=True)
+        col, data = self.colors_and_ratios(colors)
+        return svg.pie(data, col, stroke_circle=True)
 
     def add_language(self, language, values, colormaps, spec=None):
-        icon = self._icon([colormaps[pid](vals[0].v) for pid, vals in values.items()])
+        colors = self.weighted_colors(values, colormaps)
+        icon = self._icon(colors)
         props = {
             "name": language.name,
             "tooltip": language.name,
