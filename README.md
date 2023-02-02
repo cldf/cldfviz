@@ -93,7 +93,7 @@ For details see [docs/text.md](docs/text.md).
 
 ### `cldfviz.examples`
 
-While it is possible to (selectively) include IGT formatted examples in [CLDF Markdwown](https://github.com/cldf/cldf/blob/master/extensions/markdown.md) via `cldfviz.text`,
+While it is possible to (selectively) include IGT formatted examples in [CLDF Markdown](https://github.com/cldf/cldf/blob/master/extensions/markdown.md) via `cldfviz.text`,
 often it is useful to just look at an HTML formatted list of all examples from a dataset. This can
 be done via `cldfviz.examples`. For details see [docs/examples.md](docs/examples.md).
 
