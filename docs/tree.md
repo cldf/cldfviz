@@ -1,7 +1,7 @@
 # `cldfviz.tree`
 
 The `cldfviz.tree` command wraps functionality provided in the Python package
-[`toytree` package](https://toytree.readthedocs.io/en/latest/index.html) to plot (phylogenetic)
+[`toytree`](https://toytree.readthedocs.io/en/latest/index.html) to plot (phylogenetic)
 trees available in [Newick format]() in [SVG format](https://de.wikipedia.org/wiki/Scalable_Vector_Graphics)
 (which is amenable to post-processing using tools like [Inkscape](https://inkscape.org/)).
 
@@ -81,7 +81,7 @@ potential influence of geography on data. Similarly, plotting data on a genealog
 light on the influence of genealogy.
 
 Now, there isn't too much variation in Ta-Ne-Omotic for WALS features, so we'll switch to investigating
-[vowel naslaization](https://wals.info/feature/10A) for Indo-European languages:
+[vowel nasalization](https://wals.info/feature/10A) for Indo-European languages:
 ```shell
 cldfbench cldfviz.tree --tree-dataset glottolog-cldf-4.7/ --tree-id indo1319 \
 --data-dataset wals-2020.3/ --parameters 10A --output tree.svg \
@@ -113,7 +113,8 @@ We use the `--language-filters` option to prune the large Afro-Asiatic tree to t
 comparison (and re-use the styles from above for consistent layout):
 
 ```shell
-$ cldfbench cldfviz.tree PATH/TO/wals/cldf --tree-id  family-afroasiatic wals-omotic.svg --styles styles.py --name-as-label --language-filters '{"Subfamily":"Omotic"}'
+cldfbench cldfviz.tree --tree-dataset wals-2020.3/ --tree-id family-afroasiatic --output tree.svg \
+--name-as-label --language-filters '{"Subfamily":"Omotic"}' --open
 ```
 
 > ![](output/wals-omotic.svg)
