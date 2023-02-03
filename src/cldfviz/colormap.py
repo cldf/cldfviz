@@ -1,5 +1,6 @@
 import json
 import typing
+import itertools
 import collections
 
 from matplotlib import cm
@@ -9,7 +10,7 @@ from clldutils.color import qualitative_colors, sequential_colors, rgb_as_hex
 
 from cldfviz.multiparameter import CONTINUOUS, CATEGORICAL, Parameter
 
-__all__ = ['COLORMAPS', 'hextriplet', 'Colormap']
+__all__ = ['COLORMAPS', 'hextriplet', 'Colormap', 'get_shape_and_color', 'weighted_colors']
 COLORMAPS = {
     CATEGORICAL: ['boynton', 'tol', 'base', 'seq'],
     CONTINUOUS: [cm for cm in plt.colormaps() if not cm.endswith('_r')],
@@ -99,3 +100,26 @@ class Colormap:
         if value is None:
             return self.novalue
         return self.cm(value)
+
+
+def get_shape_and_color(colors_or_shapes):
+    if len(colors_or_shapes) == 2:
+        shapes, colors = [], []
+        for _, c in colors_or_shapes:
+            (shapes if c in SHAPES else colors).append(c)
+        if shapes:
+            if len(shapes) > 1:
+                raise ValueError('Only one shape can be specified for a marker')
+            return shapes[0], colors[0]
+
+
+def weighted_colors(values, colormaps):
+    colors = []
+    for pid, vals in values.items():
+        cm = colormaps[pid]
+        total = sum(1 if vv.weight is None else vv.weight for vv in vals)
+        for code, vvs in itertools.groupby(sorted(vals, key=lambda vv: vv.v), lambda vv: vv.v):
+            colors.append((
+                sum(1 if vv.weight is None else vv.weight for vv in vvs) / total / len(values),
+                cm(code)))
+    return colors

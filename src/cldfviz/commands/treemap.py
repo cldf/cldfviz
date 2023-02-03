@@ -26,14 +26,11 @@ import logging
 import pathlib
 import collections
 
-import newick
-from pyglottolog.objects import Glottocode
 from pycldf.cli_util import add_dataset, get_dataset
-from pycldf.ext import discovery
-from pycldf.trees import TreeTable
 
 from cldfviz.cli_util import (
     add_testable, add_open, open_output, add_language_filter, get_filtered_languages,
+    add_tree, get_tree,
 )
 from cldfviz.glottolog import Glottolog
 from cldfviz.pdutils import df_from_dicts
@@ -72,24 +69,9 @@ def register(parser):
     add_dataset(parser)
     Glottolog.add(parser)
     parser.add_argument('parameter')
-    parser.add_argument(
-        '--tree',
-        help="Tree specified as Glottocode (interpreted as the root of the Glottolog tree), "
-             "Newick formatted string or path to a file containing the Newick formatted "
-             "tree.")
-    parser.add_argument(
-        '--tree-dataset', default=None,
-    )
-    parser.add_argument(
-        '--tree-id', default=None,
-    )
-    parser.add_argument(
-        '--glottocodes-as-tree-labels',
-        action='store_true',
-        default=False,
-        help="If a tree in a TreeTable of a CLDF dataset is used, the nodes will be renamed "
-             "using the corresponding Glottocodes."
-    )
+
+    add_tree(parser)
+
     parser.add_argument(
         '--tree-label-property',
         help="Name of the language property used to identify languages in the tree.",
@@ -126,34 +108,7 @@ def run(args):
         (filtered_languages is None or (v['languageReference'] in filtered_languages))}
 
     # 2. Get the tree ...
-    if args.tree:
-        if Glottocode.pattern.match(args.tree):
-            assert glottolog
-            tree = glottolog.newick(args.tree)
-        elif pathlib.Path(args.tree).exists():
-            tree = newick.read(args.tree)[0]
-        else:
-            tree = newick.loads(args.tree)[0]
-    else:
-        treeds = discovery.get_dataset(args.tree_dataset, args.download_dir)
-        for tree in TreeTable(treeds):
-            if (args.tree_id and tree.id == args.tree_id) or \
-                    ((not args.tree_id) and tree.tree_type == 'summary'):
-                tree = tree.newick()
-                break
-        else:
-            raise ValueError('No matching tree found')  # pragma: no cover
-        # Rename tree nodes:
-        if args.glottocodes_as_tree_labels:
-            name_map = {
-                r['id']: r['glottocode']
-                for r in treeds.iter_rows('LanguageTable', 'id', 'glottocode')}
-
-            def rename(n):
-                n.name = name_map.get(n.name)
-                return n
-            tree.visit(rename)
-
+    tree, _, _ = get_tree(args, glottolog=glottolog)
     # ... and its set of node labels.
     nodes = {n.name for n in tree.walk()}
 

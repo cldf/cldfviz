@@ -22,11 +22,10 @@ import pathlib
 from pycldf.cli_util import get_dataset, add_dataset
 from clldutils.clilib import PathType, ParserError
 
-from cldfviz.colormap import Colormap, COLORMAPS
-from cldfviz.multiparameter import MultiParameter, CONTINUOUS, CATEGORICAL
 from cldfviz.map import Map, MarkerFactory
 from cldfviz.cli_util import (
-    add_testable, add_listvalued, import_subclass, add_language_filter, get_language_filter)
+    add_testable, import_subclass, get_multiparameter, join_quoted, add_multiparameter,
+)
 from cldfviz.glottolog import Glottolog
 
 FORMATS = {}
@@ -35,45 +34,13 @@ for cls in Map.__subclasses__():
         FORMATS[fmt] = cls
 
 
-def join_quoted(items):
-    return ', '.join(['"{}"'.format(i) for i in items])
-
-
 def register(parser):
     add_testable(parser)
     add_dataset(parser)
-    add_language_filter(parser)
     Glottolog.add(parser)
-    add_listvalued(
-        parser,
-        '--parameters',
-        help="Comma-separated Parameter IDs, specifying the values to plot on the map. If not "
-             "specified, all languages in the dataset will be plotted.",
-    )
-    add_listvalued(
-        parser,
-        '--datatypes',
-        help="Explicit datatypes for parameters",
-    )
-    add_listvalued(
-        parser,
-        '--colormaps',
-        help="Comma-separated names of colormaps to use for the respective parameter. Choose from "
-             "{} for categorical and from {} for continuous parameters."
-             "".format(join_quoted(COLORMAPS[CATEGORICAL]), join_quoted(COLORMAPS[CONTINUOUS])),
-    )
-    add_listvalued(
-        parser,
-        '--language-properties',
-        help="Comma-separated language properties, i.e. columns in the dataset's LanguageTable "
-             "to plot on the map.",
-    )
-    add_listvalued(
-        parser,
-        '--language-properties-colormaps',
-        help="Comma-separated names of colormap to use for the respective language properties. "
-             "See help for --colormaps for choices",
-    )
+
+    add_multiparameter(parser, with_language_filter=True, with_language_properties=True)
+
     parser.add_argument(
         '--output',
         type=PathType(type='file', must_exist=False),
@@ -116,12 +83,6 @@ def register(parser):
         help="Display language names on the map",
     )
     parser.add_argument(
-        '--missing-value',
-        default=None,
-        help="A color used to indicate missing values. If not specified missing values will be "
-             "omitted.",
-    )
-    parser.add_argument(
         '--no-legend',
         action='store_true',
         default=False,
@@ -132,10 +93,6 @@ def register(parser):
         action='store_true',
         default=False,
         help="Don't open the created file.",
-    )
-    parser.add_argument(
-        '--frequency-col',
-        default=None,
     )
     for cls in Map.__subclasses__():
         cls.add_options(
@@ -149,44 +106,8 @@ def run(args):
     else:
         assert args.output.suffix[1:] == args.format
 
-    glottolog = Glottolog.from_args(args)
-    data = MultiParameter(
-        ds,
-        args.parameters,
-        datatypes=args.datatypes,
-        glottolog=glottolog,
-        include_missing=args.missing_value is not None,
-        language_properties=args.language_properties,
-        language_filter=get_language_filter(args),
-        frequency_col=getattr(args, 'frequency_col', None),
-    )
-    if args.parameters and not args.colormaps:
-        args.colormaps = [None] * len(args.parameters)
-    if args.language_properties and not args.language_properties_colormaps:
-        args.language_properties_colormaps = \
-            [None] * len(args.language_properties)
-    if '__language__' in data.parameters:
-        assert len(data.parameters) == 1
-        args.colormaps = [None]
-    args.colormaps.extend(args.language_properties_colormaps)
-    assert len(args.colormaps) == len(data.parameters), '{}'.format(data.parameters.keys())
-    try:
-        cms = {
-            pid: Colormap(
-                data.parameters[pid],
-                name=cm,
-                novalue=args.missing_value)
-            for pid, cm in zip(data.parameters, args.colormaps)}
-    except (ValueError, KeyError) as e:
-        raise ParserError(str(e))
-
-    with_shapes = sum(1 for cm in cms.values() if cm.with_shapes)
-    if with_shapes:
-        if with_shapes > 1:
-            raise ParserError('Only one colormap can specify shapes.')
-        if len(data.parameters) != 2:
-            raise ParserError('Shapes can only be specified for one of two parameters.')
-
+    data, cms = get_multiparameter(
+        args, ds, Glottolog.from_args(args), exclude_lang=lambda lg: lg.lat is None)
     if args.marker_factory:
         comps = args.marker_factory.split(',')
         cls = import_subclass(comps[0], MarkerFactory)

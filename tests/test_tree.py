@@ -30,7 +30,9 @@ def test_render(StructureDataset, opts, expect):
         from pycldf.trees import TreeTable
         from cldfviz.tree import render
 
-    assert expect(render(list(TreeTable(StructureDataset))[0], **opts))
+    svg = render(list(TreeTable(StructureDataset))[0], **opts)
+    assert '<svg' in svg
+    assert expect(svg)
 
 
 def test_render_to_file(StructureDataset, tmp_path):

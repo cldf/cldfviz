@@ -11,6 +11,11 @@ from cldfbench.__main__ import main
 from cldfviz.map import WITH_CARTOPY, MarkerFactory, leaflet, mpl
 
 
+def lmain(*args, **kw):
+    kw.setdefault('log', logging.getLogger(__name__))
+    return main(*args, **kw)
+
+
 @pytest.fixture
 def ds_arg(StructureDataset):
     return str(StructureDataset.directory / 'StructureDataset-metadata.json')
@@ -62,19 +67,46 @@ def test_tree(ds_arg, tmp_path, capsys):
         warnings.filterwarnings(
             'ignore', category=DeprecationWarning, module='importlib._bootstrap')
 
-        main(['cldfviz.tree', ds_arg, '--ascii-art'])
-        out, _ = capsys.readouterr()
-        assert 'Marathi' in out
-
         styles = tmp_path / 's.json'
         styles.write_text('{}', encoding='utf8')
         o = tmp_path / 'test2.svg'
-        main(['cldfviz.tree', ds_arg, '--output', str(o), '--test', '--styles', str(styles)])
+        lmain(['cldfviz.tree', '--tree-dataset', ds_arg, '--output', str(o), '--test', '--styles', str(styles)])
         assert o.exists()
 
-        main(['cldfviz.tree', ds_arg, '--test', '--title', 'The Title'])
+@pytest.mark.parametrize(
+    'args,expect',
+    [
+        (
+            ['--tree-dataset', 'DATASET', '--ascii-art', '--tree-id', '1'],
+            lambda out: 'Marathi' in out),
+        (
+            ['--tree-dataset', 'DATASET', '--test', '--title', 'The Title'],
+            lambda out: 'The Title' in out),
+        (
+            ['--tree-dataset', 'DATASET', '--test', '--name-as-label'],
+            lambda out: 'Korku_NM' not in out and ('Korku' in out)),
+        (
+            ['--tree', '((khr:1,sat:1.1),(unr:2,bfw:1.9)):3', '--tree-label-property',
+             'ISO639P3code', '--name-as-label', '--data-dataset', 'DATASET', '--parameters', 'C'],
+            lambda out: 'Kharia' in out),
+        (
+            ['--tree-dataset', 'DATASET', '--test', '--name-as-label',
+             '--data-dataset', 'DATASET', '--parameters', 'C'],
+            lambda out: 'Enclitic PL' in out and ('Korku_NM' not in out) and ('Korku' in out)),
+        (
+            ['--tree', '((Santali_NM:1,Mundari_NM:1.1),(Hindi_IA:2,Sadri_IA:1.9)):3',
+             '--test', '--data-dataset', 'DATASET', '--parameters', 'C,B'],
+            lambda out: 'Hindi_IA' in out),
+    ]
+)
+def test_tree_args(ds_arg, tmp_path, capsys, args, expect):
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore', category=DeprecationWarning, module='importlib._bootstrap')
+
+        lmain(['cldfviz.tree'] + [ds_arg if arg == 'DATASET' else arg for arg in args])
         out, _ = capsys.readouterr()
-        assert 'The Title' in out
+        assert expect(out)
 
 
 def test_treemap(ds_arg, tmp_path, glottolog_dir, metadatafree_dataset):
@@ -105,10 +137,9 @@ def test_treemap(ds_arg, tmp_path, glottolog_dir, metadatafree_dataset):
               '--tree-id', '1',
               '--glottocodes-as-tree-labels'])
         assert tmp_path.joinpath('B.pdf').exists()
-        main(['cldfviz.treemap', str(tmp_path / 'values.csv'), 'param1', '--test',
+        lmain(['cldfviz.treemap', str(tmp_path / 'values.csv'), 'param1', '--test',
               '--ltm-filename', str(tmp_path / 'B.pdf'),
-              '--tree', 'abcd1234', '--glottolog', str(glottolog_dir)],
-             log=logging.getLogger(__name__))
+              '--tree', 'abcd1234', '--glottolog', str(glottolog_dir)])
         assert tmp_path.joinpath('B.pdf').exists()
 
 
@@ -180,9 +211,8 @@ def test_text_multi_ds(ds_arg, capsys):
 def test_text_with_images(ds_arg, capsys, tmp_path):
     tmpl = tmp_path / 'templ.md'
     tmpl.write_text('![](map.html?parameters=B&pacific-centered#cldfviz.map-pref)')
-    main(
-        ['cldfviz.text', '--text-file', str(tmpl), '--test', '--output', str(tmp_path / 'test.md'), 'pref:' + ds_arg],
-        log=logging.getLogger(__name__))
+    lmain(
+        ['cldfviz.text', '--text-file', str(tmpl), '--test', '--output', str(tmp_path / 'test.md'), 'pref:' + ds_arg])
     assert tmp_path.joinpath('map.html').exists()
 
     main(['cldfviz.text', ds_arg, '--text-string', '![](tree.svg#cldfviz.tree)', '--test', '--output', str(tmp_path / 'test.md')])
@@ -225,7 +255,7 @@ ID,Language_ID,Parameter_ID,Value
             if v is not None:
                 args.append(str(v))
         args.append(str(data or values))
-        main(args, log=logging.getLogger(__name__))
+        lmain(args)
 
     run(parameters='param1')
     assert tmp_path.joinpath('testmap.html').exists()

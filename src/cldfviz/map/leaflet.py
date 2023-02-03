@@ -5,6 +5,7 @@ import attr
 from clldutils import svg
 from clldutils.html import HTML
 
+from cldfviz.colormap import get_shape_and_color, weighted_colors
 from .base import Map, PACIFIC_CENTERED
 import cldfviz
 
@@ -118,15 +119,14 @@ class MapLeaflet(Map):
         return [lon, lat]
 
     def _icon(self, colors):
-        res = self.get_shape_and_color(colors)
+        colors = [(1 / len(colors), t) if isinstance(t, str) else t for t in colors]
+        res = get_shape_and_color(colors)
         if res:
             return svg.icon(SHAPE_MAP[res[0]] + res[1].replace('#', ''))
-        col, data = self.colors_and_ratios(colors)
-        return svg.pie(data, col, stroke_circle=True)
+        return svg.pie([c[0] for c in colors], [c[1] for c in colors], stroke_circle=True)
 
     def add_language(self, language, values, colormaps, spec=None):
-        colors = self.weighted_colors(values, colormaps)
-        icon = self._icon(colors)
+        icon = self._icon(weighted_colors(values, colormaps))
         props = {
             "name": language.name,
             "tooltip": language.name,

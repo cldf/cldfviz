@@ -19,6 +19,8 @@ With `cldfviz.map` you can create
 - printable maps in one of the image formats [PNG](https://en.wikipedia.org/wiki/Portable_Network_Graphics), 
   [JPG](https://en.wikipedia.org/wiki/JPEG) or [PDF](https://en.wikipedia.org/wiki/PDF), using the
   [cartopy](https://pypi.org/project/Cartopy/) library.
+- printable and editable maps in [SVG](https://en.wikipedia.org/wiki/SVG) format, using the
+  [cartopy](https://pypi.org/project/Cartopy/) library.
 
 Since installation of cartopy is somewhat complex, it isn't installed with `cldfviz` by default, but has to
 be explicitly [specified as extra](https://peps.python.org/pep-0508/#extras), running
@@ -26,8 +28,8 @@ be explicitly [specified as extra](https://peps.python.org/pep-0508/#extras), ru
 pip install cldfviz[cartopy]
 ```
 
-Choosing between output formats is done with the `--format` option, which accepts the string `html`, `png`, `jpg`
-and `pdf`.
+Choosing between output formats is done with the `--format` option, which accepts the string `html`, `png`, `jpg`, `pdf`
+and `svg`.
 
 `cldfviz` tries to create similar looking maps for both output types so that you can explore your dataset using
 HTML maps, and then create corresponding maps for a publication by just swapping the `--format` option.
@@ -83,7 +85,7 @@ list of column names from the `LanguageTable` for the `--language-properties` op
   For details about how to specify colormaps, see [colormaps.md](colormaps.md).
 
 - `--markersize`
-  The size of the map markers is controled via the `--markersize` option. You might need to experiment a bit
+  The size of the map markers is controlled via the `--markersize` option. You might need to experiment a bit
   to figure out a perfect size, since "size in pixels" may translate to quite different optics depending on
   screen size, `--dpi` settings, projections, etc.
 
@@ -97,6 +99,8 @@ There's a handfull of options to control the overall appearance of maps:
   in half.
 - `--language-labels`: Flag to display language names on the map. Note: This quickly gets crowded.
 - `--missing-value`: Specify a color used to indicate missing values. If not specified missing values will be omitted.
+  Note that this setting will only include rows from `ValueTable` having `null` as `Value`. It will **not**
+  include synthetic `null` values for all languages in the dataset.
 - `--no-legend`: Flag to not add a legend to the map. This is mainly of interest for printable maps, e.g. when a
   legend is provided elsewhere in a paper.
 
@@ -153,31 +157,40 @@ ID,Language_ID,Parameter_ID,Value
 ```
 you can "put it on a map" using the geo-data from Glottolog by running
 ```shell
-$ cldfbench cldfviz.map values.csv --parameters romance --glottolog-cldf https://raw.githubusercontent.com/glottolog/glottolog-cldf/v4.7/cldf/cldf-metadata.json
+$ cldfbench cldfviz.map values.csv --parameters romance --colormap tol \
+--glottolog-cldf glottolog-cldf-4.7/ --format svg
 ```
 
+![](output/minimal.svg)
 
-### HTML maps
 
-With the [leaflet](https://leafletjs.com) library, we can create interactive maps which can be explored in a browser.
+### Datatypes
 
-Running
+#### Multi-valued variables
+
+While many typological datasets look like the one above (or like WALS), with one value per language and parameter, this may not
+always be the case. APiCS, for example, has quite a few multi-valued features, e.g. [Order of subject, object, and verb](https://apics-online.info/parameters/1).
+`cldfviz.map` supports this (much like the APiCS web app does) by plotting small pie-charts as markers
+in case of multi-valued languages:
 ```shell
-cldfbench cldfviz.map wals-2020.3/ --base-layer USGS.USTopo --pacific-centered
+$ cldfbench cldfviz.map cldf-datasets-apics-4ed59b5/cldf --parameters 1 --format svg --projection Mollweide --width 10
 ```
-will create an HTML page `map.html` and open it in the browser, thus rendering an interactive
-map of the languages in the dataset.
+![](output/apics_1_nofreqs.svg)
 
-![WALS languages](output/wals_languages.png)
+Note the difference in sector sizes between this map and the one on the APiCS site. The size of the sectors
+on the APiCS site is **weighted** by a frequency. Fortunately, this frequency is available in the CLDF
+data as well and can be used by `cldfviz.map`, too:
 
-For smaller language samples, it may be suitable to display the language names on the map, too.
-Here's [WALS' feature 10B](https://wals.info/feature/10B):
 ```shell
-cldfbench cldfviz.map wals-2020.3/ --parameters 10B --colormaps tol --markersize 20 --language-labels
+$ cldfbench cldfviz.map cldf-datasets-apics-4ed59b5/cldf --parameters 1 --weight-col Frequency \
+--format svg --projection Mollweide --width 10
 ```
-![WALS 10B](output/wals_10B.png)
+![](output/apics_1_freqs.svg)
 
-`cldfviz.map` can detect and display continuous variables, too. There are no continuous features in WALS, but since
+
+#### Continuous variables
+
+`cldfviz.map` can detect and display continuous variables, too. There are no continuous features in APiCS or WALS, but since
 `cldfviz.map` also works with
 [metadata-free CLDF datasets](https://github.com/cldf/cldf/blob/master/README.md#metadata-free-conformance), let's
 quickly create one. Using the [UNIX shell](https://swcarpentry.github.io/shell-novice/) tools `sed` and `awk` and the
@@ -238,16 +251,37 @@ cldfbench cldfviz.map wals-2020.3/ --parameters 129A,130A,130B \
 ![WALS 129A, 130A and 130B](output/wals_129A_130A_130B.jpg)
 
 
-#### Printable maps via cartopy
+### HTML maps
+
+With the [leaflet](https://leafletjs.com) library, we can create interactive maps which can be explored in a browser.
+
+Running
+```shell
+cldfbench cldfviz.map wals-2020.3/ --base-layer USGS.USTopo --pacific-centered --colormaps tol
+```
+will create an HTML page `map.html` and open it in the browser, thus rendering an interactive
+map of the languages in the dataset.
+
+![WALS languages](output/wals_languages.png)
+
+For smaller language samples, it may be suitable to display the language names on the map, too.
+Here's [WALS' feature 10B](https://wals.info/feature/10B):
+```shell
+cldfbench cldfviz.map wals-2020.3/ --parameters 10B --colormaps tol --markersize 20 --language-labels
+```
+![WALS 10B](output/wals_10B.png)
+
+
+### Printable maps via cartopy
 
 If `cldfviz` is installed with `cartopy` similar maps to the ones shown above can also be created
 in various image formats:
 ```shell
-cldfbench cldfviz.map wals-2020.3/ --parameters 129A --colormaps tol \
---language-properties Latitude --pacific-centered \
---format jpg --width 20 --height 10 --dpi 300 --markersize 40
+$ cldfbench cldfviz.map wals-2020.3/ --parameters 129A --colormaps tol --language-properties Latitude \
+--pacific-centered --format svg --width 20 --height 10 --dpi 300 --markersize 20 --with-ocean \
+--projection Mollweide
 ```
-![WALS 129A and latitude](output/wals_latitude_handandarm_2.jpg)
+![WALS 129A and latitude](output/wals_latitude_handandarm_2.svg)
 
 While these maps lack the interactivity of the HTML maps, they may be better suited for inclusion in print
 formats than screen shots of maps in the browser. They also provide some additional options like a choice

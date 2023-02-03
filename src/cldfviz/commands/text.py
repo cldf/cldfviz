@@ -113,7 +113,8 @@ def create_images(oargs, md, dss, base_dir):
             if prefix is None or (ml.parsed_url.fragment.partition('-')[2] == prefix):
                 p = base_dir.joinpath(ml.parsed_url.path)
                 p.parent.mkdir(parents=True, exist_ok=True)
-                args = [str(ds.tablegroup._fname)]
+                args = ['--tree-dataset', ] if 'tree' in ml.parsed_url.fragment else []
+                args.append(str(ds.tablegroup._fname))
                 kw = ml.parsed_url_query
                 kw['output'] = [str(p)]
                 for k, v in kw.items():

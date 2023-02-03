@@ -1,2 +1,2 @@
-ID,Name,Description,Media_ID,Tree_Branch_Length_Unit
-1,1,Stuff,treenwk,millennia
+ID,Name,Description,Media_ID,Tree_Branch_Length_Unit,Tree_Type
+1,1,Stuff,treenwk,millennia,summary

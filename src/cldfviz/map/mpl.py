@@ -9,10 +9,11 @@ import numpy as np
 import cartopy.feature
 import cartopy.crs
 from matplotlib import pyplot as plt
-from matplotlib.patches import Wedge, Rectangle
+from matplotlib.patches import Wedge, Rectangle, Circle
 from matplotlib.legend_handler import HandlerPatch
 from PIL import Image
 
+from cldfviz.colormap import get_shape_and_color, weighted_colors
 from .base import Map, PACIFIC_CENTERED
 
 SHAPE_MAP = {
@@ -98,7 +99,8 @@ class MapPlot(Map):
         if (not self.args.test) and (not self.args.with_stock_img):  # pragma: no cover
             ax.coastlines(resolution='50m', color='darkgrey')
             ax.add_feature(cartopy.feature.LAND, color='beige', zorder=1)
-            ax.add_feature(cartopy.feature.OCEAN, color='#97B5E1', zorder=2)
+            if self.args.with_ocean:
+                ax.add_feature(cartopy.feature.OCEAN, color='#97B5E1', zorder=2)
             if not self.args.no_borders:
                 ax.add_feature(cartopy.feature.BORDERS, linestyle=':', zorder=4)
             ax.add_feature(cartopy.feature.LAKES, color="#97B5E1", alpha=0.5, zorder=3)
@@ -172,6 +174,14 @@ class MapPlot(Map):
             default='PlateCarree',
         )
         parser.add_argument(
+            '--with-ocean',
+            help="Render the oceans in the same color as other bodies of water. Since cartopy's "
+                 "OCEAN polygon is somewhat broken, this may result in broken SVG output. Thus, we "
+                 "don't include this by default. {}".format(help_suffix),
+            action="store_true",
+            default=False,
+        )
+        parser.add_argument(
             '--with-stock-img',
             help="Add a map underlay (using cartopy's `stock_img` method). {}".format(help_suffix),
             action="store_true",
@@ -200,8 +210,14 @@ class MapPlot(Map):
         return lon, lat
 
     def pie_markers(self, colors):
+        if len(colors) == 1:
+            # Draw a full circle
+            x = np.cos(np.linspace(0, 2 * np.pi, 30)).tolist()
+            y = np.sin(np.linspace(0, 2 * np.pi, 30)).tolist()
+            yield colors[0][1], np.column_stack([x, y])
+            return
         start = 0.
-        for color, ratio in zip(*self.colors_and_ratios(colors)):
+        for ratio, color in colors:
             x = [0] + \
                 np.cos(np.linspace(2 * np.pi * start, 2 * np.pi * (start + ratio), 30)).tolist() + \
                 [0]
@@ -244,10 +260,10 @@ class MapPlot(Map):
                     **text_kw)
             return
         lon, lat = self._lonlat(language)
-        colors = self.weighted_colors(values, colormaps)
+        colors = weighted_colors(values, colormaps)
 
         if self.args.projection != 'PlateCarree':
-            res = self.get_shape_and_color(colors)
+            res = get_shape_and_color(colors)
             if res:
                 self.ax.plot(
                     language.lon, language.lat,
@@ -261,32 +277,21 @@ class MapPlot(Map):
                 )
                 return
 
-            if (len(values) > 1) or any(isinstance(c, list) for c in colors):
-                for color, marker in self.pie_markers(colors):
-                    self.ax.scatter(
-                        [language.lon], [language.lat],
-                        marker=marker,
-                        s=[self.args.markersize * 10],
-                        transform=cartopy.crs.Geodetic(),
-                        zorder=zorder,
-                        edgecolors=["black"],
-                        facecolor=color,
-                    )
-                return
-            pid, vals = list(values.items())[0]
-            self.ax.plot(
-                language.lon, language.lat,
-                color=colormaps[pid](vals[0].v),
-                markersize=self.args.markersize,
-                zorder=zorder,
-                marker='o',
-                markeredgecolor='black',
-                linewidth=1,
-                transform=cartopy.crs.Geodetic(),
-            )
+            # Use scatter to create pie-markers suitable for the projection.
+            for color, marker in self.pie_markers(colors):
+                self.ax.scatter(
+                    [language.lon], [language.lat],
+                    marker=marker,
+                    s=[self.args.markersize * 10],
+                    transform=cartopy.crs.Geodetic(),
+                    linewidth=1,
+                    edgecolor='black',
+                    zorder=zorder,
+                    facecolor=color,
+                )
             return
 
-        res = self.get_shape_and_color(colors)
+        res = get_shape_and_color(colors)
         if res:
             self.ax.plot(
                 lon, lat,
@@ -299,7 +304,7 @@ class MapPlot(Map):
             )
         else:
             s = 0
-            for color, ratio in zip(*self.colors_and_ratios(colors)):
+            for ratio, color in colors:
                 angle = 360.0 * ratio
                 self.ax.add_patch(Wedge(
                     [lon, lat],
@@ -307,12 +312,18 @@ class MapPlot(Map):
                     s,
                     s + angle,
                     facecolor=color,
-                    edgecolor="black",
-                    linewidth=1,
+                    linewidth=0,
                     label=language.name,
                     zorder=zorder
                 ))
                 s += angle
+            self.ax.add_patch(Circle(
+                (lon, lat),
+                self.args.markersize * self.scaling_factor / 2.0,
+                fill=False,
+                edgecolor="black",
+                linewidth=1,
+                zorder=zorder))
         if self.args.language_labels:
             self.ax.text(
                 lon + self.args.markersize * self.scaling_factor + 3 * self.scaling_factor,
