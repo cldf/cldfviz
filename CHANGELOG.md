@@ -1,7 +1,7 @@
 # Changes
 
 
-## [Unreleased]
+## [v0.12.0] - 2023-02-06
 
 - Support for plotting data on trees.
 - Support for multi-valued parameters.
