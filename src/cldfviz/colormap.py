@@ -22,6 +22,13 @@ SHAPES = {
     'diamond',
     'circle',
 }
+SVG_SHAPE_MAP = {
+    'triangle_down': 'f',
+    'triangle_up': 't',
+    'square': 's',
+    'diamond': 'd',
+    'circle': 'c',
+}
 
 
 def hextriplet(s):
@@ -103,14 +110,14 @@ class Colormap:
 
 
 def get_shape_and_color(colors_or_shapes):
-    if len(colors_or_shapes) == 2:
+    if 1 <= len(colors_or_shapes) <= 2:
         shapes, colors = [], []
         for _, c in colors_or_shapes:
             (shapes if c in SHAPES else colors).append(c)
         if shapes:
             if len(shapes) > 1:
                 raise ValueError('Only one shape can be specified for a marker')
-            return shapes[0], colors[0]
+            return shapes[0], colors[0] if colors else '#000000'
 
 
 def weighted_colors(values, colormaps):

@@ -271,6 +271,15 @@ cldfbench cldfviz.map wals-2020.3/ --parameters 10B --colormaps tol --markersize
 ```
 ![WALS 10B](output/wals_10B.png)
 
+Leveraging the [GeoJSON support in Leaflet](https://leafletjs.com/examples/geojson/), HTML maps allow
+inclusion of an additional GeoJSON overlay (and an associated [GeoJSON options object](https://leafletjs.com/reference.html#geojson-option)),
+via `--overlay-geojson` and `--overlay-options`. One such overlay - the [Terrestrial Ecoregions of the World](https://www.worldwildlife.org/publications/terrestrial-ecoregions-of-the-world) - 
+is provided with `cldfviz`.
+```shell
+cldfbench cldfviz.map wals-2020.3/ --parameters 10B --overlay-geojson ecoregions
+```
+> ![](output/wals_10B_ecoregions.png)
+
 
 ### Printable maps via cartopy
 

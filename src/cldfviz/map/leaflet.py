@@ -1,21 +1,18 @@
+import html
 import json
 import string
 
 import attr
 from clldutils import svg
 from clldutils.html import HTML
+from clldutils.clilib import PathType
+from clldutils import jsonlib
 
-from cldfviz.colormap import get_shape_and_color, weighted_colors
+from cldfviz.colormap import get_shape_and_color, weighted_colors, SVG_SHAPE_MAP as SHAPE_MAP
 from .base import Map, PACIFIC_CENTERED
+from cldfviz.template import TEMPLATE_DIR
 import cldfviz
 
-SHAPE_MAP = {
-    'triangle_down': 'f',
-    'triangle_up': 't',
-    'square': 's',
-    'diamond': 'd',
-    'circle': 'c',
-}
 BASE_LAYERS = {
     'OpenStreetMap': (
         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -61,6 +58,7 @@ BASE_LAYERS = {
         }
     ),
 }
+GEOJSON_LAYERS = {p.name.split('.')[0]: p for p in TEMPLATE_DIR.joinpath('map').glob('*.geojson*')}
 
 
 @attr.s
@@ -109,6 +107,18 @@ class MapLeaflet(Map):
             '--value-template',
             default='{parameter}: {code}',
             help='A format string specifying how to format values as text labels.',
+        )
+        parser.add_argument(
+            '--overlay-geojson',
+            type=PathType(type='file', must_exist=False),
+            default=None,
+            help='Path to the GeoJSON file containing a FeatureCollection to overlay on the map. '
+                 'Note: You may also chose from {}.'.format(list(GEOJSON_LAYERS.keys()))
+        )
+        parser.add_argument(
+            '--overlay-options',
+            type=PathType(type='file'),
+            default=None,
         )
 
     def _lonlat(self, language):
@@ -198,7 +208,23 @@ class MapLeaflet(Map):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """write files"""
-        html = string.Template(
+        import zipfile
+
+        overlay_geojson, overlay_options = dict(features=[]), '{}'
+        if self.args.overlay_geojson:
+            if str(self.args.overlay_geojson) in GEOJSON_LAYERS:  # cast PathType() to str!
+                self.args.overlay_options = \
+                    TEMPLATE_DIR / 'map' / '{}.js'.format(self.args.overlay_geojson)
+                self.args.overlay_geojson = GEOJSON_LAYERS[str(self.args.overlay_geojson)]
+            if zipfile.is_zipfile(self.args.overlay_geojson):
+                zip = zipfile.ZipFile(self.args.overlay_geojson)
+                overlay_geojson = json.loads(zip.read(zip.namelist()[0]).decode('utf8'))
+            else:
+                overlay_geojson = jsonlib.load(self.args.overlay_geojson)  # pragma: no cover
+            if self.args.overlay_options:
+                overlay_options = self.args.overlay_options.read_text(encoding='utf8')
+
+        html_ = string.Template(
             cldfviz.PKG_DIR.joinpath('templates', 'map', 'leaflet.html').read_text(encoding='utf8')
         ).substitute(
             title=self.args.title or '',
@@ -211,5 +237,8 @@ class MapLeaflet(Map):
             }),
             tile_url=json.dumps(BASE_LAYERS[self.args.base_layer][0]),
             tile_options=json.dumps(BASE_LAYERS[self.args.base_layer][1]),
-            geojson=json.dumps({"features": self.features, "type": "FeatureCollection"}))
-        self.args.output.write_text(html, encoding='utf8')
+            geojson=json.dumps({"features": self.features, "type": "FeatureCollection"}),
+            overlay_geojson=json.dumps(overlay_geojson['features']),
+            overlay_options=html.escape(overlay_options, quote=False),
+        )
+        self.args.output.write_text(html_, encoding='utf8')

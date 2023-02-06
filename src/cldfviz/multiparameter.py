@@ -116,7 +116,7 @@ class MultiParameter:
             langs = {gc: Language(gc, glottolog=glottolog)
                      for gc in set(r['languageReference'] for r in
                                    ds.iter_rows('ValueTable', 'languageReference'))
-                     if gc in glottolog}
+                     if glottolog and gc in glottolog}
 
         langs = {
             k: v for k, v in langs.items() if v and (exclude_lang is None or not exclude_lang(v))}

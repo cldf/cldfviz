@@ -3,6 +3,7 @@ Map plotting with matplotlib and cartopy
 """
 import json
 import textwrap
+import warnings
 
 import attr
 import numpy as np
@@ -121,12 +122,16 @@ class MapPlot(Map):
         format = self.args.output.suffix.replace('.', '').lower()
         if format == 'jpg':
             mplfname = self.args.output.parent / '{}.png'.format(self.args.output.stem)
-            plt.savefig(str(mplfname), bbox_inches="tight")
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', category=UserWarning, module='cartopy.mpl.style')
+                plt.savefig(str(mplfname), bbox_inches="tight")
             img = Image.open(str(mplfname)).convert('RGB')
             img.save(str(self.args.output), optimize=True, quality=95)
             mplfname.unlink()
         else:
-            plt.savefig(str(self.args.output), bbox_inches="tight")
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', category=UserWarning, module='cartopy.mpl.style')
+                plt.savefig(str(self.args.output), bbox_inches="tight")
 
         plt.close()
 
@@ -336,7 +341,7 @@ class MapPlot(Map):
             return '\n'.join(textwrap.wrap(s, width=20))
 
         with_shapes = False
-        if len(parameters) == 2:
+        if 1 <= len(parameters) <= 2:
             for pid, parameter in parameters.items():
                 if not isinstance(parameter.domain, tuple):
                     for v, label in parameter.domain.items():

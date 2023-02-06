@@ -9,7 +9,9 @@ import toytree
 import toyplot.svg
 from pycldf.trees import Tree
 from newick import RESERVED_PUNCTUATION, Node
-from clldutils.svg import pie
+from clldutils.svg import pie, icon
+
+from cldfviz.colormap import get_shape_and_color, SVG_SHAPE_MAP
 
 __all__ = ['render']
 
@@ -56,8 +58,16 @@ class SVGTree:
         return ee
 
     @staticmethod
-    def marker(parent, ratios, colors):
-        p = ElementTree.fromstring(pie(ratios, colors, width=20, stroke_circle=True))
+    def marker(parent, weighted_colors):
+        res = get_shape_and_color(weighted_colors)
+        if res:
+            g = ElementTree.SubElement(parent, 'g')
+            g.attrib['transform'] = 'scale(0.5)'
+            parent = g
+            p = ElementTree.fromstring(icon(res[1].replace('#', SVG_SHAPE_MAP[res[0]])))
+        else:
+            ratios, colors = [c[0] for c in weighted_colors], [c[1] for c in weighted_colors]
+            p = ElementTree.fromstring(pie(ratios, colors, width=20, stroke_circle=True))
         parent.extend(p.findall('./{}path'.format('{http://www.w3.org/2000/svg}')))
         parent.extend(p.findall('./{}circle'.format('{http://www.w3.org/2000/svg}')))
 
@@ -180,25 +190,36 @@ def add_marker(svg, t, parent, data, labels):
 
         g = ElementTree.SubElement(parent, 'g')
         g.attrib = dict(transform="translate(0,-10)")
-        svg.marker(g, [r for r, _ in data.values[t.text]], [c for _, c in data.values[t.text]])
+        svg.marker(g, data.values[t.text])
         if t.text in (labels or {}):
             t.text = labels[t.text]
 
 
 def add_legend(svg, data):
-    def shorten(text):
-        return textwrap.shorten(str(text), 25, placeholder='…')
+    def shorten(text, width):
+        return textwrap.shorten(str(text), width, placeholder='…')
 
-    def row(legend, y, ratios, colors, label, **attrs):
+    def row(legend, y, weighted_colors, label, **attrs):
         row_ = svg.element('g', legend, transform="translate(10,{})".format(y))
-        svg.marker(row_, ratios, colors)
-        svg.element('text', row_, x=30, y=15, text=shorten(label), stroke_width=0, **attrs)
+        if weighted_colors:
+            svg.marker(row_, weighted_colors)
+        svg.element(
+            'text', row_,
+            x=30 if weighted_colors else 0, y=15,
+            text=shorten(label, 25 if weighted_colors else 30), stroke_width=0, **attrs)
 
     y = 0
     legend = svg.element(
         'g', svg.svg,
         transform="translate({},{})".format(svg.width - 20, 45), style="font-size: 12px")
     rect = svg.element('rect', legend, x=0, y=0, width='200', height=svg.height, rx=5, fill='white')
+    pid_with_color = None
+    if any(cm.with_shapes for cm in data.colormaps.values()):
+        for pid, cm in data.colormaps.items():
+            if not cm.with_shapes:
+                pid_with_color = pid
+                break
+
     for i, (pid, parameter) in enumerate(data.parameters.items()):
         if i != 0:
             svg.element('line', legend, x1=5, y1=y, x2=195, y2=y, stroke='black')
@@ -208,8 +229,7 @@ def add_legend(svg, data):
 
         row(legend,
             y,
-            [1 for _ in data.parameters],
-            ['#000000' if j == i else '#ffffff' for j in range(len(data.parameters))],
+            None,
             parameter.name,
             font_weight='bold')
         y += 25
@@ -232,10 +252,12 @@ def add_legend(svg, data):
             y += 25
         else:
             for v, label in parameter.domain.items():
-                row(legend, y, [1 for _ in data.parameters],
-                    [data.colormaps[pid](v) if j == i else '#ffffff'
-                     for j in range(len(data.parameters))],
-                    label)
+                weighted_colors = [
+                    (1, data.colormaps[pid](v) if j == i else '#ffffff')
+                    for j in range(len(data.parameters))]
+                if pid_with_color == pid:
+                    weighted_colors = [(1, data.colormaps[pid](v))]
+                row(legend, y, weighted_colors, label)
                 y += 25
     rect.attrib['height'] = str(y)
 

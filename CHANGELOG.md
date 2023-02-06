@@ -6,6 +6,7 @@
 - Support for plotting data on trees.
 - Support for multi-valued parameters.
 - Support SVG output for `cldfviz.map`.
+- Support custom GeoJSON layer in HTML maps.
 - 100% statement coverage in tests.
 
 **Backward incompatibilities:**

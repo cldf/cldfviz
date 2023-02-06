@@ -235,7 +235,7 @@ def get_multiparameter(args, ds: Dataset, glottolog: Glottolog, **ukw):
     if with_shapes:
         if with_shapes > 1:
             raise ParserError('Only one colormap can specify shapes.')
-        if len(data.parameters) != 2:
+        if len(data.parameters) > 2:
             raise ParserError('Shapes can only be specified for one of two parameters.')
 
     return data, cms

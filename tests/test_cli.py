@@ -1,6 +1,8 @@
+import shlex
 import logging
 import pathlib
 import warnings
+import functools
 
 import pytest
 import requests_mock
@@ -16,33 +18,32 @@ def lmain(*args, **kw):
     return main(*args, **kw)
 
 
+def runcli(command, cli):
+    return lmain([command] + shlex.split(cli))
+
+
 @pytest.fixture
 def ds_arg(StructureDataset):
     return str(StructureDataset.directory / 'StructureDataset-metadata.json')
 
 
 def test_audiowordlist(Wordlist, capsys, tmp_path):
+    def run(opts):
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', category=DeprecationWarning, module='importlib._bootstrap')
+            warnings.filterwarnings(
+                'ignore', category=DeprecationWarning, module='joblib.backports')
+            functools.partial(runcli, 'cldfviz.audiowordlist')(opts)
+        out, _ = capsys.readouterr()
+        return out
+
     tmp_path.joinpath('1.wav').write_text('x', encoding='utf8')
-    main([
-        'cldfviz.audiowordlist',
-        str(Wordlist.directory / 'Wordlist-metadata.json'),
-        'ID=island',
-        '--media-dir', str(tmp_path),
-    ])
-    out, _ = capsys.readouterr()
-    assert '1.wav' in out
+    assert '1.wav' in run('{} ID=island --media-dir {}'.format(Wordlist.directory, tmp_path))
 
-    main([
-        'cldfviz.audiowordlist', str(Wordlist.directory / 'Wordlist-metadata.json'), 'ID=island'])
-    out, _ = capsys.readouterr()
-    assert 'example.org' in out
+    assert 'example.org' in run('{} ID=island'.format(Wordlist.directory))
 
-    main([
-        'cldfviz.audiowordlist',
-        '--output', str(tmp_path / 'o.html'),
-        str(Wordlist.directory / 'Wordlist-metadata.json'),
-        'ID=island'])
-    out, _ = capsys.readouterr()
+    run('{} ID=island --output {}'.format(Wordlist.directory, tmp_path / 'o.html'))
     assert tmp_path.joinpath('o.html').exists()
 
     ds = pycldf.Wordlist.in_dir(tmp_path)
@@ -54,15 +55,10 @@ def test_audiowordlist(Wordlist, capsys, tmp_path):
         FormTable=[dict(ID='1', Language_ID='l1', Parameter_ID='p1', Form='abc', Media_ID='m1')],
         MediaTable=[dict(ID='m1', Media_Type='audio/x-wav', Download_URL='http://example.org')],
     )
-    main([
-        'cldfviz.audiowordlist',
-        str(tmp_path / 'Wordlist-metadata.json'),
-        'p1'])
-    out, _ = capsys.readouterr()
-    assert 'abc' in out
+    assert 'abc' in run('{} p1'.format(tmp_path / 'Wordlist-metadata.json'))
 
 
-def test_tree(ds_arg, tmp_path, capsys):
+def test_tree_misc(ds_arg, tmp_path, capsys):
     with warnings.catch_warnings():
         warnings.filterwarnings(
             'ignore', category=DeprecationWarning, module='importlib._bootstrap')
@@ -73,74 +69,103 @@ def test_tree(ds_arg, tmp_path, capsys):
         lmain(['cldfviz.tree', '--tree-dataset', ds_arg, '--output', str(o), '--test', '--styles', str(styles)])
         assert o.exists()
 
+
 @pytest.mark.parametrize(
     'args,expect',
     [
         (
-            ['--tree-dataset', 'DATASET', '--ascii-art', '--tree-id', '1'],
+            '--tree-dataset DATASET --ascii-art --tree-id 1',
             lambda out: 'Marathi' in out),
         (
-            ['--tree-dataset', 'DATASET', '--test', '--title', 'The Title'],
+            '--tree-dataset DATASET --title "The Title"',
             lambda out: 'The Title' in out),
         (
-            ['--tree-dataset', 'DATASET', '--test', '--name-as-label'],
+            '--tree-dataset DATASET --name-as-label',
             lambda out: 'Korku_NM' not in out and ('Korku' in out)),
         (
-            ['--tree', '((khr:1,sat:1.1),(unr:2,bfw:1.9)):3', '--tree-label-property',
-             'ISO639P3code', '--name-as-label', '--data-dataset', 'DATASET', '--parameters', 'C'],
+            '--tree "((khr:1,sat:1.1),(unr:2,bfw:1.9)):3" --tree-label-property ISO639P3code '
+            '--name-as-label --data-dataset DATASET --parameters C',
             lambda out: 'Kharia' in out),
         (
-            ['--tree-dataset', 'DATASET', '--test', '--name-as-label',
-             '--data-dataset', 'DATASET', '--parameters', 'C'],
+            '--tree-dataset DATASET --name-as-label --data-dataset DATASET --parameters C',
             lambda out: 'Enclitic PL' in out and ('Korku_NM' not in out) and ('Korku' in out)),
         (
-            ['--tree', '((Santali_NM:1,Mundari_NM:1.1),(Hindi_IA:2,Sadri_IA:1.9)):3',
-             '--test', '--data-dataset', 'DATASET', '--parameters', 'C,B'],
+            '--tree-dataset DATASET --data-dataset DATASET --parameters C '
+            '--colormaps \'{"0":"circle","1":"triangle_up","2":"triangle_down"}\'',
+            lambda out: 'Enclitic PL' in out),
+        (
+            '--tree-dataset DATASET --data-dataset DATASET --parameters C,D '
+            '--colormaps \'{"0":"circle","1":"triangle_up","2":"triangle_down"},tol\'',
+            lambda out: 'Enclitic PL' in out),
+        (
+            '--tree "((Santali_NM:1,Mundari_NM:1.1),(Hindi_IA:2,Sadri_IA:1.9)):3" '
+            '--data-dataset DATASET --parameters C,B',
             lambda out: 'Hindi_IA' in out),
     ]
 )
-def test_tree_args(ds_arg, tmp_path, capsys, args, expect):
+def test_tree(ds_arg, tmp_path, capsys, args, expect):
     with warnings.catch_warnings():
         warnings.filterwarnings(
             'ignore', category=DeprecationWarning, module='importlib._bootstrap')
 
-        lmain(['cldfviz.tree'] + [ds_arg if arg == 'DATASET' else arg for arg in args])
+        runcli('cldfviz.tree', '--test ' + args.replace('DATASET', ds_arg))
         out, _ = capsys.readouterr()
         assert expect(out)
 
 
-def test_treemap(ds_arg, tmp_path, glottolog_dir, metadatafree_dataset):
-    if WITH_CARTOPY:
-        tp = tmp_path / 'tree.nwk'
-        tp.write_text(
-            "((Santali_NM:1,Mundari_NM:1.1),(Hindi_IA:2,Sadri_IA:1.9)):3", encoding='utf8')
-        main(['cldfviz.treemap', ds_arg, 'B', '--test',
-              '--ltm-filename', str(tmp_path / 'B.pdf'),
-              '--tree', str(tp),
-              '--language-filters', '{"Name":".+"}',
-              '--tree-label-property', 'ID'])
-        assert tmp_path.joinpath('B.pdf').exists()
-        main(['cldfviz.treemap', ds_arg, 'B', '--test',
-              '--ltm-filename', str(tmp_path / 'B.pdf'),
-              '--tree', '"((Santali_NM:1,Mundari_NM:1.1),(Hindi_IA:2,Sadri_IA:1.9)):3"',
-              '--tree-label-property', 'ID'])
-        assert tmp_path.joinpath('B.pdf').exists()
-        main(['cldfviz.treemap', ds_arg, 'B', '--test',
-              '--ltm-filename', str(tmp_path / 'B.pdf'),
-              '--tree-dataset', ds_arg,
-              '--tree-id', '1',
-              '--tree-label-property', 'ID'])
-        assert tmp_path.joinpath('B.pdf').exists()
-        main(['cldfviz.treemap', ds_arg, 'B', '--test',
-              '--ltm-filename', str(tmp_path / 'B.pdf'),
-              '--tree-dataset', ds_arg,
-              '--tree-id', '1',
-              '--glottocodes-as-tree-labels'])
-        assert tmp_path.joinpath('B.pdf').exists()
-        lmain(['cldfviz.treemap', str(tmp_path / 'values.csv'), 'param1', '--test',
-              '--ltm-filename', str(tmp_path / 'B.pdf'),
-              '--tree', 'abcd1234', '--glottolog', str(glottolog_dir)])
-        assert tmp_path.joinpath('B.pdf').exists()
+@pytest.mark.skipif(not WITH_CARTOPY, reason="Cannot run without cartopy.")
+@pytest.mark.parametrize(
+    'with_full_dataset,opts,expect',
+    [
+        (
+            True,
+            'B --tree "((Santali_NM:1,Mundari_NM:1.1),(Hindi_IA:2,Sadri_IA:1.9)):3" '
+            '--language-filters \'{"Name":".+"}\' --tree-label-property ID',
+            lambda svg: True),
+        (
+            True,
+            'B --tree "((Santali_NM:1,Mundari_NM:1.1),(Hindi_IA:2,Sadri_IA:1.9)):3" '
+            '--tree-label-property ID',
+            lambda svg: True),
+        (
+            True,
+            'B --tree-dataset DATASET --tree-id 1 --tree-label-property ID',
+            lambda svg: True),
+        (
+            True,
+            'B --tree-dataset DATASET --tree-id 1 --glottocodes-as-tree-labels',
+            lambda svg: True),
+        (
+            False,
+            'param1 --tree abcd1234 --glottolog GLOTTOLOG',
+            lambda svg: True),
+        (
+            False,
+            'param1 --tree "((abcd1234:2,abcd1235:2.5)book1243:3):2;" --glottolog GLOTTOLOG',
+            lambda svg: True),
+        (
+            False,
+            'param1 --tree "((abcd1234:2,abcd1235:2.5):2,book1243:3):2;" --glottolog GLOTTOLOG',
+            lambda svg: True),
+    ]
+)
+def test_treemap(
+        tmp_path, glottolog_dir, MetadataFreeStructureDataset, StructureDataset,
+        with_full_dataset, opts, expect):
+    out = tmp_path / 'test.svg'
+    opts = opts.replace('DATASET', str(StructureDataset.directory))
+    opts = opts.replace('GLOTTOLOG', str(glottolog_dir))
+    print(opts)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore', category=UserWarning, module='geopandas.plotting')
+        runcli(
+            'cldfviz.treemap',
+            '{} --output {} --test {}'.format(
+                StructureDataset.directory if with_full_dataset else MetadataFreeStructureDataset,
+                out,
+                opts))
+    assert expect(out.read_text(encoding='utf8'))
 
 
 def test_examples(ds_arg, tmp_path, capsys):
@@ -179,16 +204,27 @@ def test_erd(ds_arg, tmp_path, mocker):
         assert o.exists()
 
 
-def test_text(ds_arg, capsys, Wordlist):
-    main(['cldfviz.text', '--text-string', '"[](Source?with_the_works=false#cldf:__all__)"', ds_arg])
-    assert 'Peterson, John' in capsys.readouterr()[0]
-    main(['cldfviz.text', '-l', ds_arg])
-    assert 'CodeTable' in capsys.readouterr()[0]
-
-    main([
-        'cldfviz.text', str(Wordlist.directory / 'Wordlist-metadata.json'), '--media-id', '2'])
-    out, _ = capsys.readouterr()
-    assert 'The Text' in out
+@pytest.mark.parametrize(
+    'ds,opts,expect',
+    [
+        (
+            'StructureDataset',
+            '--text-string "[](Source?with_the_works=false#cldf:__all__)"',
+            lambda out: 'Peterson, John' in out),
+        (
+            'StructureDataset',
+            '-l',
+            lambda out: 'CodeTable' in out),
+        (
+            'Wordlist',
+            '--media-id 2',
+            lambda out: 'The Text' in out),
+    ]
+)
+def test_text(capsys, Wordlist, StructureDataset, ds, opts, expect):
+    runcli('cldfviz.text', '{} --test {}'.format(
+        (Wordlist if ds == 'Wordlist' else StructureDataset).directory, opts))
+    assert expect(capsys.readouterr()[0])
 
 
 def test_text_invalid(StructureDataset):
@@ -226,124 +262,155 @@ class MF(MarkerFactory):
 
     def __call__(self, map, language, values, colormaps):
         if self.args.format == 'html':
-            return leaflet.LeafletMarkerSpec(css='.leaflet-tooltip {}')
-        return mpl.MPLMarkerSpec(text='text')
+            return leaflet.LeafletMarkerSpec(tooltip='abcdefg', css='.leaflet-tooltip {}')
+        return mpl.MPLMarkerSpec(text='abcdefg')
 
 
-def test_map(glottolog_dir, tmp_path, capsys, ds_arg, md_path_factory):
-    values = tmp_path.joinpath('values.csv')
-    values.write_text("""\
-ID,Language_ID,Parameter_ID,Value
-1,abcd1235,param1,val1
-2,abcd1234,param1,val2
-3,book1243,param1,val3
-5,book1243,param2,val3
-4,isol1234,param1,val4""", encoding='utf8')
-    sd = ds_arg
-
-    def run(data=None, **kw):
-        for k, v in dict(
-            glottolog=glottolog_dir,
-            output=tmp_path / 'testmap',
-            format='html',
-            test=None,
-        ).items():
-            kw.setdefault(k, v)
-        args = ['cldfviz.map']
-        for k, v in kw.items():
-            args.append('--{}'.format(k.replace('_', '-')))
-            if v is not None:
-                args.append(str(v))
-        args.append(str(data or values))
-        lmain(args)
-
-    run(parameters='param1')
-    assert tmp_path.joinpath('testmap.html').exists()
-
-    run(parameters='param1',
-        colormaps='{"val1": "#a00", "val2": "#0a0", "val3": "#00a", "val4": "#000"}')
-    assert tmp_path.joinpath('testmap.html').exists()
+def test_map_misc(tmp_path, capsys, ds_arg, md_path_factory, MetadataFreeStructureDataset):
+    def run(ds, opts):
+        return functools.partial(runcli, 'cldfviz.map')(str(ds) + ' ' + opts)
 
     with pytest.raises(SystemExit):  # Shapes in colormap, but just one parameter.
-        run(parameters='param1',
-            colormaps='{"val1": "circle", "val2": "#0a0", "val3": "#00a", "val4": "#000"}')
+        run(MetadataFreeStructureDataset,
+            '--parameters param1 '
+            '--colormaps \'{"val1": "circle", "val2": "#0a0", "val3": "#00a", "val4": "#000"}\'')
 
     with pytest.raises(SystemExit):  # Explicit color map for non-categorical parameter.
-        run(parameters='B',
-            colormaps='{"v":"#aaaaaa"}',
-            data=sd)
+        run(ds_arg, '--parameters B --colormaps \'{"v":"#aaaaaa"}\'')
 
     with pytest.raises(SystemExit):  # Shapes in color maps for both parameters.
-        run(parameters='C,D',
-            colormaps='{"0":"circle","1":"diamond","2":"square"},'
-                      '{"0":"circle","1":"diamond","2":"square"}',
-            data=sd)
+        run(ds_arg,
+            '--parameters C,D '
+            '--colormaps \'{"0":"circle","1":"diamond","2":"square"},'
+            '{"0":"circle","1":"diamond","2":"square"}\'')
 
-    run(parameters='C,D',
-        colormaps='{"0":"circle","1":"diamond","2":"square"},tol',
-        data=sd)
+    with pytest.raises(SystemExit):  # Shapes in color maps, but more than 2 parameters.
+        run(ds_arg,
+            '--parameters C,D,E '
+            '--colormaps \'{"0":"circle","1":"diamond","2":"square"},tol,tol\'')
 
     with pytest.raises(SystemExit):
         # Non-matching colormap values:
-        run(parameters='param1', colormaps='{"x": "y"}')
+        run(MetadataFreeStructureDataset, '--parameters param1 --colormaps \'{"x": "y"}\'')
     out, _ = capsys.readouterr()
     assert 'ERROR' in out
 
-    run(parameters='B,C',
-        colormaps='viridis,tol',
-        language_properties='Family_name',
-        pacific_centered=None,
-        data=str(md_path_factory('StructureDataset_listvalued_glottocode')))
-    assert tmp_path.joinpath('testmap.html').exists()
-
-    run(data=sd,
-        parameters='C',
-        language_filters='{"Name":"Kharia"}')
-    assert 'Santali' not in tmp_path.joinpath('testmap.html').read_text(encoding='utf8')
-
-    run(data=sd,
-        parameters='C',
-        language_filters='{"Filtered":true}')
-    html = tmp_path.joinpath('testmap.html').read_text(encoding='utf8')
-    assert 'Kharia' in html and 'Telugu' not in html
-
-    run(data=sd,
-        parameters='C',
-        language_filters='{"ListFiltered":"a"}')
-    html = tmp_path.joinpath('testmap.html').read_text(encoding='utf8')
-    assert 'Kharia' in html and 'Ho' not in html
-
-    run(marker_factory='cldfviz.map', data=sd)
-    run(marker_factory='{},test'.format(__file__), data=sd)
-
     if WITH_CARTOPY:
-        run(format='png', parameters='param1')
-        assert tmp_path.joinpath('testmap.png').exists()
-        run(format='jpg',
-            title='The Title',
-            language_labels=None,
-            parameters='B,C',
-            colormaps='viridis,tol',
-            language_properties='Family_name',
-            pacific_centered=None,
-            output=tmp_path / 'testmap.jpg',
-            data=sd)
-        assert tmp_path.joinpath('testmap.jpg').exists()
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', category=DeprecationWarning, module='cartopy.crs')
+            # For JPG, there's a slightly different code path.
+            run(ds_arg, '--format jpg --parameters C --output {}'.format(tmp_path / 'test.jpg'))
 
-        run(format='png', projection='Robinson', parameters='param1', with_stock_img=None)
-        run(format='png', projection='Robinson', parameters='param1', extent='"-150,150,50,-50"')
-        run(format='png', projection='Robinson', parameters='param1', zorder='{"v":5}')
-        run(format='png', parameters='param1,param2', no_borders=None)
-        run(format='png', marker_factory='cldfviz.map', data=sd)
-        run(format='png', marker_factory='{},test'.format(__file__), data=sd)
-        run(format='png',
-            data=sd,
-            parameters='C,D',
-            colormaps='{"0":"circle","1":"diamond","2":"square"},tol')
-        run(format='png',
-            data=sd,
-            parameters='C,D',
-            colormaps='{"0":"circle","1":"diamond","2":"square"},tol',
-            projection='Mollweide')
-        # Test multi-valued parameter (triggering piechart icons!):
-        run(format='png', data=sd, parameters='Z,C', projection='Mollweide', pacific_centered=None)
+
+@pytest.mark.skipif(not WITH_CARTOPY, reason="Cannot run without cartopy.")
+@pytest.mark.parametrize(
+    'with_full_dataset,opts,expect_html,expect_svg',
+    [
+        (False, '--parameters param1', None, None),
+        (
+            False,
+            '--parameters param1 '
+            '--colormaps=\'{"val1":"#a00","val2":"#0a0","val3":"#00a","val4":"#000"}\'',
+            None, None),
+        (
+            True,
+            '--parameters C --overlay-geojson ecoregions',
+            lambda html: 'ECO_NAME' in html, None),
+        (
+            True,
+            '--parameters C --colormaps \'{"0":"circle","1":"diamond","2":"square"}\'',
+            None, None),
+        (
+            True,
+            '--parameters C,D --colormaps \'{"0":"circle","1":"diamond","2":"square"},tol\'',
+            None, None),
+        (
+            'StructureDataset_listvalued_glottocode',
+            '--parameters B,C --colormaps viridis,tol --language-properties Family_name '
+            '--pacific-centered',
+            None, None),
+        (
+            True,
+            '--parameters C --language-filters \'{"Name":"Kharia"}\'',
+            lambda html: 'Kharia' in html and 'Telugu' not in html, None),
+        (
+            True,
+            '--parameters C --language-filters \'{"Filtered":1}\'',
+            lambda html: 'Kharia' in html and 'Maithili' not in html, None),
+        (
+            True,
+            '--parameters C --language-filters \'{"ListFiltered":"a"}\'',
+            lambda html: 'Kharia' in html and 'Ho' not in html, None),
+        (
+            True,
+            '--marker-factory cldfviz.map',
+            None, None),
+        (
+            True,
+            '--marker-factory {},test'.format(__file__),
+            None, None),
+        (
+            False,
+            '--parameters param1',
+            None, lambda svg: 'param1' in svg),
+        (
+            True,
+            '--title "The Title" --language-labels --parameters B,C --colormaps viridis,tol '
+            '--language-properties Family_name --pacific-centered',
+            None, lambda svg: 'The Title' in svg,
+        ),
+        (
+            False,
+            '--projection Robinson --parameters param1 --with-stock-img',
+            None, None),
+        (
+            False,
+            '--projection Robinson --parameters param1 --extent "50,150,50,-50"',
+            None, None),
+        (
+            False,
+            '--projection Robinson --parameters param1 --zorder \'{"v":5}\'',
+            None, None),
+        (
+            False,
+            '--parameters param1,param2 --no-borders',
+            None, None),
+        (
+            True,
+            '--parameters C,D --colormaps \'{"0":"circle","1":"diamond","2":"square"},tol\' '
+            '--projection Mollweide',
+            None, None),
+        (
+            True,
+            '--parameters Z,C --projection Mollweide --pacific-centered',
+            None, None),
+    ]
+)
+def test_map(
+        MetadataFreeStructureDataset, StructureDataset, md_path_factory,
+        glottolog_dir, tmp_path, with_full_dataset, opts, expect_html, expect_svg):
+    if isinstance(with_full_dataset, str):
+        data = md_path_factory(with_full_dataset)
+    else:
+        data = StructureDataset.directory / 'StructureDataset-metadata.json' \
+            if with_full_dataset else MetadataFreeStructureDataset
+
+    def run(fmt):
+        out = tmp_path / 'testmap.{}'.format(fmt)
+        args = '{} --test --format {} --output {} --glottolog {} '.format(
+            data, fmt, out, glottolog_dir)
+        runcli('cldfviz.map', args + opts)
+        assert out.exists()
+        return out.read_text(encoding='utf8')
+
+    html = run('html')
+    if expect_html:
+        assert expect_html(html)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore', category=DeprecationWarning, module='cartopy.crs')
+        svg = run('svg')
+    if expect_svg:
+        assert expect_svg(svg)

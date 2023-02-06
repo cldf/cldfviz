@@ -61,6 +61,7 @@
 <script type="text/javascript">
     var geojson = $geojson;
     var options = $options;
+    var overlay_geojson = $overlay_geojson;
     var layers = [L.tileLayer($tile_url, $tile_options)];
     var layer_groups = {};
     var markers = [];
@@ -107,6 +108,12 @@
     });
 
     map = L.map('map', {layers: layers, fullscreenControl: true}).setView([5, 160], 2);
+    if (overlay_geojson) {
+        L.geoJSON(
+            overlay_geojson,
+            $overlay_options
+        ).addTo(map);
+    }
     if (options.with_layers || options.with_layers_for_combinations) {
         L.control.layers({}, layer_groups, {collapsed: false, sortLayers: true}).addTo(map);
     } else {
