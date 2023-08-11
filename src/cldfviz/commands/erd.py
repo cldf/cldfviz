@@ -48,6 +48,12 @@ def register(parser):
         help='Path to a suitable version of the Xerial SQLite JDBC Driver jar file.',
         default=None)
     parser.add_argument(
+        '--db',
+        type=PathType(type='file'),
+        help='Path to CLDF SQLite file. This provides a shortcut, bypassing SQLite creation.',
+        default=None,
+    )
+    parser.add_argument(
         '--format',
         choices=['compact.dot', 'compact.svg', 'large.dot', 'large.svg'],
         help="`large` diagrams include all fields of an entity, `compact` ones do not. Diagrams "
@@ -70,7 +76,10 @@ def run(args):
                 setattr(args, attrib, download_file(url, tmp / target))
             else:
                 setattr(args, attrib, copy_file(getattr(args, attrib), tmp / target))
-        get_database(args.dataset_locator, download_dir=tmp, fname=tmp / 'db.sqlite')
+        if args.db:
+            copy_file(args.db, tmp / 'db.sqlite')  # pragma: no cover
+        else:
+            get_database(args.dataset_locator, download_dir=tmp, fname=tmp / 'db.sqlite')
 
         # Note: This exact way of calling java must be kept to keep tests working.
         out = subprocess.check_output(shlex.split(
