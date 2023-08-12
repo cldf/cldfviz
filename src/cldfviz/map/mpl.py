@@ -172,6 +172,8 @@ class MapPlot(Map):
             '--projection',
             help="Map projection. For details, see "
                  "https://scitools.org.uk/cartopy/docs/latest/crs/projections.html "
+                 "Note that not all options work for all projections; e.g. --language-labels "
+                 "will only work with PlateCarree, the default projection."
                  "{}".format(help_suffix),
             choices=[
                 c.__name__ for c in iter_subclasses(cartopy.crs.Projection)
