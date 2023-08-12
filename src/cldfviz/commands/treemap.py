@@ -105,7 +105,7 @@ def run(args):
     values = {
         v['languageReference']: v for v in ds.iter_rows('ValueTable', *cols)
         if v['parameterReference'] == args.parameter and  # noqa: W504
-        v['value'] and  # We don't handle missing data
+        v['value'] and  # noqa: W504  We don't handle missing data
         (filtered_languages is None or (v['languageReference'] in filtered_languages))}
 
     # 2. Get the tree ...
