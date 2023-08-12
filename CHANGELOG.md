@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Added `--db` option to `cldfviz.erd` command to allow bypassing SQLite creation.
+- Dropped py3.7 compatibility.
 
 
 ## [v0.12.0] - 2023-02-06
