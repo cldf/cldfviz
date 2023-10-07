@@ -117,6 +117,7 @@ class TemplateRenderer(CLDFMarkdownText):
         )
         jinja_template = self.env.get_template(tmpl_fname)
         jinja_template.globals.update(self.func_dict)
+        jinja_template.globals.update({"component": fname_or_component})
         return jinja_template.render(**ctx)
 
     def get_tmpl_context(self, ml):
