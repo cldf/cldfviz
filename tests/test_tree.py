@@ -29,10 +29,13 @@ def test_render(StructureDataset, opts, expect):
             'ignore', category=DeprecationWarning, module='importlib._bootstrap')
         from pycldf.trees import TreeTable
         from cldfviz.tree import render
+        from newick import loads
 
     svg = render(list(TreeTable(StructureDataset))[0], **opts)
     assert '<svg' in svg
     assert expect(svg)
+
+    render(loads('(A,);')[0], labels={'A': None})
 
 
 def test_render_to_file(StructureDataset, tmp_path):

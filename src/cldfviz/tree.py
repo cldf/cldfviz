@@ -17,9 +17,11 @@ __all__ = ['render']
 
 
 def clean_node_label(s):
-    for c in RESERVED_PUNCTUATION:
-        s = s.replace(c, '_')
-    return s.replace(' ', '_')
+    if s:  # Automatically generated label mappings may map to `None`.
+        for c in RESERVED_PUNCTUATION:
+            s = s.replace(c, '_')
+        return s.replace(' ', '_')
+    return s
 
 
 class SVGTree:
