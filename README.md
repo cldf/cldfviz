@@ -79,7 +79,7 @@ A common way to visualize data from a CLDF StructureDataset is as "dots on a map
 i.e. as [WALS](https://wals.info)-like geographic maps, displaying typological variation.
 The `cldfviz.map` subcommand allows you to create such maps. For details see [docs/map.md](docs/map.md).
 
-> [<img alt="details" width="350" src="docs/output/wals_10B.png" />](docs/map.md)
+> ![WALS 10B](docs/output/wals_10B.png)
 
 
 ### `cldfviz.text`
