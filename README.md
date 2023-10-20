@@ -90,7 +90,7 @@ The `cldfviz.text` subcommand allows you "render" documents written in [CLDF mar
 such documents to plain markdown by inserting suitable representations of the referenced data.
 For details see [docs/text.md](docs/text.md).
 
-> [<img alt="details" width="350" src="docs/output/wals_exponence.png" />](docs/text.md)
+[<img alt="details" width="350" src="docs/output/wals_exponence.png" />](docs/text.md)
 
 
 ### `cldfviz.examples`
