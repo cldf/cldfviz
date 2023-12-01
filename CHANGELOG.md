@@ -1,6 +1,6 @@
 # Changes
 
-## [Unreleased]
+## [v1.0.1] - 2023-12-01
 
 - Fixed bug whereby CLDF examples were not properly HTML escaped when rendered as Markdown.
 - Fixed bug whereby the --language-filters option was ignored in `cldfviz.map` when no
