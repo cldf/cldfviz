@@ -1,4 +1,8 @@
 import re
+import html
+import typing
+import pathlib
+import functools
 
 from pycldf import Dataset
 from pycldf.ext.markdown import CLDFMarkdownText
@@ -39,7 +43,12 @@ def iter_templates():
         yield p, doc, [v for v in vars if v != 'ctx']
 
 
-def pad_ex(obj, gloss):
+def pad_ex(obj: typing.Iterable[str],
+           gloss: typing.Iterable[str],
+           escape: typing.Optional[bool] = True):
+    """
+    :param escape: Flag signaling whether to html.escape words and glosses.
+    """
     out_obj = []
     out_gloss = []
     for o, g in zip(obj, gloss):
@@ -49,12 +58,17 @@ def pad_ex(obj, gloss):
             o += " "*-diff  # noqa E225
         else:
             g += " " * diff
-        out_obj.append(o)
-        out_gloss.append(g)
+        out_obj.append(html.escape(o, quote=False) if escape else o)
+        out_gloss.append(html.escape(g, quote=False) if escape else g)
     return "  ".join(out_obj).strip(), "  ".join(out_gloss).strip()
 
 
-def render(doc, cldf_dict, template_dir=None, loader=None, func_dict=None):
+def render(doc: typing.Union[pathlib.Path, str],
+           cldf_dict: typing.Union[Dataset, typing.Dict[typing.Union[str, None], Dataset]],
+           template_dir: typing.Optional[typing.Union[str, pathlib.Path]] = None,
+           loader: typing.Optional[jinja2.BaseLoader] = None,
+           func_dict: typing.Optional[typing.Dict[str, callable]] = None,
+           escape: typing.Optional[bool] = True) -> str:
     """
     Render CLDF Markdown using customizable jinja2 templates.
 
@@ -63,15 +77,17 @@ def render(doc, cldf_dict, template_dir=None, loader=None, func_dict=None):
     - Reference list: Include a list of cited references using the link \
       `[](Source?cited_only#cldf:__all__)`
 
-    :param doc:
-    :param cldf_dict:
-    :param template_dir:
-    :param loader:
-    :param func_dict:
-    :return:
+    :param doc: A CLDF Markdown document specified as string or filepath.
+    :param cldf_dict: A CLDF dataset or a mapping of prefixes to CLDF datasets.
+    :param template_dir: Path to custom template directory.
+    :param loader: As alternative to a custom template directory, a custom jinja2 loader can be \
+    specified.
+    :param func_dict: Mapping of names to callables passed to templates as renderer globals, see \
+    https://jinja.palletsprojects.com/en/3.1.x/api/#jinja2.Environment.globals.
+    :return: Rendered document as string.
     """
     func_dict = func_dict or {}
-    func_dict.update({"pad_ex": pad_ex})
+    func_dict.update({"pad_ex": functools.partial(pad_ex, escape=escape)})
 
     if isinstance(cldf_dict, Dataset):
         cldf_dict = {None: cldf_dict}

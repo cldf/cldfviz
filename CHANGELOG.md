@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Fixed bug whereby CLDF examples were not properly HTML escaped when rendered as Markdown.
 - Fixed bug whereby the --language-filters option was ignored in `cldfviz.map` when no
   parameters were specified.
 - Added Python 3.12 to supported version.

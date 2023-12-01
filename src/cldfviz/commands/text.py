@@ -44,6 +44,8 @@ def register(parser):
     parser.add_argument('--templates', type=PathType(type='dir'), default=None)
     parser.add_argument('--output', type=PathType(type='file', must_exist=False), default=None)
     parser.add_argument('--download-dir', type=PathType(type='dir'), default=None)
+    parser.add_argument(
+        '--no-escape', help='Do not HTML escape content.', action='store_true', default=False)
 
 
 def run(args):
@@ -83,7 +85,7 @@ def run(args):
                 text = media.read()
                 break
 
-    res = render(text, dss, args.templates)
+    res = render(text, dss, args.templates, escape=not args.no_escape)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(res, encoding='utf8')

@@ -216,6 +216,10 @@ def test_erd(ds_arg, tmp_path, mocker):
             '-l',
             lambda out: 'CodeTable' in out),
         (
+            'StructureDataset',
+            '--text-string "[ex](ExampleTable#cldf:igt)" --no-escape',
+            lambda out: '<in>' in out),
+        (
             'Wordlist',
             '--media-id 2',
             lambda out: 'The Text' in out),

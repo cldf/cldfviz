@@ -44,8 +44,16 @@ def test_render_example(StructureDataset):
 
 > (igt) Ho (Peterson 2017)
 <pre>
-The  t-ext  
-The  GL-OSS  
+The  t-e&lt;in&gt;xt  
+The  GL-&lt;FOC&gt;OSS  
+‘the translation’</pre>
+"""
+    assert render('[ex](ExampleTable#cldf:igt)', StructureDataset, escape=False) == """\
+
+> (igt) Ho (Peterson 2017)
+<pre>
+The  t-e<in>xt  
+The  GL-<FOC>OSS  
 ‘the translation’</pre>
 """
     assert render('[ex](ExampleTable#cldf:ptonly)', StructureDataset) == """\
