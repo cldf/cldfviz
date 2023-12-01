@@ -4,6 +4,7 @@
 
 - Fixed bug whereby the --language-filters option was ignored in `cldfviz.map` when no
   parameters were specified.
+- Added Python 3.12 to supported version.
 
 
 ## [v1.0.0] - 2023-08-14
