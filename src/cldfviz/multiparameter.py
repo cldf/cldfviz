@@ -141,7 +141,9 @@ class MultiParameter:
         language_rows = []
         for i, language_property in enumerate(language_properties):
             if i == 0:
-                language_rows = list(ds.iter_rows('LanguageTable', 'id', 'name'))
+                language_rows = [
+                    r for r in ds.iter_rows('LanguageTable', 'id', 'name')
+                    if r['id'] in langs]
             if not all(isinstance(v[language_property], (int, float, decimal.Decimal))
                        for v in language_rows if v[language_property] is not None):
                 codes[language_property] = collections.OrderedDict([

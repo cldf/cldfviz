@@ -76,7 +76,8 @@ def add_language_filter(parser):
         help="JSON object specifying filter criteria for included languages. Keys must be "
              "names of columns in the datasets' LanguageTable, values are interpreted as "
              "regular expressions if they are strings or as literal values otherwise and will "
-             "be matched against the value of a language for the specified column. Only "
+             "be matched against the *string* value of a language for the specified column "
+             '(thus, to match boolean values, the filter must specify "False" or "True"). Only '
              "languages matching all criteria are included in the analysis.",
     )
 
@@ -92,7 +93,7 @@ def get_language_filter(args):
                 if isinstance(val, list):
                     if v not in val:
                         return False
-                elif not re.search(v, val or ''):
+                elif not re.search(v, str(val) or ''):
                     return False
             else:
                 if lg.data[k] != v:

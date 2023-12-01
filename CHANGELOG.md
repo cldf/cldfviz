@@ -1,5 +1,11 @@
 # Changes
 
+## [Unreleased]
+
+- Fixed bug whereby the --language-filters option was ignored in `cldfviz.map` when no
+  parameters were specified.
+
+
 ## [v1.0.0] - 2023-08-14
 
 - Added `--db` option to `cldfviz.erd` command to allow bypassing SQLite creation.

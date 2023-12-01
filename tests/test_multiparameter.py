@@ -1,7 +1,10 @@
+import argparse
+
 import pytest
 from pycldf import Dataset
 
 from cldfviz.multiparameter import MultiParameter, Language, Value, CONTINUOUS
+from cldfviz.cli_util import get_language_filter
 
 
 def test_Language(glottolog, StructureDataset):
@@ -28,7 +31,12 @@ def test_MultiParameter(metadatafree_dataset, StructureDataset, glottolog, tmp_p
         assert values['C'][0].v == 'C-1'
         assert values['C'][0].code == '1'
         break
-    mp = MultiParameter(StructureDataset, ['B'], language_properties=['Family_name'])
+    mp = MultiParameter(
+        StructureDataset,
+        ['B'],
+        language_filter=get_language_filter(argparse.Namespace(language_filters='{"Filtered":"False"}')),
+        language_properties=['Family_name'])
+    assert len(mp.languages) == 26
     assert 'Family_name' in mp.parameters
     mp = MultiParameter(StructureDataset, [])
     assert '__language__' in mp.parameters
