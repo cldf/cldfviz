@@ -64,6 +64,18 @@ to include a list of all **cited** sources. This is supported as follows:
    at the location where the list should appear.
 2. Discovery of cited sources relies on the references being rendered as links. Thus, it is necessary that all
    CLDF markdown links in the document are specified adding the `with_internal_ref_link` URL parameter.
+3. If `Source` instances are referenced directly, the `ref` URL parameter needs to be supplied,
+   e.g. `see [Meier 2012](Source?ref&with_internal_ref_links#cldf:Meier2012)`.
+
+
+### Render an object using a selected properties
+
+Sometimes it is desirable to render an object by just displaying a particular property, e.g. to
+display the `name` or `description` of a Parameter as document title. This can be done using the
+`property.md` template:
+```
+# [](ParameterTable?__template__=property.md&name=name#cldf:param1)
+```
 
 
 ## CLI
