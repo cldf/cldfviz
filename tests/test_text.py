@@ -127,3 +127,16 @@ def test_templates(Wordlist, Generic, StructureDataset, comp, query, oid, ds, ex
     else:
         print(res)
         assert expected in res
+
+
+def test_reference_list(StructureDataset):
+    text = """# [](ParameterTable?__template__=property.md&name=name#cldf:B)
+
+See [](Source?ref&with_internal_ref_link#cldf:Peterson2017) and [ex](http://example.com)
+
+[References](Source?cited_only#cldf:__all__)
+"""
+    res = render(text, StructureDataset)
+    assert "Gender/Noun classes" in res
+    assert 'Peterson 2017' in res
+    assert "Fitting the pieces together" in res

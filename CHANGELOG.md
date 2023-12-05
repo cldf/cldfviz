@@ -1,5 +1,11 @@
 # Changes
 
+## [Unreleased]
+
+- Fixed bug whereby non-source CLDF Markdown links were not replaced when a
+  link to insert a reference list of cited sources was present.
+
+
 ## [v1.0.1] - 2023-12-01
 
 - Fixed bug whereby CLDF examples were not properly HTML escaped when rendered as Markdown.

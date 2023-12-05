@@ -157,7 +157,7 @@ class TemplateRenderer(CLDFMarkdownText):
                 ctx['ctx'] = [s for s in self.get_object(ml) if s.id in self.cited]
                 ctx["with_anchor"] = True
                 return self.render_template('Source', ctx, index=True)
-            return ml
+            return ml  # pragma: no cover
 
         if ref_link:  # So we need a second pass.
             self.with_partial_local_reflist = True
@@ -179,6 +179,7 @@ class TemplateRenderer(CLDFMarkdownText):
                 if MarkdownLink.from_match(ml).url.startswith('#source-'))
 
             # 2. Insert the pruned list of sources:
+            self.text = md
             md = super().render(
                 simple_link_detection=simple_link_detection, markdown_kw=markdown_kw)
         return md
