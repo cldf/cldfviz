@@ -159,3 +159,11 @@ List, J.-M. and Prokić, J. 2014. A benchmark database of phonetic alignments in
 ```
 
 Similarly, for `cldfviz.map` references, use `cldfviz.map-<id>` as URL fragment in the relevant links.
+
+
+## Related
+
+There are several other efforts towards making Markdown a viable authoring platform for linguistic texts:
+- Florian Matter's [pylingdocs](https://github.com/fmatter/pylingdocs) provides an authoring platform on top of CLDF Markdown
+- Taras Zakahrko's [pandoc-glossify](https://github.com/tzakharko/pandoc-glossify) provides a [Pandoc](https://pandoc.org/) extension to render interlinear glossed text
+- Michael Cysouw's [pandoc-ling](https://github.com/cysouw/pandoc-ling) also provides a [Pandoc](https://pandoc.org/) extension to render interlinear glossed text (testifying to the usefulness of Pandoc as cross-format authoring platform).
