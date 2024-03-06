@@ -146,10 +146,12 @@ class MultiParameter:
                     if r['id'] in langs]
             if not all(isinstance(v[language_property], (int, float, decimal.Decimal))
                        for v in language_rows if v[language_property] is not None):
+                counts = collections.Counter([r[language_property] for r in language_rows])
                 codes[language_property] = collections.OrderedDict([
                     (p, p) for p in sorted(
                         set(r[language_property] for r in language_rows
-                            if r[language_property] is not None))
+                            if r[language_property] is not None),
+                        key=lambda x: -counts[x])
                 ])
         self.languages = collections.OrderedDict()
         self.values = []
@@ -213,8 +215,9 @@ class MultiParameter:
                     p.type = CONTINUOUS
                     p.domain = (min(v.float for v in vals), max(v.float for v in vals))
                 else:
+                    counts = collections.Counter([vv.v for vv in vals])
                     p.domain = collections.OrderedDict([
-                        (v, v) for v in sorted(set(vv.v for vv in vals), key=lambda vv: str(vv))])
+                        (v, v) for v in sorted(set(vv.v for vv in vals), key=lambda vv: -counts[vv])])
 
     def __str__(self):  # pragma: no cover
         return str(self.parameters)
