@@ -1,0 +1,5 @@
+ID,Description,Target_Parameter_ID,Source_Parameter_ID,Edge_Is_Directed,iattr
+1,a,B,C,Yes,1
+2,a,C,D,No,2
+3,b,H,I,Yes,3
+4,a,H,K,No,4

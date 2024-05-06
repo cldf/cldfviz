@@ -217,7 +217,8 @@ class MultiParameter:
                 else:
                     counts = collections.Counter([vv.v for vv in vals])
                     p.domain = collections.OrderedDict([
-                        (v, v) for v in sorted(set(vv.v for vv in vals), key=lambda vv: -counts[vv])])
+                        (v, v)
+                        for v in sorted(set(vv.v for vv in vals), key=lambda vv: -counts[vv])])
 
     def __str__(self):  # pragma: no cover
         return str(self.parameters)

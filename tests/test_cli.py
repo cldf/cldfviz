@@ -204,6 +204,64 @@ def test_erd(ds_arg, tmp_path, mocker):
         assert o.exists()
 
 
+def test_network(capsys, StructureDataset, tmp_path):
+    eattrs = tmp_path / 'e.py'
+    eattrs.write_text(
+        """dict(
+    drop=lambda e: e.id == "2",
+    color=lambda e: "red" if e.id == "1" else "blue",
+    integer=lambda e: 1,
+    float=lambda e: 2.1,
+    boolean=True,
+)""",
+        encoding='utf8')
+
+    nattrs = tmp_path / 'n.py'
+    nattrs.write_text('dict(color=lambda n: "black" if n.id == "B" else None)', encoding='utf8')
+
+    runcli(
+        'cldfviz.network',
+        '{} --edge-attributes {} --node-attributes {} --format graphml'.format(
+            StructureDataset.directory,
+            eattrs,
+            nattrs,
+        ))
+    assert '<node ' in capsys.readouterr()[0]
+
+    runcli('cldfviz.network', '{} --edge-attributes {}'.format(
+        StructureDataset.directory,
+        eattrs,
+    ))
+    assert 'digraph' in capsys.readouterr()[0]
+
+    runcli('cldfviz.network', """{} --edge-filters '{}'""".format(
+        StructureDataset.directory,
+        '{"Description": "a"}'
+    ))
+    assert capsys.readouterr()[0].count('->') == 3
+
+    runcli('cldfviz.network', """{} --edge-filters '{}'""".format(
+        StructureDataset.directory,
+        '{"Description": ["a"]}'
+    ))
+    assert capsys.readouterr()[0].count('->') == 3
+
+    runcli('cldfviz.network', """{} --edge-filters '{}'""".format(
+        StructureDataset.directory,
+        '{"Description": "a|b"}'
+    ))
+    assert capsys.readouterr()[0].count('->') == 4
+
+    runcli('cldfviz.network', """{} --edge-filters '{}'""".format(
+        StructureDataset.directory,
+        '{"iattr": 4}'
+    ))
+    assert capsys.readouterr()[0].count('->') == 1
+
+    runcli('cldfviz.network', """{} --parameter 'H'""".format(StructureDataset.directory))
+    assert capsys.readouterr()[0].count('->') == 2
+
+
 @pytest.mark.parametrize(
     'ds,opts,expect',
     [

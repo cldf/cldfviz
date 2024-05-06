@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+- Implemented support for visualization of ParameterNetwork data.
+
+
 ## [v1.0.2] - 2023-12-05
 
 - Fixed bug whereby non-source CLDF Markdown links were not replaced when a
