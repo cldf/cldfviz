@@ -156,7 +156,7 @@ does and since [Graphviz' DOT format](https://graphviz.org/doc/info/lang.html) i
 formats supported by `cldfviz.network`, exploratory analysis is supported by just piping the output
 into the `dot` program to create a network visualization.
 
-[<img alt="details" width="350" src="docs/partof_neck.svg" />](docs/network.md)
+[<img alt="details" width="350" src="docs/output/partof_neck2.svg" />](docs/network.md)
 
 
 ## Related

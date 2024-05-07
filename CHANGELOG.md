@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## [v1.1.0] - 2024-05-07
 
 - Implemented support for visualization of ParameterNetwork data.
 
