@@ -144,6 +144,21 @@ For details see [docs/erd.md](docs/erd.md).
 [<img alt="details" width="350" src="docs/output/wacl.svg" />](docs/erd.md)
 
 
+### `cldfviz.network`
+
+A [ParameterNetwork component](https://github.com/cldf/cldf/tree/master/components/parameternetworks)
+was added to CLDF with version 1.3, acknowledging that in datasets like [CLICS](https://clics.clld.org/)
+a network of parameters (established through colexifications in CLICS) acted as both, output of the
+colexification algorithm, but also as input for various cluster methods. Since there are many tools
+for network analysis available, the main task for a CLDF-based tool is to convert (filtered) parts
+of a `ParameterNetwork` to a format that can serve as input for other tools. This is what `cldfviz.network`
+does and since [Graphviz' DOT format](https://graphviz.org/doc/info/lang.html) is one of the target
+formats supported by `cldfviz.network`, exploratory analysis is supported by just piping the output
+into the `dot` program to create a network visualization.
+
+[<img alt="details" width="350" src="docs/partof_neck.svg" />](docs/network.md)
+
+
 ## Related
 
 Other tools to convert CLDF data to "human-readable" formats:
