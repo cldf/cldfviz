@@ -143,6 +143,7 @@ class TemplateRenderer(CLDFMarkdownText):
                 tmpl_context[k] = False
         tmpl_context['ctx'] = self.get_object(ml)
         tmpl_context['cldf'] = self.dataset_mapping[ml.prefix]
+        tmpl_context['ml_label'] = ml.label
         return tmpl_context
 
     def render_link(self, ml):

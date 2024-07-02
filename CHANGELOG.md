@@ -1,5 +1,10 @@
 # Changes
 
+## [Unreleased]
+
+- Support more flexible citation labels in `cldfviz.text`.
+
+
 ## [v1.1.0] - 2024-05-07
 
 - Implemented support for visualization of ParameterNetwork data.

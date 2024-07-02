@@ -1,8 +1,8 @@
 {# 
  Template macros
  #}
-{% macro sourceref(src, year_brackets=None, with_internal_ref_link=False) -%}
-{% if with_internal_ref_link %}[{% endif %}{{ src.refkey(year_brackets=year_brackets) }}{% if with_internal_ref_link %}
+{% macro sourceref(src, year_brackets=None, with_internal_ref_link=False, label=None) -%}
+{% if with_internal_ref_link %}[{% endif %}{{ label or src.refkey(year_brackets=year_brackets) }}{% if with_internal_ref_link %}
 ](#{% if with_internal_ref_link is string %}{{ with_internal_ref_link }}{% else %}source-{{ src.id }}{% endif %}){% endif %}
 {%- endmacro %}
 

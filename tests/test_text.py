@@ -140,3 +140,8 @@ See [](Source?ref&with_internal_ref_link#cldf:Peterson2017) and [ex](http://exam
     assert "Gender/Noun classes" in res
     assert 'Peterson 2017' in res
     assert "Fitting the pieces together" in res
+
+
+def test_keep_label(StructureDataset):
+    text = "[xyz](Source?ref&with_internal_ref_link&keep_label#cldf:Peterson2017)"
+    assert 'xyz' in render(text, StructureDataset)

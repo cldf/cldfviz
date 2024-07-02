@@ -8,5 +8,5 @@
 {% import "util.md" as util %}
 {% set year_brackets = year_brackets or None %}
 {% if ref is defined %}
-{{ util.sourceref(ctx, year_brackets=year_brackets, with_internal_ref_link=with_internal_ref_link) }}{% else %}
+{{ util.sourceref(ctx, year_brackets=year_brackets, with_internal_ref_link=with_internal_ref_link, label=ml_label if keep_label else None) }}{% else %}
 {{ util.source(ctx, with_anchor=with_anchor, with_link=with_link) }}{% endif %}
