@@ -8,6 +8,8 @@ from pycldf import Dataset
 from pycldf.ext.markdown import CLDFMarkdownText
 import jinja2
 import jinja2.meta
+from packaging.version import Version
+import clldutils
 from clldutils.misc import nfilter
 from clldutils.markup import MarkdownLink, MarkdownImageLink
 
@@ -16,6 +18,11 @@ import cldfviz
 __all__ = ['iter_templates', 'render', 'iter_cldfviz_links']
 
 TEMPLATE_DIR = cldfviz.PKG_DIR.joinpath('templates', 'text')
+
+
+def source_markdown(src, with_link=False):
+    with_link = with_link and Version(clldutils.__version__) >= Version('3.21.0')
+    return src.text(**{'markdown': True} if with_link else {})
 
 
 def _add_filters(env):
@@ -87,7 +94,9 @@ def render(doc: typing.Union[pathlib.Path, str],
     :return: Rendered document as string.
     """
     func_dict = func_dict or {}
-    func_dict.update({"pad_ex": functools.partial(pad_ex, escape=escape)})
+    func_dict.update({
+        "pad_ex": functools.partial(pad_ex, escape=escape),
+        "source_markdown": source_markdown})
 
     if isinstance(cldf_dict, Dataset):
         cldf_dict = {None: cldf_dict}

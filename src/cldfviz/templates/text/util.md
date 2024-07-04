@@ -59,10 +59,8 @@
 {%- endmacro %}
 
 {% macro source(src, with_anchor=False, with_link=False) -%}
-{% if with_anchor %}<a id="source-{{ src.id }}"> </a>{% endif %}{{ src.text() }}{% if with_link %}
-{% if src.get("doi") %}
- [DOI: {{ src["doi"] }}](https://doi.org/{{ src["doi"] }}){% else %}{% if src.get("url") %}
+{% if with_anchor %}<a id="source-{{ src.id }}"> </a>{% endif %}{{ source_markdown(src, with_link) }}{% if with_link %}
+{% if src.get("url") %}
  [{{ src["url"] }}]({{ src["url"] }}){% endif %}
-{% endif %}
 {% endif %}
 {%- endmacro %}

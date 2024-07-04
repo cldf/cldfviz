@@ -110,7 +110,7 @@ def test_render_metadata(StructureDataset):
         ('ParameterTable', None, 'C', 'sd', 'Codes'),
         ('Source', None, 'Peterson2017', 'sd', 'Peterson, John. 2017.'),
         ('Source', None, '__all__', 'sd', '- '),
-        ('Source', 'with_link', 'Peterson2017', 'sd', '[DOI:'),
+        ('Source', 'with_link', 'Peterson2017', 'sd', 'doi: ['),
     ]
 )
 def test_templates(Wordlist, Generic, StructureDataset, comp, query, oid, ds, expected):
@@ -130,14 +130,14 @@ def test_templates(Wordlist, Generic, StructureDataset, comp, query, oid, ds, ex
 
 
 def test_reference_list(StructureDataset):
-    text = """# [](ParameterTable?__template__=property.md&name=name#cldf:B)
+    text = """# [](ParameterTable?__template__=property.md&property=name#cldf:B)
 
 See [](Source?ref&with_internal_ref_link#cldf:Peterson2017) and [ex](http://example.com)
 
 [References](Source?cited_only#cldf:__all__)
 """
     res = render(text, StructureDataset)
-    assert "Gender/Noun classes" in res
+    assert "# Gender/Noun classes" in res
     assert 'Peterson 2017' in res
     assert "Fitting the pieces together" in res
 

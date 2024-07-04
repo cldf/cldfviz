@@ -1,5 +1,11 @@
 # Changes
 
+
+## [Unreleased]
+
+- Use markdown support from `clldutils.source` if available.
+
+
 ## [v1.2.0] - 2024-07-03
 
 - Support more flexible citation labels in `cldfviz.text`.
