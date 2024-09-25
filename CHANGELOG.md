@@ -4,6 +4,7 @@
 ## [Unreleased]
 
 - Use markdown support from `clldutils.source` if available.
+- Allow using code IDs in colormaps for `cldfviz.map`.
 
 
 ## [v1.2.0] - 2024-07-03

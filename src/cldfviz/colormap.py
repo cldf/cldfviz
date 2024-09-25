@@ -62,12 +62,17 @@ class Colormap:
                 raw.setdefault('None', novalue)
             label_to_code = {v: k for k, v in parameter.domain.items()}
             for v, c in raw.items():
-                if (v not in parameter.value_to_code) and v not in label_to_code:
+                if v in parameter.value_to_code:
+                    v = parameter.value_to_code[v]
+                elif v in parameter.value_to_code.values():
+                    pass  # pragma: no cover
+                elif v in label_to_code:
+                    v = label_to_code[v]  # pragma: no cover
+                else:
                     raise ValueError('Colormap value "{}" not in domain {}'.format(
-                        v, list(parameter.value_to_code.keys())))
-                v = parameter.value_to_code.get(v, label_to_code.get(v))
+                        v, sorted(set(parameter.value_to_code.values()))))
                 self.explicit_cm[v] = hextriplet(c)
-            vals = list(parameter.value_to_code)
+            vals = set(parameter.value_to_code.values())
             if len(vals) > len(self.explicit_cm):
                 raise ValueError('Colormap {} does not cover all values {}!'.format(
                     dict(raw), vals))
