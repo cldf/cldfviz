@@ -1,6 +1,12 @@
 # Changes
 
 
+## Unreleased
+
+Implemented experimental functionality allowing colored shapes as markers on HTML maps for
+single parameters.
+
+
 ## [v1.3.0] - 2024-09-25
 
 - Use markdown support from `clldutils.source` if available.

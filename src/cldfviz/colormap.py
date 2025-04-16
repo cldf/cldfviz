@@ -35,6 +35,8 @@ def hextriplet(s):
     """
     Wrap clldutils.color.rgb_as_hex to provide unified error handling.
     """
+    if isinstance(s, list) and s[0] in SHAPES:
+        return [s[0], hextriplet(s[1])]
     if s in SHAPES:
         # A bit of a hack: We allow a handful of shape names as "color" spec as well.
         return s
@@ -103,7 +105,9 @@ class Colormap:
 
     @property
     def with_shapes(self):
-        return self.explicit_cm and any(c in SHAPES for c in self.explicit_cm.values())
+        return self.explicit_cm and any(
+            c in SHAPES if isinstance(c, str) else c[0] in SHAPES for c in self.explicit_cm.values()
+        )
 
     def scalar_mappable(self):
         return cm.ScalarMappable(norm=None, cmap=self._cm)
@@ -118,7 +122,11 @@ def get_shape_and_color(colors_or_shapes):
     if 1 <= len(colors_or_shapes) <= 2:
         shapes, colors = [], []
         for _, c in colors_or_shapes:
-            (shapes if c in SHAPES else colors).append(c)
+            if isinstance(c, list):
+                shapes.append(c[0])
+                colors.append(c[1])
+            else:
+                (shapes if c in SHAPES else colors).append(c)
         if shapes:
             if len(shapes) > 1:
                 raise ValueError('Only one shape can be specified for a marker')

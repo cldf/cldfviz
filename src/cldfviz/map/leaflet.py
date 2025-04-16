@@ -129,9 +129,18 @@ class MapLeaflet(Map):
         return [lon, lat]
 
     def _icon(self, colors):
+        scolors = []
+        if isinstance(colors[0], list):
+            ncolors = []
+            for s, c in colors:
+                ncolors.append(s)
+                scolors.append(c)
+            colors = ncolors
         colors = [(1 / len(colors), t) if isinstance(t, str) else t for t in colors]
         res = get_shape_and_color(colors)
         if res:
+            if scolors:
+                return svg.icon(SHAPE_MAP[res[0]] + scolors[0].replace('#', ''))
             return svg.icon(SHAPE_MAP[res[0]] + res[1].replace('#', ''))
         return svg.pie([c[0] for c in colors], [c[1] for c in colors], stroke_circle=True)
 
