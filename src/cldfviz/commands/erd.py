@@ -68,7 +68,7 @@ def run(args):
         for url, target in [
             ('xerial/sqlite-jdbc/releases/download/3.39.4.1/sqlite-jdbc-3.39.4.1.jar',
              'sqlite.jar'),
-            ('schemaspy/schemaspy/releases/download/v6.1.0/schemaspy-6.1.0.jar',
+            ('schemaspy/schemaspy/releases/download/v6.2.4/schemaspy-6.2.4.jar',
              'schemaspy.jar'),
         ]:
             attrib = target.replace('.', '_')

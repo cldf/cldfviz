@@ -291,10 +291,10 @@ class MapPlot(Map):
                     marker=marker,
                     s=[self.args.markersize * 10],
                     transform=cartopy.crs.Geodetic(),
-                    linewidth=1,
-                    edgecolor='black',
+                    #linewidth=1,
+                    #edgecolor='black',
                     zorder=zorder,
-                    facecolor=color,
+                    facecolor=(color, 0.7),
                 )
             return
 
@@ -365,7 +365,7 @@ class MapPlot(Map):
                             [], [],
                             marker=SHAPE_MAP[color] if color in SHAPE_MAP else 'o',
                             color='#000000' if color in SHAPE_MAP else color,
-                            linewidth=1,
+                            linewidth=0,#1,
                             linestyle='',
                             label=wrapped_label(label))
                     )
@@ -385,7 +385,7 @@ class MapPlot(Map):
                 s,
                 s + angle,
                 facecolor="None",
-                edgecolor="black",
+                edgecolor="white",
                 label=wrapped_label(parameter.name),
                 zorder=20
             ))
@@ -411,7 +411,7 @@ class MapPlot(Map):
                         s,
                         s + angle,
                         facecolor=colormaps[pid](v),
-                        edgecolor="black",
+                        edgecolor="white",
                         label=wrapped_label(label),
                         zorder=20
                     ))
