@@ -1,8 +1,9 @@
 import html
 import json
 import string
+import dataclasses
+from typing import Optional, Any
 
-import attr
 from clldutils import svg
 from clldutils.html import HTML
 from clldutils.clilib import PathType
@@ -61,15 +62,15 @@ BASE_LAYERS = {
 GEOJSON_LAYERS = {p.name.split('.')[0]: p for p in TEMPLATE_DIR.joinpath('map').glob('*.geojson*')}
 
 
-@attr.s
+@dataclasses.dataclass
 class LeafletMarkerSpec:
-    icon = attr.ib(default=svg.data_url(svg.icon('c000')))
-    name = attr.ib(default=None)
-    values = attr.ib(default=None)
-    tooltip = attr.ib(default=None)
-    tooltip_class = attr.ib(default=None)
-    markersize = attr.ib(default=None)
-    css = attr.ib(default=None)
+    icon: str = svg.data_url(svg.icon('c000'))
+    name: Optional[str] = None
+    values: Optional[Any] = None
+    tooltip: Optional[str] = None
+    tooltip_class: Optional[str] = None
+    markersize: Optional[int] = None
+    css: Optional[str] = None
 
 
 class MapLeaflet(Map):
@@ -160,7 +161,7 @@ class MapLeaflet(Map):
             if spec.css:
                 self.css.add(spec.css)
             props.update(
-                {k: v for k, v in attr.asdict(spec).items() if v is not None and k != 'css'})
+                {k: v for k, v in dataclasses.asdict(spec).items() if v is not None and k != 'css'})
         self.features.append({
             # A language as GeoJSON point with svg marker icon
             "geometry": {"coordinates": self._lonlat(language), "type": "Point"},

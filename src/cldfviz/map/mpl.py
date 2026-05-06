@@ -4,8 +4,9 @@ Map plotting with matplotlib and cartopy
 import json
 import textwrap
 import warnings
+import dataclasses
+from typing import Optional
 
-import attr
 import numpy as np
 import cartopy.feature
 import cartopy.crs
@@ -51,13 +52,13 @@ class HandleWedge(HandlerPatch):
         return [p]
 
 
-@attr.s
+@dataclasses.dataclass
 class MPLMarkerSpec:
-    marker_kw = attr.ib(default=attr.Factory(dict))
-    text = attr.ib(default=None)
-    text_offset_x = attr.ib(default=None)
-    text_offset_y = attr.ib(default=None)
-    text_kw = attr.ib(default=attr.Factory(dict))
+    marker_kw: dict = dataclasses.field(default_factory=dict)
+    text: Optional[str] = None
+    text_offset_x: Optional[int] = None
+    text_offset_y: Optional[int] = None
+    text_kw: dict = dataclasses.field(default_factory=dict)
 
 
 class MapPlot(Map):
