@@ -1,22 +1,26 @@
-import typing
+import enum
 import decimal
 import functools
 import itertools
 import collections
+from collections.abc import Iterator, Iterable
+import dataclasses
+from typing import Optional, Union, Callable
 
-import attr
 import pycldf
 from pycldf import orm
 from pyglottolog.languoids import Languoid
 
 from cldfviz.glottolog import Glottolog
 
-CONTINUOUS = 1
-CATEGORICAL = 2
+
+class ParameterType(enum.Enum):
+    CONTINUOUS = 1
+    CATEGORICAL = 2
 
 
 class Language:
-    def __init__(self, obj, glottolog: typing.Optional[Glottolog] = None):
+    def __init__(self, obj, glottolog: Optional[Glottolog] = None):
         glottolog = glottolog or {}
         if isinstance(obj, str):
             obj = glottolog[obj]
@@ -42,13 +46,13 @@ class Language:
         self.lon = float(self.lon) if self.lon is not None else self.lon
 
 
-@attr.s
+@dataclasses.dataclass
 class Parameter:
-    id = attr.ib()
-    name = attr.ib()
-    type = attr.ib(default=CATEGORICAL)
-    domain = attr.ib(default=attr.Factory(dict))
-    value_to_code = attr.ib(default=attr.Factory(dict))
+    id: str
+    name: str
+    type: ParameterType = ParameterType.CATEGORICAL
+    domain: dict = dataclasses.field(default_factory=dict)
+    value_to_code: dict = dataclasses.field(default_factory=dict)
 
     @classmethod
     def from_object(cls, obj):
@@ -56,20 +60,20 @@ class Parameter:
 
 
 @functools.total_ordering
-@attr.s(order=False, eq=False)
+@dataclasses.dataclass(order=False, eq=False)
 class Value:
-    v = attr.ib()
-    pid = attr.ib()
-    lid = attr.ib()
-    code = attr.ib()
-    float = attr.ib(default=None)
-    weight = attr.ib(default=None)
+    v: str
+    pid: str
+    lid: str
+    code: str
+    float_val: float = None
+    weight: Optional[float] = None
 
-    def __attrs_post_init__(self):
+    def __post_init__(self):
         try:
-            self.float = float(self.v)
+            self.float_val = float(self.v)
         except (ValueError, TypeError):
-            self.float = None
+            self.float_val = None
 
     def __eq__(self, other):
         return (self.lid, self.pid, self.v) == (other.lid, other.pid, other.v)
@@ -97,12 +101,12 @@ class MultiParameter:
     """
     def __init__(self,
                  ds: pycldf.Dataset,
-                 pids: typing.Iterable[str],
-                 datatypes: typing.Iterable[str] = None,
+                 pids: Iterable[str],
+                 datatypes: Iterable[str] = None,
                  include_missing: bool = False,
-                 glottolog: typing.Optional[typing.Dict[str, typing.Union[dict, Languoid]]] = None,
-                 language_properties: typing.Optional[typing.Iterable[str]] = None,
-                 language_filter: typing.Optional[typing.Callable[[orm.Object], bool]] = None,
+                 glottolog: Optional[dict[str, Union[dict, Languoid]]] = None,
+                 language_properties: Optional[Iterable[str]] = None,
+                 language_filter: Optional[Callable[[orm.Object], bool]] = None,
                  weight_col=None,
                  exclude_lang=None):
         self.include_missing = include_missing
@@ -209,11 +213,11 @@ class MultiParameter:
                 p.domain = codes[p.id]
             else:
                 vals = [v for v in self.values if v.pid == p.id]
-                if all(v.float is not None for v in vals) and \
+                if all(v.float_val is not None for v in vals) and \
                         (len(set(v.v for v in vals)) > 8 or  # noqa: W504
                          (datatypes and datatypes[i] == 'number')):
-                    p.type = CONTINUOUS
-                    p.domain = (min(v.float for v in vals), max(v.float for v in vals))
+                    p.type = ParameterType.CONTINUOUS
+                    p.domain = (min(v.float_val for v in vals), max(v.float_val for v in vals))
                 else:
                     counts = collections.Counter([vv.v for vv in vals])
                     p.domain = collections.OrderedDict([
@@ -224,7 +228,7 @@ class MultiParameter:
         return str(self.parameters)
 
     def iter_languages(self) \
-            -> typing.Iterator[typing.Tuple[Language, typing.Dict[str, typing.List[Value]]]]:
+            -> Iterator[tuple[Language, dict[str, list[Value]]]]:
         for lid, values in itertools.groupby(sorted(self.values), lambda v: v.lid):
             values = {pid: list(vals) for pid, vals in itertools.groupby(values, lambda v: v.pid)}
             values = collections.OrderedDict(

@@ -8,12 +8,12 @@ from matplotlib.colors import Normalize, to_hex, CSS4_COLORS, BASE_COLORS
 import matplotlib.pyplot as plt
 from clldutils.color import qualitative_colors, sequential_colors, rgb_as_hex
 
-from cldfviz.multiparameter import CONTINUOUS, CATEGORICAL, Parameter
+from cldfviz.multiparameter import ParameterType, Parameter
 
 __all__ = ['COLORMAPS', 'hextriplet', 'Colormap', 'get_shape_and_color', 'weighted_colors']
 COLORMAPS = {
-    CATEGORICAL: ['boynton', 'tol', 'base', 'seq'],
-    CONTINUOUS: [cm for cm in plt.colormaps() if not cm.endswith('_r')],
+    ParameterType.CATEGORICAL: ['boynton', 'tol', 'base', 'seq'],
+    ParameterType.CONTINUOUS: [cm for cm in plt.colormaps() if not cm.endswith('_r')],
 }
 SHAPES = {
     'triangle_down',

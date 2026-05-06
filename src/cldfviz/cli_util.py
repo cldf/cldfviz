@@ -16,14 +16,14 @@ from clldutils.text import split_text_with_context
 from clldutils.clilib import PathType, ParserError
 from clldutils import path
 import newick
-from pyglottolog.objects import Glottocode
+from pyglottolog.languoids import Glottocode
 from pycldf import Dataset
 from pycldf.ext import discovery
 from pycldf.trees import TreeTable, Tree
 
 from cldfviz.glottolog import Glottolog
-from cldfviz.colormap import COLORMAPS, CATEGORICAL, CONTINUOUS, Colormap
-from cldfviz.multiparameter import MultiParameter
+from cldfviz.colormap import COLORMAPS, Colormap
+from cldfviz.multiparameter import MultiParameter, ParameterType
 
 
 def join_quoted(items: typing.Iterable) -> str:
@@ -160,7 +160,7 @@ def add_multiparameter(parser, with_language_filter=False, with_language_propert
         '--colormaps',
         help="Comma-separated names of colormaps to use for the respective parameter. Choose from "
              "{} for categorical and from {} for continuous parameters."
-             "".format(join_quoted(COLORMAPS[CATEGORICAL]), join_quoted(COLORMAPS[CONTINUOUS])),
+             "".format(join_quoted(COLORMAPS[ParameterType.CATEGORICAL]), join_quoted(COLORMAPS[ParameterType.CONTINUOUS])),
     )
     parser.add_argument(
         '--missing-value',

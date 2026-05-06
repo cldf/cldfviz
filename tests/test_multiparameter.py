@@ -3,7 +3,7 @@ import argparse
 import pytest
 from pycldf import Dataset
 
-from cldfviz.multiparameter import MultiParameter, Language, Value, CONTINUOUS
+from cldfviz.multiparameter import MultiParameter, Language, Value, ParameterType
 from cldfviz.cli_util import get_language_filter
 
 
@@ -56,7 +56,7 @@ ID,Language_ID,Parameter_ID,Value
 10,abcd1234,param1,10""", encoding='utf8')
     ds = Dataset.from_data(values)
     mp = MultiParameter(ds, ['param1'], glottolog=glottolog)
-    assert list(mp.parameters.values())[0].type == CONTINUOUS
+    assert list(mp.parameters.values())[0].type == ParameterType.CONTINUOUS
     mp = MultiParameter(ds, [], glottolog=glottolog)
     assert len(mp.languages) == 2
 

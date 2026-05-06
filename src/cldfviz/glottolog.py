@@ -5,8 +5,9 @@ data.
 """
 import argparse
 import collections
+import dataclasses
+from typing import Optional
 
-import attr
 from pycldf import Dataset
 from pycldf.ext import discovery
 from cldfbench.cli_util import add_catalog_spec, IGNORE_MISSING
@@ -21,12 +22,12 @@ except ImportError:  # pragma: no cover
 __all__ = ['Glottolog', 'Languoid']
 
 
-@attr.s
+@dataclasses.dataclass
 class Languoid:
-    id = attr.ib()
-    name = attr.ib()
-    lat = attr.ib()
-    lon = attr.ib()
+    id: str
+    name: str
+    lat: Optional[float]
+    lon: Optional[float]
 
     @classmethod
     def from_dict(cls, d):
