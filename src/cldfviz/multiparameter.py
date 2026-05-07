@@ -13,7 +13,9 @@ from pycldf import orm
 from cldfviz.glottolog import Glottolog
 
 PidType = str
+CodesDictType = dict[PidType, collections.OrderedDict[str, str]]
 ValueDictType = collections.OrderedDict[PidType, list['Value']]
+PSEUDO_PARAM_LANGUAGE = '__language__'
 
 
 class ParameterType(enum.Enum):
@@ -88,7 +90,7 @@ class Parameter:
     def from_object(cls, obj):
         return cls(id=obj.id, name=getattr(obj.cldf, 'name', obj.id))
 
-    def set_domain(self, values: Iterable['Value'], codes, datatype: Optional[str]):
+    def set_domain(self, values: Iterable['Value'], codes: CodesDictType, datatype: Optional[str]):
         if self.id in codes:  # A categorical parameter.
             self.domain = codes[self.id]
             return
@@ -130,7 +132,7 @@ class Value:
         return (self.lid, self.pid, self.v) < (other.lid, other.pid, other.v)
 
     @classmethod
-    def from_row(cls, row, codes, weight_col=None):
+    def from_row(cls, row, codes: CodesDictType, weight_col=None):
         return cls(
             v=row.get('codeReference') or row['value'],
             lid=row['languageReference'],
@@ -149,11 +151,11 @@ class ValueData:
     @classmethod
     def from_dataset(
             cls,
-            ds,
-            pdata,
-            ldata,
-            include_missing,
-            weight_col,
+            ds: pycldf.Dataset,
+            pdata: 'ParameterData',
+            ldata: 'LanguageData',
+            include_missing: bool,
+            weight_col: Optional[str],
     ):
         res = cls()
         res._add_parameter_values(ds, pdata, ldata.languages, include_missing, weight_col)
@@ -208,30 +210,22 @@ class ValueData:
                             lid=lang['id'],
                             code=language_property))
 
-    def _add_language_values(
-            self,
-            ds,
-            langs,
-    ):
+    def _add_language_values(self, ds: pycldf.Dataset, langs: dict[str, Language]):
         if self.values:
             return
+
+        def make_value(lid):
+            return Value(v='y', pid=PSEUDO_PARAM_LANGUAGE, lid=lid, code='language')
+
         if 'LanguageTable' not in ds:
             for lid, lang in langs.items():
                 self.languages.setdefault(lid, lang)
-                self.values.append(Value(
-                    v='y',
-                    pid='__language__',
-                    lid=lid,
-                    code='language'))
-        else:
-            for lang in ds.iter_rows('LanguageTable', 'id', 'name'):
-                if lang['id'] in langs:
-                    self.languages.setdefault(lang['id'], langs[lang['id']])
-                    self.values.append(Value(
-                        v='y',
-                        pid='__language__',
-                        lid=lang['id'],
-                        code='language'))
+                self.values.append(make_value(lid))
+            return
+        for lang in ds.iter_rows('LanguageTable', 'id', 'name'):
+            if lang['id'] in langs:
+                self.languages.setdefault(lang['id'], langs[lang['id']])
+                self.values.append(make_value(lang['id']))
 
 
 @dataclasses.dataclass
@@ -255,7 +249,7 @@ class LanguageData:
 class ParameterData:
     pids: Iterable[str]
     parameters: ParameterDictType = dataclasses.field(default_factory=dict)
-    codes: dict[PidType, collections.OrderedDict[str, str]] = dataclasses.field(
+    codes: CodesDictType = dataclasses.field(
         default_factory=lambda: collections.defaultdict(collections.OrderedDict))
 
     @classmethod
@@ -283,17 +277,19 @@ class ParameterData:
             [(pid, params.get(pid, Parameter(id=pid, name=pid))) for pid in self.pids])
         # For each language-property we add a parameter:
         for language_property in language_properties or []:
-            self.parameters[language_property] = Parameter(id=language_property, name=language_property)
+            self.parameters[language_property] = Parameter(
+                id=language_property, name=language_property)
         if not self.parameters:
             # No parameters and no language property specified: Just plot language locations.
-            self.parameters['__language__'] = Parameter(id='__language__', name='language')
+            self.parameters[PSEUDO_PARAM_LANGUAGE] = Parameter(
+                id=PSEUDO_PARAM_LANGUAGE, name='language')
 
     def _add_codes(
             self,
             ds: pycldf.Dataset,
             language_properties: Iterable[str],
             language_rows: list[dict[str, Any]],
-    ) -> dict[PidType, collections.OrderedDict[str, str]]:
+    ):
         if 'CodeTable' in ds:
             for row in ds.iter_rows('CodeTable', 'id', 'parameterReference', 'name'):
                 if row['parameterReference'] in self.parameters:
