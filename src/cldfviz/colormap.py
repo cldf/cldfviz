@@ -1,3 +1,6 @@
+"""
+Functionality related to mapping values to colors (or shapes).
+"""
 import json
 import itertools
 import collections
@@ -8,7 +11,7 @@ from matplotlib.colors import Normalize, to_hex, CSS4_COLORS, BASE_COLORS
 import matplotlib.pyplot as plt
 from clldutils.color import qualitative_colors, sequential_colors, rgb_as_hex
 
-from cldfviz.multiparameter import ParameterType, Parameter
+from cldfviz.multiparameter import ParameterType, Parameter, ValueDictType
 
 __all__ = [
     'WeightedColorsType',
@@ -55,7 +58,7 @@ def hextriplet(s: Union[str, tuple[str, str], list[str]]) -> ColorType:
     try:
         return rgb_as_hex(s)
     except (AssertionError, ValueError) as e:
-        raise ValueError(f'Invalid color spec: "{s}" ({str(e)})')
+        raise ValueError(f'Invalid color spec: "{s}" ({str(e)})') from e
 
 
 def _get_explicit_cm(
@@ -98,6 +101,9 @@ def _get_explicit_cm(
 
 
 class Colormap:
+    """
+    An instantiated Colormap is a callable conforming to ColormapType.
+    """
     def __init__(self, parameter: Parameter, name: Optional[str] = None, novalue=None):
         domain = parameter.domain
         self.explicit_cm: Optional[CategoricalColormapType] = _get_explicit_cm(
@@ -106,7 +112,7 @@ class Colormap:
             name = None
 
         self.novalue: Optional[ColorType] = hextriplet(novalue) if novalue else None
-        self._cm = getattr(cm, name or 'yyy', cm.jet)
+        self._cm = getattr(cm, name or 'yyy', cm.jet)  # pylint: disable=E1101
 
         if isinstance(domain, tuple):
             assert not self.explicit_cm
@@ -125,11 +131,13 @@ class Colormap:
 
     @property
     def with_shapes(self) -> bool:
+        """Whether the colormap specifies shapes (and not (only) colors)."""
         return bool(self.explicit_cm) and any(
             c in SHAPES if isinstance(c, str) else c[0] in SHAPES for c in self.explicit_cm.values()
         )
 
     def scalar_mappable(self):
+        """Somewhat obscure details required by matplotlib."""
         return cm.ScalarMappable(norm=None, cmap=self._cm)
 
     def __call__(self, value: ValueType) -> ColorType:
@@ -138,7 +146,8 @@ class Colormap:
         return self.cm(value)
 
 
-def get_shape_and_color(colors_or_shapes):
+def get_shape_and_color(colors_or_shapes: WeightedColorsType) -> Union[None, tuple[str, str]]:
+    """Support for the special case of shapes and colors combined."""
     if 1 <= len(colors_or_shapes) <= 2:
         shapes, colors = [], []
         for _, c in colors_or_shapes:
@@ -151,15 +160,20 @@ def get_shape_and_color(colors_or_shapes):
             if len(shapes) > 1:
                 raise ValueError('Only one shape can be specified for a marker')
             return shapes[0], colors[0] if colors else '#000000'
+    return None
 
 
-def weighted_colors(values, colormaps) -> WeightedColorsType:
+def weighted_colors(values: ValueDictType, colormaps: dict[str, Colormap]) -> WeightedColorsType:
+    """
+    Compute colors and weights for the values of a single language for a set of parameters,
+    suitable for creating pie charts.
+    """
     colors = []
     for pid, vals in values.items():
-        cm = colormaps[pid]
+        cm_ = colormaps[pid]
         total = sum(1 if vv.weight is None else vv.weight for vv in vals)
         for code, vvs in itertools.groupby(sorted(vals, key=lambda vv: vv.v), lambda vv: vv.v):
             colors.append((
                 sum(1 if vv.weight is None else vv.weight for vv in vvs) / total / len(values),
-                cm(code)))
+                cm_(code)))
     return colors

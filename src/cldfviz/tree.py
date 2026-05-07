@@ -19,6 +19,12 @@ from cldfviz.multiparameter import Parameter, ParameterDictType
 
 __all__ = ['render', 'TreeData']
 
+NodeNameType = str
+GlottocodeType = str
+GlottologNameType = str
+GlottologMappingType = dict[NodeNameType, tuple[GlottocodeType, GlottologNameType]]
+LabelsType = Union[Callable[[NodeNameType], str], dict[NodeNameType, str]]
+
 
 def clean_node_label(s: Union[str, None]) -> Union[str, None]:
     """Create a node label suitable for inclusion in SVG."""
@@ -29,11 +35,39 @@ def clean_node_label(s: Union[str, None]) -> Union[str, None]:
     return s
 
 
+@dataclasses.dataclass
+class TreeData:
+    values: dict[str, WeightedColorsType]
+    parameters: ParameterDictType
+    colormaps: dict[Union[str, None], Colormap]
+
+
 class SVGTree:
     """Functionality to create SVG programmatically."""
     def __init__(self, svg):
         self.svg = svg
         self.parent_map: dict = {c: p for p in svg.iter() for c in p}
+
+    @classmethod
+    def from_toyplot(cls, tree_object, nwk, data, width, height, legend, styles):
+        style = dict(  # pylint: disable=R1735
+            width=width,
+            height=height or sum(1 for n in nwk.walk() if n.is_leaf) * (23 if data else 15) + 150,
+            node_hover=True,
+            tip_labels_align=True,
+            tip_labels_style={
+                "fill": "#262626",
+                "font-size": "11px",
+                "-toyplot-anchor-shift": "15px",
+                "line-height": "14px",
+            },
+            scalebar=bool(getattr(tree_object, 'tree_branch_length_unit', None)) or bool(legend),
+        )
+        style.update(styles or {})
+        canvas, axes, _ = toytree.tree(nwk.newick + ";", tree_format=1).draw(**style)
+        if legend:
+            axes.label.text = legend
+        return cls(toyplot.svg.render(canvas, None))
 
     @property
     def height(self) -> float:
@@ -89,26 +123,97 @@ class SVGTree:
     def __str__(self):
         return bytes(self).decode('utf8')
 
+    @staticmethod
+    def prepare_nwk(
+            nwk,
+            leafs,
+            glottolog_mapping: GlottologMappingType,
+            labels: LabelsType,
+            data,
+            with_glottolog_links: bool,
+    ):
+        """
+        This function prepares the newick representation of the tree in such a way that
+        post-processing the toytree output becomes possible.
+        """
+        if leafs:
+            if callable(leafs):
+                leafs = [n.name for n in nwk.walk() if n.name and leafs(n)]
+            nwk.prune_by_names(leafs, inverse=True)
 
-@dataclasses.dataclass
-class TreeData:
-    values: dict[str, WeightedColorsType]
-    parameters: ParameterDictType
-    colormaps: dict[Union[str, None], Colormap]
+        if data:
+            nwk.prune_by_names(list(data.values.keys()), inverse=True)
+
+        if with_glottolog_links:
+            def apply_glottolog_mapping(n):
+                if n.name in glottolog_mapping:
+                    n.name = f"{n.name}--{glottolog_mapping[n.name][0]}"
+                if not n.is_leaf:
+                    n.name = None
+            nwk.visit(apply_glottolog_mapping)
+
+        if labels and (not data):
+            def apply_labels(n):
+                n.name = clean_node_label(labels(n) if callable(labels) else labels[n.name]) \
+                    if n.name else n.name
+            nwk.visit(apply_labels)
+
+        def pad(n):
+            if n.name and n.is_leaf:
+                # FIXME: pad to fit longest label  # pylint: disable=fixme
+                n.name = n.name + '#############'
+        nwk.visit(pad)
+
+    def add_glottolog_links(self, glottolog_mapping: GlottologMappingType):
+        """Add Glottolog links next to the leaf names."""
+        def _add_glottolog_links(svg, t, _, gcodes):
+            "Post-process the SVG to turn leaf names with Glottocodes into links"""
+            if t.text:
+                lid, _, gcode = t.text.strip().partition('--')
+                if gcode:
+                    se = svg.element('text', t, **copy.copy(t.attrib))
+                    gname = gcodes[lid][1]
+                    if gname:
+                        se.text = f'{lid} - {gname} [{gcode}]'
+                    else:
+                        se.text = f'{lid} - [{gcode}]'
+                    se.attrib['fill'] = '#0000ff'
+                    t.tag = 'a'
+                    t.attrib = {
+                        'href': f'https://glottolog.org/resource/languoid/id/{gcode}',
+                        # 'title': 'The glottolog name',
+                    }
+                    t.text = None
+        self.visit_leafs(_add_glottolog_links, glottolog_mapping)
+
+    def add_marker(self, data: TreeData, labels: LabelsType):
+        """Add value marker next to the leaf name."""
+        def _add_marker(svg, t, parent: ElementTree.Element, data: TreeData, labels):
+            """Prepend leaf labels with markers."""
+            t.text = t.text.rstrip('#') if t.text else t.text
+            if t.text in data.values:
+                t.attrib['x'] = str(float(t.attrib['x']) + 15)
+
+                g = ElementTree.SubElement(parent, 'g')
+                g.attrib = {'transform': "translate(0,-10)"}
+                svg.marker(g, data.values[t.text])
+                if t.text in (labels or {}):
+                    t.text = labels[t.text]
+        self.visit_leafs(_add_marker, data, labels)
 
 
-def render(  # pylint: disable=R0913,R0913
+def render(  # pylint: disable=R0913,R0917
         nwk: Union[Node, Tree],
         tree_object: Optional[Tree] = None,
         output: Optional[pathlib.Path] = None,
-        glottolog_mapping: Optional[dict[str, tuple[str, str]]] = None,
+        glottolog_mapping: Optional[GlottologMappingType] = None,
         legend: Optional[str] = None,
         width: Optional[int] = 500,
         height: Optional[int] = None,
         styles: Optional[dict] = None,
         with_glottolog_links: bool = False,
-        labels: Optional[Union[Callable[[Node], str], dict]] = None,
-        leafs: Optional[Union[Callable[[Node], bool], list]] = None,
+        labels: Optional[Union[Callable[[Node], str], dict[NodeNameType, str]]] = None,
+        leafs: Optional[Union[Callable[[Node], bool], list[NodeNameType]]] = None,
         data: Optional[TreeData] = None,
 ) -> Union[pathlib.Path, str]:
     """Render a tree to SVG."""
@@ -117,56 +222,14 @@ def render(  # pylint: disable=R0913,R0913
         tree_object = nwk
         nwk = tree_object.newick(strip_comments=True)
 
-    def rename(n):
-        if n.name in glottolog_mapping:
-            n.name = f"{n.name}--{glottolog_mapping[n.name][0]}"
-        if not n.is_leaf:
-            n.name = None
+    SVGTree.prepare_nwk(nwk, leafs, glottolog_mapping, labels, data, with_glottolog_links)
+    res = SVGTree.from_toyplot(tree_object, nwk, data, width, height, legend, styles)
 
-    def rename2(n):
-        n.name = clean_node_label(labels(n) if callable(labels) else labels[n.name]) \
-            if n.name else n.name
-
-    if leafs:
-        if callable(leafs):
-            leafs = [n.name for n in nwk.walk() if n.name and leafs(n)]
-        nwk.prune_by_names(leafs, inverse=True)
-    if data:
-        nwk.prune_by_names(list(data.values.keys()), inverse=True)
     if with_glottolog_links:
-        nwk.visit(rename)
-    if labels and (not data):
-        nwk.visit(rename2)
-
-    def pad(n):
-        if n.name and n.is_leaf:
-            # FIXME: pad to fit longest label  # pylint: disable=fixme
-            n.name = n.name + '#############'
-    nwk.visit(pad)
-
-    style = dict(  # pylint: disable=R1735
-        width=width,
-        height=height or sum(1 for n in nwk.walk() if n.is_leaf) * (23 if data else 15) + 150,
-        node_hover=True,
-        tip_labels_align=True,
-        tip_labels_style={
-            "fill": "#262626",
-            "font-size": "11px",
-            "-toyplot-anchor-shift": "15px",
-            "line-height": "14px",
-        },
-        scalebar=bool(getattr(tree_object, 'tree_branch_length_unit', None)) or bool(legend),
-    )
-    style.update(styles or {})
-    canvas, axes, _ = toytree.tree(nwk.newick + ";", tree_format=1).draw(**style)
-    if legend:
-        axes.label.text = legend
-    res = SVGTree(toyplot.svg.render(canvas, None))
-    if with_glottolog_links:
-        res.visit_leafs(add_glottolog_links, glottolog_mapping)
+        res.add_glottolog_links(glottolog_mapping)
 
     if data:
-        res.visit_leafs(add_marker, data, labels)
+        res.add_marker(data, labels)
         add_legend(res, data)
     else:
         res.visit_leafs(
@@ -176,39 +239,6 @@ def render(  # pylint: disable=R0913,R0913
         output.write_bytes(bytes(res))
         return output
     return str(res)
-
-
-def add_glottolog_links(svg, t, _, gcodes):
-    "Post-process the SVG to turn leaf names with Glottocodes into links"""
-    if t.text:
-        lid, _, gcode = t.text.strip().partition('--')
-        if gcode:
-            se = svg.element('text', t, **copy.copy(t.attrib))
-            gname = gcodes[lid][1]
-            if gname:
-                se.text = f'{lid} - {gname} [{gcode}]'
-            else:
-                se.text = f'{lid} - [{gcode}]'
-            se.attrib['fill'] = '#0000ff'
-            t.tag = 'a'
-            t.attrib = {
-                'href': f'https://glottolog.org/resource/languoid/id/{gcode}',
-                # 'title': 'The glottolog name',
-            }
-            t.text = None
-
-
-def add_marker(svg, t, parent: ElementTree.Element, data: TreeData, labels: dict[str, str]):
-    """Prepend leaf labels with markers."""
-    t.text = t.text.rstrip('#') if t.text else t.text
-    if t.text in data.values:
-        t.attrib['x'] = str(float(t.attrib['x']) + 15)
-
-        g = ElementTree.SubElement(parent, 'g')
-        g.attrib = {'transform': "translate(0,-10)"}
-        svg.marker(g, data.values[t.text])
-        if t.text in (labels or {}):
-            t.text = labels[t.text]
 
 
 @dataclasses.dataclass
