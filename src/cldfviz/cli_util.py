@@ -9,9 +9,11 @@ import json
 import inspect
 import pathlib
 import argparse
+import importlib
 import webbrowser
 from collections.abc import Iterable
-from typing import Optional, Union, Any
+from types import ModuleType
+from typing import Optional, Union, Any, Callable
 
 from clldutils.text import split_text_with_context
 from clldutils.clilib import PathType, ParserError
@@ -19,12 +21,14 @@ from clldutils import path
 import newick
 from pyglottolog.languoids import Glottocode
 from pycldf import Dataset
+from pycldf import orm
 from pycldf.ext import discovery
 from pycldf.trees import TreeTable, Tree
 
 from cldfviz.glottolog import Glottolog
 from cldfviz.colormap import COLORMAPS, Colormap
 from cldfviz.multiparameter import MultiParameter, ParameterType
+from cldfviz.util import add_download_dir
 
 
 def join_quoted(items: Iterable) -> str:
@@ -50,6 +54,7 @@ def add_jinja_template(parser: argparse.ArgumentParser, default: Any):
 
 
 def add_open(parser: argparse.ArgumentParser):
+    """Add option specifying that output should be opened in the browser."""
     parser.add_argument(
         "--open", action='store_true', default=False,
         help="Open the output file in the browser. (Requires specifying --output as well.)"
@@ -64,20 +69,23 @@ def add_open(parser: argparse.ArgumentParser):
 
 
 def open_output(args: argparse.Namespace):
+    """Maybe open a file in the browser."""
     if args.output and args.open and not getattr(args, 'test', False):  # pragma: no cover
         webbrowser.open(args.output.resolve().as_uri(), new=1)
 
 
 def write_output(args: argparse.Namespace, res: str):
+    """Write res to a file or to stdout."""
     if args.output:
         args.output.write_text(res, encoding="utf8")
-        print("Output written to {}".format(args.output))
+        print(f"Output written to {args.output}")
         open_output(args)
     else:
         print(res)
 
 
-def add_language_filter(parser):
+def add_language_filter(parser: argparse.ArgumentParser):
+    """Add option to specify a language filter."""
     parser.add_argument(
         '--language-filters',
         default=None,
@@ -90,11 +98,12 @@ def add_language_filter(parser):
     )
 
 
-def get_language_filter(args):
+def get_language_filter(args: argparse.Namespace) -> Optional[Callable[[orm.Language], bool]]:
+    """Get a language filter function implementing the filtering specified on the cl."""
     if args.language_filters is None:
-        return
+        return None
 
-    def language_filter(lg):
+    def language_filter(lg: orm.Language):
         for k, v in json.loads(args.language_filters).items():
             val = lg.data[k]
             if isinstance(v, str):
@@ -110,7 +119,8 @@ def get_language_filter(args):
     return language_filter
 
 
-def get_filtered_languages(args, ds) -> Union[None, list[str]]:
+def get_filtered_languages(args: argparse.Namespace, ds: Dataset) -> Union[None, list[str]]:
+    """Get the language filter specified by args and run it on the dataset."""
     language_filter = get_language_filter(args)
     if language_filter:
         res = []
@@ -120,31 +130,39 @@ def get_filtered_languages(args, ds) -> Union[None, list[str]]:
             if language_filter(lg):
                 res.append(lg.id)
         return res
+    return None
 
 
-def add_testable(parser):
+def add_testable(parser: argparse.ArgumentParser):
+    """Add a test option."""
     parser.add_argument('--test', action='store_true', default=False, help=argparse.SUPPRESS)
 
 
-def add_listvalued(parser, *args, **kw):
+def add_listvalued(parser: argparse.ArgumentParser, *args, **kw):
+    """
+    Add an option of type list-valued. The option value is split on commas appearing outside of
+    curly braces. So the value may also contain JSON formatted objects.
+    """
     kw.setdefault('default', [])
     kw.setdefault('type', lambda s: split_text_with_context(s, ',', brackets={'{': '}'}))
     parser.add_argument(*args, **kw)
 
 
-def import_module(dotted_name_or_path):
-    import importlib
+def import_module(dotted_name_or_path: str) -> ModuleType:
+    """Import a module."""
     p = pathlib.Path(dotted_name_or_path)
     if p.exists():
         return path.import_module(p.resolve())
     return importlib.import_module(dotted_name_or_path)
 
 
-def import_subclass(dotted_name_or_path, cls):
+def import_subclass(dotted_name_or_path: str, cls: type) -> Optional[type]:
+    """Import a subclass from a module."""
     mod = import_module(dotted_name_or_path)
     for _, obj in inspect.getmembers(mod):
         if inspect.isclass(obj) and issubclass(obj, cls) and not obj.__subclasses__():
             return obj
+    return None  # pragma: no cover
 
 
 def add_multiparameter(parser, with_language_filter=False, with_language_properties=False):
@@ -166,9 +184,9 @@ def add_multiparameter(parser, with_language_filter=False, with_language_propert
     add_listvalued(
         parser,
         '--colormaps',
-        help="Comma-separated names of colormaps to use for the respective parameter. Choose from "
-             "{} for categorical and from {} for continuous parameters."
-             "".format(join_quoted(COLORMAPS[ParameterType.CATEGORICAL]), join_quoted(COLORMAPS[ParameterType.CONTINUOUS])),
+        help=f"Comma-separated names of colormaps to use for the respective parameter. Choose from "
+             f"{join_quoted(COLORMAPS[ParameterType.CATEGORICAL])} for categorical and from "
+             f"{join_quoted(COLORMAPS[ParameterType.CONTINUOUS])} for continuous parameters.",
     )
     parser.add_argument(
         '--missing-value',
@@ -200,15 +218,16 @@ def add_multiparameter(parser, with_language_filter=False, with_language_propert
 
 
 def get_multiparameter(
-        args,
+        args: argparse.Namespace,
         ds: Dataset,
         glottolog: Glottolog,
         **ukw,
 ) -> tuple[MultiParameter, dict[Union[str, None], Colormap]]:
+    """Instantiate a MultiParameter object as specified in cl args."""
     with_language_filters = hasattr(args, 'language_filters')
     with_language_properties = hasattr(args, 'language_properties')
 
-    kw = dict(
+    kw = dict(  # pylint: disable=R1735
         datatypes=args.datatypes,
         glottolog=glottolog,
         include_missing=args.missing_value is not None,
@@ -234,7 +253,7 @@ def get_multiparameter(
             args.colormaps = args.colormaps or [None]
         args.colormaps.extend(args.language_properties_colormaps)
 
-    assert len(args.colormaps) == len(data.parameters), '{}'.format(data.parameters.keys())
+    assert len(args.colormaps) == len(data.parameters), f'{data.parameters.keys()}'
     try:
         cms = {
             pid: Colormap(
@@ -243,7 +262,7 @@ def get_multiparameter(
                 novalue=args.missing_value)
             for pid, cm in zip(data.parameters, args.colormaps)}
     except (ValueError, KeyError) as e:
-        raise ParserError(str(e))
+        raise ParserError(str(e)) from e
 
     with_shapes = sum(1 for cm in cms.values() if cm.with_shapes)
     if with_shapes:
@@ -255,29 +274,22 @@ def get_multiparameter(
     return data, cms
 
 
-def add_secondary_dataset(parser, opt: str, help: Optional[str] = None):
+def add_secondary_dataset(
+        parser: argparse.ArgumentParser,
+        opt: str,
+        help: Optional[str] = None,  # pylint: disable=W0622
+):
     """
     Some commands access data in multiple CLDF datasets.
 
     To be used with `get_secondary_dataset`.
     """
-    parser.add_argument(
-        opt,
-        default=None,
-        help="CLDF dataset locator. {}".format(help or '').strip(),
-    )
-    try:
-        parser.add_argument(
-            '--download-dir',
-            type=PathType(type='dir'),
-            help='An existing directory to use for downloading a dataset (if necessary).',
-            default=None,
-        )
-    except argparse.ArgumentError:  # pragma: no cover
-        pass  # output option already added.
+    parser.add_argument(opt, default=None, help=f"CLDF dataset locator. {help or ''}".strip())
+    add_download_dir(parser)
 
 
-def add_tree(parser):
+def add_tree(parser: argparse.ArgumentParser):
+    """Add options to specify a CLDF tree object."""
     add_secondary_dataset(
         parser,
         '--tree-dataset',
@@ -300,13 +312,17 @@ def add_tree(parser):
     )
 
 
-def get_secondary_dataset(args, opt: str):
+def get_secondary_dataset(args: argparse.Namespace, opt: str) -> Optional[Dataset]:
+    """Retrieve a secondary dataset specified as option."""
     if getattr(args, opt):
         return discovery.get_dataset(getattr(args, opt), args.download_dir)
+    return None  # pragma: no cover
 
 
-def get_tree(args, glottolog: Optional[Glottolog] = None) \
-        -> tuple[newick.Node, Union[None, Tree], Union[None, Dataset]]:
+def get_tree(
+        args: argparse.Namespace,
+        glottolog: Optional[Glottolog] = None,
+) -> tuple[newick.Node, Union[None, Tree], Union[None, Dataset]]:
     """
     Note: While the `Tree` object which may be returned by this function allows access to the
     Newick string of the tree, the returned `Node` object should be used preferentially. This is

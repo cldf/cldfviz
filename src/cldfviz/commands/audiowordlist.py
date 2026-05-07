@@ -63,7 +63,7 @@ def run(args):
     # Get relevant forms and linked media:
     forms = []
     for form, media in get_objects_and_media(
-            ds, 'FormTable', 'formReference', filter=lambda f: f.cldf.parameterReference == pid):
+            ds, 'FormTable', 'formReference', filter_=lambda f: f.cldf.parameterReference == pid):
         forms.append((
             form,
             nfilter(get_media_url(f, args.media_dir) for f in media if f.mimetype.type == 'audio')))

@@ -27,7 +27,7 @@ def run(args):
     examples = []
     for example, media in get_objects_and_media(
             ds, 'ExampleTable', 'exampleReference',
-            filter=lambda e: (valid_langs is None) or e.cldf.languageReference in valid_langs):
+            filter_=lambda e: (valid_langs is None) or e.cldf.languageReference in valid_langs):
         examples.append((
             example,
             nfilter(get_media_url(f) for f in media if f.mimetype.type == 'audio')))

@@ -14,6 +14,7 @@ __all__ = ['df_from_dicts']
 
 
 class DF:
+    """Simple converter to turn dicts into a DataFrame."""
     def __init__(self):
         self.df = None
         self.acc = collections.defaultdict(list)
@@ -21,7 +22,8 @@ class DF:
     def __enter__(self):
         return self
 
-    def add(self, item):
+    def add(self, item: dict):
+        """Add a dict"""
         if self.df is None:
             self.df = pd.DataFrame(columns=list(item))
         for k, v in item.items():
