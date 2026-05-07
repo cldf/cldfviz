@@ -5,7 +5,7 @@ import itertools
 import collections
 from collections.abc import Iterable, Generator
 import dataclasses
-from typing import Optional, Callable, Any
+from typing import Optional, Callable, Any, Union
 
 import pycldf
 from pycldf import orm
@@ -24,23 +24,23 @@ class ParameterType(enum.Enum):
 
 @dataclasses.dataclass(frozen=True)
 class Language:
-    """A Glottolog language"""
+    """Language metadata to facilitate plotting on a map."""
     id: str
     name: str
     lat: Optional[float]
     lon: Optional[float]
 
     @staticmethod
-    def optional_float(f):
+    def _optional_float(f):
         return float(f) if f is not None else None
 
     @classmethod
-    def from_glottocode(cls, glottocode: str, glottolog: Glottolog):
+    def _from_glottocode(cls, glottocode: str, glottolog: Glottolog):
         obj = glottolog[glottocode]
-        return cls(obj.id, obj.name, cls.optional_float(obj.lat), cls.optional_float(obj.lon))
+        return cls(obj.id, obj.name, cls._optional_float(obj.lat), cls._optional_float(obj.lon))
 
     @classmethod
-    def from_object(cls, obj: orm.Language, glottolog: Optional[Glottolog] = None):
+    def _from_object(cls, obj: orm.Language, glottolog: Optional[Glottolog] = None):
         lat = obj.cldf.latitude
         lon = obj.cldf.longitude
         if lat is None and obj.cldf.glottocode in glottolog:
@@ -50,7 +50,7 @@ class Language:
             # shapely.geometry.MultiPoint([(0, 0), (1, 1)]).convex_hull.centroid
             lat = glottolog[obj.cldf.glottocode].lat
             lon = glottolog[obj.cldf.glottocode].lon
-        return cls(obj.id, obj.name, cls.optional_float(lat), cls.optional_float(lon))
+        return cls(obj.id, obj.name, cls._optional_float(lat), cls._optional_float(lon))
 
     @staticmethod
     def from_dataset(
@@ -59,16 +59,17 @@ class Language:
             language_filter: Optional[Callable[[orm.Language], bool]] = None,
             exclude_lang: Optional[Callable[['Language'], bool]] = None,
     ) -> dict[str, 'Language']:
+        """Retrieve a filtered set of languages from a dataset."""
         if 'LanguageTable' in ds:
             langs = {
-                lg.id: Language.from_object(lg, glottolog=glottolog)
+                lg.id: Language._from_object(lg, glottolog=glottolog)
                 for lg in ds.objects('LanguageTable')
                 if language_filter is None or language_filter(lg)}
         else:
             glottocodes = {
                 r['languageReference'] for r in ds.iter_rows('ValueTable', 'languageReference')}
             langs = {
-                gc: Language.from_glottocode(gc, glottolog)
+                gc: Language._from_glottocode(gc, glottolog)
                 for gc in glottocodes if glottolog and gc in glottolog}
         return {
             k: v for k, v in langs.items() if v and (exclude_lang is None or not exclude_lang(v))}
@@ -76,31 +77,31 @@ class Language:
 
 @dataclasses.dataclass
 class Parameter:
+    """Relevant parameter metadata to facilitate plotting of values and a legend."""
     id: str
     name: str
     type: ParameterType = ParameterType.CATEGORICAL
-    domain: dict = dataclasses.field(default_factory=dict)
+    domain: Union[dict[str, str], tuple[float, float]] = dataclasses.field(default_factory=dict)
     value_to_code: dict = dataclasses.field(default_factory=dict)
 
     @classmethod
     def from_object(cls, obj):
         return cls(id=obj.id, name=getattr(obj.cldf, 'name', obj.id))
 
-    def set_domain(self, values, codes, datatype):
-        if self.id in codes:
+    def set_domain(self, values: Iterable['Value'], codes, datatype: Optional[str]):
+        if self.id in codes:  # A categorical parameter.
             self.domain = codes[self.id]
             return
         vals = [v for v in values if v.pid == self.id]
+        distinct_vals = {v.v for v in vals}
         if all(v.float_val is not None for v in vals) and \
-                (len(set(v.v for v in vals)) > 8 or  # noqa: W504
-                 datatype == 'number'):
+                (len(distinct_vals) > 8 or datatype == 'number'):
             self.type = ParameterType.CONTINUOUS
             self.domain = (min(v.float_val for v in vals), max(v.float_val for v in vals))
             return
         counts = collections.Counter([vv.v for vv in vals])
         self.domain = collections.OrderedDict([
-            (v, v)
-            for v in sorted(set(vv.v for vv in vals), key=lambda vv: -counts[vv])])
+            (v, v) for v in sorted(distinct_vals, key=lambda vv: -counts[vv])])
 
 
 ParameterDictType = collections.OrderedDict[str, Parameter]

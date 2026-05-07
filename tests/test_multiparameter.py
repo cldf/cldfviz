@@ -12,7 +12,7 @@ def test_Language(glottolog, StructureDataset):
     for row in StructureDataset['LanguageTable']:
         row['Glottocode'] = 'abcd1234'
         row['Latitude'] = None
-        lang = Language.from_object(orm.Language(StructureDataset, row), glottolog)
+        lang = Language._from_object(orm.Language(StructureDataset, row), glottolog)
         assert lang.lat == pytest.approx(10.0)
         break
 
