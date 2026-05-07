@@ -132,7 +132,7 @@ def test_templates(Wordlist, Generic, StructureDataset, comp, query, oid, ds, ex
 def test_reference_list(StructureDataset):
     text = """# [](ParameterTable?__template__=property.md&property=name#cldf:B)
 
-See [](Source?ref&with_internal_ref_link#cldf:Peterson2017) and [ex](http://example.com)
+See [](Source?ref&with_internal_ref_link#cldf:Peterson2017) and [stuff] or [ex](http://example.com)
 
 [References](Source?cited_only#cldf:__all__)
 """

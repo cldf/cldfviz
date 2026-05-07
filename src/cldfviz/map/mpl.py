@@ -361,11 +361,17 @@ class MapPlot(Map):
                         label=wrapped_label(parameter.name)))
                 for v, label in parameter.domain.items():
                     color = colormaps[pid](v)
+                    if isinstance(color, tuple):
+                        shape, color = color
+                    else:
+                        shape = None
+                        if color in SHAPE_MAP:
+                            shape, color = color, shape
                     handles.append(
                         plt.Line2D(
                             [], [],
-                            marker=SHAPE_MAP[color] if color in SHAPE_MAP else 'o',
-                            color='#000000' if color in SHAPE_MAP else color,
+                            marker=SHAPE_MAP[shape] if shape else 'o',
+                            color='#000000' if color is None else color,
                             linewidth=0,#1,
                             linestyle='',
                             label=wrapped_label(label))

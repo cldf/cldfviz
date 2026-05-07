@@ -357,6 +357,9 @@ def test_map_misc(tmp_path, capsys, ds_arg, md_path_factory, MetadataFreeStructu
     out, _ = capsys.readouterr()
     assert 'ERROR' in out
 
+    run(ds_arg, '--test --parameters C --colormaps \'{"0":["circle","red"],"1":"diamond","2":"square"}\'')
+    run(ds_arg, '--format jpg --output ' + str(tmp_path) + '/test.jpg --test --parameters C --colormaps \'{"0":["circle","red"],"1":"diamond","2":"square"}\'')
+
     if WITH_CARTOPY:
         with warnings.catch_warnings():
             warnings.filterwarnings(
