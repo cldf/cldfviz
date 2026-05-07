@@ -1,3 +1,6 @@
+"""
+Functionality to access data in a CLDF dataset related to multiple (pseudo-) parameters.
+"""
 import enum
 import decimal
 import functools
@@ -46,7 +49,8 @@ class Language:
         lat = obj.cldf.latitude
         lon = obj.cldf.longitude
         if lat is None and obj.cldf.glottocode in glottolog:
-            # FIXME: If a language is mapped to multiple glottocodes, we could try to take the
+            # FIXME:  # pylint: disable=fixme
+            # If a language is mapped to multiple glottocodes, we could try to take the
             # midpoint of these as coordinate. (If longitudes have different signs, transform
             # back and forth appropriately, i.e. lon < 0 => lon = 360 - abs(lon))
             # shapely.geometry.MultiPoint([(0, 0), (1, 1)]).convex_hull.centroid
@@ -87,10 +91,12 @@ class Parameter:
     value_to_code: dict = dataclasses.field(default_factory=dict)
 
     @classmethod
-    def from_object(cls, obj):
+    def from_object(cls, obj) -> 'Parameter':
+        """Instantiate a parameter from a pycldf.orm object."""
         return cls(id=obj.id, name=getattr(obj.cldf, 'name', obj.id))
 
     def set_domain(self, values: Iterable['Value'], codes: CodesDictType, datatype: Optional[str]):
+        """Determine the domain of the parameter based on the actual values."""
         if self.id in codes:  # A categorical parameter.
             self.domain = codes[self.id]
             return
@@ -112,10 +118,15 @@ ParameterDictType = collections.OrderedDict[str, Parameter]
 @functools.total_ordering
 @dataclasses.dataclass(order=False, eq=False)
 class Value:
+    """
+    Data about a single datapoint (i.e. row in Form- or ValueTable) relevant for plotting.
+
+    By default, Values will be ordered by language, then parameter, then value.
+    """
     v: str
     pid: str
     lid: str
-    code: Optional[str]
+    code: Optional[str] = None
     float_val: float = None
     weight: Optional[float] = None
 
@@ -133,6 +144,7 @@ class Value:
 
     @classmethod
     def from_row(cls, row, codes: CodesDictType, weight_col=None):
+        """Instantiate a Value from a suitable CLDF table row."""
         return cls(
             v=row.get('codeReference') or row['value'],
             lid=row['languageReference'],
@@ -145,11 +157,12 @@ class Value:
 
 @dataclasses.dataclass
 class ValueData:
+    """Data about values in a dataset."""
     languages: collections.OrderedDict = dataclasses.field(default_factory=collections.OrderedDict)
     values: list = dataclasses.field(default_factory=list)
 
     @classmethod
-    def from_dataset(
+    def from_dataset(  # pylint: disable=R0913,R0917
             cls,
             ds: pycldf.Dataset,
             pdata: 'ParameterData',
@@ -157,6 +170,7 @@ class ValueData:
             include_missing: bool,
             weight_col: Optional[str],
     ):
+        """Extract relevant data from a dataset."""
         res = cls()
         res._add_parameter_values(ds, pdata, ldata.languages, include_missing, weight_col)
         res._add_language_property_values(
@@ -164,13 +178,13 @@ class ValueData:
         res._add_language_values(ds, ldata.languages)
         return res
 
-    def _add_parameter_values(
+    def _add_parameter_values(  # pylint: disable=R0913,R0917
             self,
-            ds,
-            pdata,
+            ds: pycldf.Dataset,
+            pdata: 'ParameterData',
             langs,
-            include_missing,
-            weight_col,
+            include_missing: bool = False,
+            weight_col: Optional[str] = None,
     ):
         if not pdata.pids:
             return
@@ -187,6 +201,7 @@ class ValueData:
                 if lang:
                     self.languages[val['languageReference']] = lang
                     self.values.append(Value.from_row(val, pdata.codes, weight_col=weight_col))
+                    # Fill in the lookup, mapping actual values to codes.
                     pdata.parameters[val['parameterReference']] \
                         .value_to_code[str(val['value'])] = \
                         val.get('codeReference') or val['Value']
@@ -214,28 +229,37 @@ class ValueData:
         if self.values:
             return
 
-        def make_value(lid):
+        def _make_value(lid):
             return Value(v='y', pid=PSEUDO_PARAM_LANGUAGE, lid=lid, code='language')
 
         if 'LanguageTable' not in ds:
             for lid, lang in langs.items():
                 self.languages.setdefault(lid, lang)
-                self.values.append(make_value(lid))
+                self.values.append(_make_value(lid))
             return
         for lang in ds.iter_rows('LanguageTable', 'id', 'name'):
             if lang['id'] in langs:
                 self.languages.setdefault(lang['id'], langs[lang['id']])
-                self.values.append(make_value(lang['id']))
+                self.values.append(_make_value(lang['id']))
 
 
 @dataclasses.dataclass
 class LanguageData:
+    """Language metadata relevant for plotting."""
     language_properties: list[str]
     languages: dict[str, Language]
     language_rows: list[collections.OrderedDict[str, Any]]
 
     @classmethod
-    def from_dataset(cls, ds, language_properties, language_filter, exclude_lang, glottolog):
+    def from_dataset(  # pylint: disable=R0913,R0917
+            cls,
+            ds: pycldf.Dataset,
+            language_properties: Iterable[str],
+            language_filter: Optional[Callable[[orm.Object], bool]] = None,
+            exclude_lang: Optional[Callable[[Language], bool]] = None,
+            glottolog: Optional[Glottolog] = None,
+    ):
+        """Get data for a filtered set of languages in a dataset."""
         langs = Language.from_dataset(ds, glottolog, language_filter, exclude_lang)
         language_rows = []
         if language_properties:
@@ -247,19 +271,29 @@ class LanguageData:
 
 @dataclasses.dataclass
 class ParameterData:
+    """
+    Metadata about multiple (pseudo-) parameters.
+    """
     pids: Iterable[str]
     parameters: ParameterDictType = dataclasses.field(default_factory=dict)
     codes: CodesDictType = dataclasses.field(
         default_factory=lambda: collections.defaultdict(collections.OrderedDict))
 
     @classmethod
-    def from_dataset(cls, ds, pids, ldata):
+    def from_dataset(
+            cls,
+            ds: pycldf.Dataset,
+            pids: Iterable[str],
+            ldata: LanguageData
+    ) -> 'ParameterData':
+        """Extract parameter metadata from the dataset."""
         res = cls(pids=pids)
         res._add_parameters(ds, ldata.language_properties)
         res._add_codes(ds, ldata.language_properties, ldata.language_rows)
         return res
 
-    def set_domains(self, values, datatypes):
+    def set_domains(self, values: list[Value], datatypes: Optional[list[str]]):
+        """Determine the domains of the parameters based on actual values in the dataset."""
         for i, p in enumerate(self.parameters.values()):
             p.set_domain(values, self.codes, datatypes[i] if datatypes else None)
 
@@ -295,7 +329,7 @@ class ParameterData:
                 if row['parameterReference'] in self.parameters:
                     self.codes[row['parameterReference']][row['id']] = row['name']
 
-        for i, language_property in enumerate(language_properties):
+        for language_property in language_properties:
             vals = [v[language_property] for v in language_rows if v[language_property] is not None]
 
             if all(isinstance(v, (int, float, decimal.Decimal)) for v in vals):
@@ -303,12 +337,12 @@ class ParameterData:
                 continue
 
             counts = collections.Counter(vals)
+            distinct_sorted = sorted(set(vals), key=lambda x: -counts[x])  # pylint: disable=W0640
             # For categorical parameters we add codes ordered from most frequent to least frequent.
-            # This will make sure that when plotting values in order, the less frequent ones will not
-            # be covered by more frequent ones.
-            self.codes[language_property] = collections.OrderedDict([
-                (v, v) for v in sorted(set(vals), key=lambda x: -counts[x])
-            ])
+            # This will make sure that when plotting values in order, the less frequent ones will
+            # not be covered by more frequent ones.
+            self.codes[language_property] = collections.OrderedDict(
+                [(v, v) for v in distinct_sorted])
 
 
 class MultiParameter:
@@ -317,16 +351,18 @@ class MultiParameter:
 
     :ivar parameters: `OrderedDict` mapping parameter IDs to :class:`Parameter` instances.
     """
-    def __init__(self,
-                 ds: pycldf.Dataset,
-                 pids: Iterable[str],
-                 datatypes: Iterable[str] = None,
-                 include_missing: bool = False,
-                 glottolog: Optional[Glottolog] = None,
-                 language_properties: Optional[Iterable[str]] = None,
-                 language_filter: Optional[Callable[[orm.Object], bool]] = None,
-                 weight_col=None,
-                 exclude_lang: Optional[Callable[[Language], bool]] = None):
+    def __init__(  # pylint: disable=R0913,R0917
+            self,
+            ds: pycldf.Dataset,
+            pids: Iterable[str],
+            datatypes: Iterable[str] = None,
+            include_missing: bool = False,
+            glottolog: Optional[Glottolog] = None,
+            language_properties: Optional[Iterable[str]] = None,
+            language_filter: Optional[Callable[[orm.Object], bool]] = None,
+            weight_col=None,
+            exclude_lang: Optional[Callable[[Language], bool]] = None,
+    ):
         self.include_missing = include_missing
 
         ldata = LanguageData.from_dataset(

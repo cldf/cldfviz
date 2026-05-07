@@ -13,6 +13,7 @@ from cldfviz.colormap import *
         ('aqua', '#00FFFF'),
         ('a00', '#AA0000'),
         ('diamond', 'diamond'),
+        (('square', 'aqua'), ('square', '#00FFFF')),
     ]
 )
 def test_hextriplet(s, res):
