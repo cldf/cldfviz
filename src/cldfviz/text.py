@@ -1,3 +1,6 @@
+"""
+Functionality implementing rendering of CLDF Markdown.
+"""
 import re
 import html
 import pathlib
@@ -16,10 +19,12 @@ import cldfviz
 
 __all__ = ['iter_templates', 'render', 'iter_cldfviz_links']
 
+PathType = Union[pathlib.Path, str]
 TEMPLATE_DIR = cldfviz.PKG_DIR.joinpath('templates', 'text')
 
 
 def source_markdown(src, with_link=False):
+    """Render a Source object as markdown."""
     return src.text(**{'markdown': True} if with_link else {})
 
 
@@ -31,6 +36,7 @@ def _add_filters(env):
 
 
 def get_env(template_dir=None, fallback_template_dir=None):
+    """Get Jinja2 environment."""
     loader = jinja2.FileSystemLoader(
         searchpath=[str(d) for d in nfilter([template_dir, fallback_template_dir, TEMPLATE_DIR])])
     env = jinja2.Environment(loader=loader, trim_blocks=True, lstrip_blocks=True)
@@ -39,13 +45,13 @@ def get_env(template_dir=None, fallback_template_dir=None):
 
 
 def iter_templates() -> Generator[tuple[pathlib.Path, str, list[str]], None, None]:
+    """Yield available templates."""
     env = get_env()
     for p in sorted(TEMPLATE_DIR.iterdir(), key=lambda pp: pp.name):
         m = re.match(r"{#(.+?)#}", p.read_text(encoding='utf8'), flags=re.MULTILINE | re.DOTALL)
         doc = m.group(1) if m else None
-        parsed_content = env.parse(env.loader.get_source(env, p.name))
-        vars = jinja2.meta.find_undeclared_variables(parsed_content)
-        yield p, doc, [v for v in vars if v != 'ctx']
+        vars_ = jinja2.meta.find_undeclared_variables(env.parse(env.loader.get_source(env, p.name)))
+        yield p, doc, [v for v in vars_ if v != 'ctx']
 
 
 def pad_ex(obj: Iterable[str],
@@ -68,12 +74,14 @@ def pad_ex(obj: Iterable[str],
     return "  ".join(out_obj).strip(), "  ".join(out_gloss).strip()
 
 
-def render(doc: Union[pathlib.Path, str],
-           cldf_dict: Union[Dataset, dict[Union[str, None], Dataset]],
-           template_dir: Optional[Union[str, pathlib.Path]] = None,
-           loader: Optional[jinja2.BaseLoader] = None,
-           func_dict: Optional[dict[str, Callable]] = None,
-           escape: Optional[bool] = True) -> str:
+def render(  # pylint: disable=R0913,R0917
+        doc: PathType,
+        cldf_dict: Union[Dataset, dict[Union[str, None], Dataset]],
+        template_dir: Optional[PathType] = None,
+        loader: Optional[jinja2.BaseLoader] = None,
+        func_dict: Optional[dict[str, Callable]] = None,
+        escape: Optional[bool] = True,
+) -> str:
     """
     Render CLDF Markdown using customizable jinja2 templates.
 
