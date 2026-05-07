@@ -141,11 +141,27 @@ class Value:
 
 
 @dataclasses.dataclass
-class Data:
+class ValueData:
     languages: collections.OrderedDict = dataclasses.field(default_factory=collections.OrderedDict)
     values: list = dataclasses.field(default_factory=list)
 
-    def add_parameter_values(
+    @classmethod
+    def from_dataset(
+            cls,
+            ds,
+            pdata,
+            ldata,
+            include_missing,
+            weight_col,
+    ):
+        res = cls()
+        res._add_parameter_values(ds, pdata, ldata.languages, include_missing, weight_col)
+        res._add_language_property_values(
+            ldata.language_properties, ldata.languages, ldata.language_rows)
+        res._add_language_values(ds, ldata.languages)
+        return res
+
+    def _add_parameter_values(
             self,
             ds,
             pdata,
@@ -174,7 +190,7 @@ class Data:
         if not all(seen[pid] for pid in pdata.pids):
             raise ValueError('Invalid parameter ID')
 
-    def add_language_property_values(
+    def _add_language_property_values(
             self,
             language_properties,
             langs,
@@ -191,7 +207,7 @@ class Data:
                             lid=lang['id'],
                             code=language_property))
 
-    def add_language_values(
+    def _add_language_values(
             self,
             ds,
             langs,
@@ -247,6 +263,10 @@ class ParameterData:
         res._add_parameters(ds, ldata.language_properties)
         res._add_codes(ds, ldata.language_properties, ldata.language_rows)
         return res
+
+    def set_domains(self, values, datatypes):
+        for i, p in enumerate(self.parameters.values()):
+            p.set_domain(values, self.codes, datatypes[i] if datatypes else None)
 
     def _add_parameters(
             self,
@@ -314,20 +334,14 @@ class MultiParameter:
 
         ldata = LanguageData.from_dataset(
             ds, language_properties, language_filter, exclude_lang, glottolog)
-
         pdata = ParameterData.from_dataset(ds, pids, ldata)
-
-        data = Data()
-        data.add_parameter_values(ds, pdata, ldata.languages, include_missing, weight_col)
-        data.add_language_property_values(ldata.language_properties, ldata.languages, ldata.language_rows)
-        data.add_language_values(ds, ldata.languages)
+        data = ValueData.from_dataset(ds, pdata, ldata, include_missing, weight_col)
 
         self.languages = data.languages
         self.values = data.values
-        self.parameters = pdata.parameters
 
-        for i, p in enumerate(self.parameters.values()):
-            p.set_domain(self.values, pdata.codes, datatypes[i] if datatypes else None)
+        pdata.set_domains(data.values, datatypes)
+        self.parameters = pdata.parameters
 
     def __str__(self):  # pragma: no cover
         return str(self.parameters)
