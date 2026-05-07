@@ -15,7 +15,8 @@ from matplotlib.patches import Wedge, Rectangle, Circle
 from matplotlib.legend_handler import HandlerPatch
 from PIL import Image
 
-from cldfviz.colormap import get_shape_and_color, weighted_colors
+from cldfviz.colormap import get_shape_and_color, weighted_colors, ColormapDictType
+from cldfviz.multiparameter import ParameterDictType
 from .base import Map, PACIFIC_CENTERED
 
 SHAPE_MAP = {
@@ -259,7 +260,7 @@ class MapPlot(Map):
             marker_kw.update(spec.marker_kw)
             self.ax.plot(language.lon, language.lat, **marker_kw)
             if spec.text:
-                text_kw = dict(zorder=20, fontsize='small')
+                text_kw = {'zorder': 20, 'fontsize': 'small'}
                 text_kw.update(spec.text_kw)
                 self.ax.text(
                     language.lon + (spec.text_offset_x or 0),
@@ -339,54 +340,32 @@ class MapPlot(Map):
                 zorder=zorder + 10,
                 fontsize='small')
 
-    def add_legend(self, parameters, colormaps):
-        def wrapped_label(s):
-            return '\n'.join(textwrap.wrap(s, width=20))
+    @staticmethod
+    def _iter_legend_handles_with_shapes(parameters, colormaps, wrapped_label):
+        for pid, parameter in parameters.items():
+            yield Rectangle(
+                (0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0,
+                label=wrapped_label(parameter.name))
+            for v, label in parameter.domain.items():
+                color = colormaps[pid](v)
+                if isinstance(color, tuple):
+                    shape, color = color
+                else:
+                    shape = None
+                    if color in SHAPE_MAP:
+                        shape, color = color, shape
+                yield plt.Line2D(
+                    [], [],
+                    marker=SHAPE_MAP[shape] if shape else 'o',
+                    color='#000000' if color is None else color,
+                    linewidth=0,  # 1,
+                    linestyle='',
+                    label=wrapped_label(label))
 
-        with_shapes = False
-        if 1 <= len(parameters) <= 2:
-            for pid, parameter in parameters.items():
-                if not isinstance(parameter.domain, tuple):
-                    for v, label in parameter.domain.items():
-                        if colormaps[pid](v) in SHAPE_MAP:
-                            with_shapes = True
-                            break
-
-        if with_shapes:
-            handles = []
-            for pid, parameter in parameters.items():
-                handles.append(
-                    Rectangle(
-                        (0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0,
-                        label=wrapped_label(parameter.name)))
-                for v, label in parameter.domain.items():
-                    color = colormaps[pid](v)
-                    if isinstance(color, tuple):
-                        shape, color = color
-                    else:
-                        shape = None
-                        if color in SHAPE_MAP:
-                            shape, color = color, shape
-                    handles.append(
-                        plt.Line2D(
-                            [], [],
-                            marker=SHAPE_MAP[shape] if shape else 'o',
-                            color='#000000' if color is None else color,
-                            linewidth=0,#1,
-                            linestyle='',
-                            label=wrapped_label(label))
-                    )
-            self.ax.legend(
-                bbox_to_anchor=(1, 1),
-                handles=handles,
-                loc='upper left',
-            )
-            return
-
-        handles = []
+    def _iter_legend_handles(self, parameters, colormaps, wrapped_label):
         s, angle = 0, 360.0 / len(parameters)
         for pid, parameter in parameters.items():
-            handles.append(Wedge(
+            yield Wedge(
                 [-100, -100],
                 self.args.markersize,
                 s,
@@ -395,7 +374,7 @@ class MapPlot(Map):
                 edgecolor="white",
                 label=wrapped_label(parameter.name),
                 zorder=20
-            ))
+            )
             if isinstance(parameter.domain, tuple):
                 cbar = plt.colorbar(
                     colormaps[pid].scalar_mappable(),
@@ -412,7 +391,7 @@ class MapPlot(Map):
                     str(round(parameter.domain[1], 2))])
             else:
                 for v, label in parameter.domain.items():
-                    handles.append(Wedge(
+                    yield Wedge(
                         [-100, -100],
                         self.args.markersize,
                         s,
@@ -421,10 +400,28 @@ class MapPlot(Map):
                         edgecolor="white",
                         label=wrapped_label(label),
                         zorder=20
-                    ))
+                    )
             s += angle
-        self.ax.legend(
-            bbox_to_anchor=(1, 1),
-            handles=handles,
-            loc='upper left',
-            handler_map={Wedge: HandleWedge()})
+
+    def add_legend(self, parameters: ParameterDictType, colormaps: ColormapDictType):
+        """Add a legend to the plot."""
+        def wrapped_label(s):
+            return '\n'.join(textwrap.wrap(s, width=20))
+
+        with_shapes = False
+        if 1 <= len(parameters) <= 2:
+            for pid, parameter in parameters.items():
+                if not isinstance(parameter.domain, tuple):
+                    for v, _ in parameter.domain.items():
+                        if colormaps[pid](v) in SHAPE_MAP:
+                            with_shapes = True
+                            break
+
+        if with_shapes:
+            handles = self._iter_legend_handles_with_shapes(parameters, colormaps, wrapped_label)
+            kw = {}
+        else:
+            handles = self._iter_legend_handles(parameters, colormaps, wrapped_label)
+            kw = {'handler_map': {Wedge: HandleWedge()}}
+
+        self.ax.legend(bbox_to_anchor=(1, 1), handles=list(handles), loc='upper left', **kw)
