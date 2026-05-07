@@ -146,6 +146,9 @@ class Colormap:
         return self.cm(value)
 
 
+ColormapDictType = dict[str, Colormap]
+
+
 def get_shape_and_color(colors_or_shapes: WeightedColorsType) -> Union[None, tuple[str, str]]:
     """Support for the special case of shapes and colors combined."""
     if 1 <= len(colors_or_shapes) <= 2:
