@@ -12,12 +12,9 @@ def test_Language(glottolog, StructureDataset):
     for row in StructureDataset['LanguageTable']:
         row['Glottocode'] = 'abcd1234'
         row['Latitude'] = None
-        lang = Language(orm.Language(StructureDataset, row), glottolog)
+        lang = Language.from_object(orm.Language(StructureDataset, row), glottolog)
         assert lang.lat == pytest.approx(10.0)
         break
-
-    with pytest.raises(TypeError):
-        _ = Language({})
 
 
 def test_MultiParameter(metadatafree_dataset, StructureDataset, glottolog, tmp_path):
@@ -28,7 +25,7 @@ def test_MultiParameter(metadatafree_dataset, StructureDataset, glottolog, tmp_p
     mp = MultiParameter(StructureDataset, ['B', 'C'])
     for lang, values in mp.iter_languages():
         assert lang.name == 'Bengali'
-        assert values['C'][0].v == 'C-1'
+        assert values['C'][0].v == 'C-1', values['C']
         assert values['C'][0].code == '1'
         break
     mp = MultiParameter(

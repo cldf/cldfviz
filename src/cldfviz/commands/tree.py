@@ -1,7 +1,6 @@
 """
 Plots a phylogeny as SVG.
 """
-import types
 import pathlib
 
 from cldfviz.cli_util import (
@@ -11,7 +10,7 @@ from cldfviz.cli_util import (
 )
 from cldfviz.glottolog import Glottolog
 from cldfviz.colormap import weighted_colors
-from cldfviz.tree import render
+from cldfviz.tree import render, TreeData
 
 
 def register(parser):
@@ -63,7 +62,7 @@ def run(args):
     if args.parameters:
         mp, cms = get_multiparameter(args, cldf, None)
         values = {lang.id: weighted_colors(val, cms) for lang, val in mp.iter_languages()}
-        data = types.SimpleNamespace(values=values, parameters=mp.parameters, colormaps=cms)
+        data = TreeData(values=values, parameters=mp.parameters, colormaps=cms)
 
     if args.title:
         legend = args.title

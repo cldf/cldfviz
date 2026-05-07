@@ -1,9 +1,12 @@
-import sys
+"""
+Functionality to render CLDF Trees as SVG using the tyotree library.
+"""
 import copy
-import typing
 import pathlib
 import textwrap
-import xml.etree.cElementTree as ElementTree
+import dataclasses
+from xml.etree import ElementTree
+from typing import Optional, Union, Callable
 
 import toytree
 import toyplot.svg
@@ -11,12 +14,14 @@ from pycldf.trees import Tree
 from newick import RESERVED_PUNCTUATION, Node
 from clldutils.svg import pie, icon
 
-from cldfviz.colormap import get_shape_and_color, SVG_SHAPE_MAP
+from cldfviz.colormap import get_shape_and_color, SVG_SHAPE_MAP, Colormap, WeightedColorsType
+from cldfviz.multiparameter import Parameter, ParameterDictType
 
-__all__ = ['render']
+__all__ = ['render', 'TreeData']
 
 
-def clean_node_label(s):
+def clean_node_label(s: Union[str, None]) -> Union[str, None]:
+    """Create a node label suitable for inclusion in SVG."""
     if s:  # Automatically generated label mappings may map to `None`.
         for c in RESERVED_PUNCTUATION:
             s = s.replace(c, '_')
@@ -25,12 +30,13 @@ def clean_node_label(s):
 
 
 class SVGTree:
+    """Functionality to create SVG programmatically."""
     def __init__(self, svg):
         self.svg = svg
-        self.parent_map = {c: p for p in svg.iter() for c in p}
+        self.parent_map: dict = {c: p for p in svg.iter() for c in p}
 
     @property
-    def height(self):
+    def height(self) -> float:
         return float(self.svg.attrib['height'].replace('px', ''))
 
     @height.setter
@@ -41,7 +47,7 @@ class SVGTree:
         self.svg.attrib['viewBox'] = ' '.join(viewBox)
 
     @property
-    def width(self):
+    def width(self) -> float:
         return float(self.svg.attrib['width'].replace('px', ''))
 
     @width.setter
@@ -52,7 +58,7 @@ class SVGTree:
         self.svg.attrib['viewBox'] = ' '.join(viewBox)
 
     @staticmethod
-    def element(tag, parent, text=None, **attrs):
+    def element(tag, parent, text=None, **attrs) -> ElementTree.Element:
         ee = ElementTree.SubElement(parent, tag)
         ee.attrib = {k.rstrip('_').replace('_', '-'): str(v) for k, v in attrs.items()}
         if text:
@@ -70,36 +76,42 @@ class SVGTree:
         else:
             ratios, colors = [c[0] for c in weighted_colors], [c[1] for c in weighted_colors]
             p = ElementTree.fromstring(pie(ratios, colors, width=20, stroke_circle=True))
-        parent.extend(p.findall('./{}path'.format('{http://www.w3.org/2000/svg}')))
-        parent.extend(p.findall('./{}circle'.format('{http://www.w3.org/2000/svg}')))
+        parent.extend(p.findall('./{http://www.w3.org/2000/svg}path'))
+        parent.extend(p.findall('./{http://www.w3.org/2000/svg}circle'))
 
     def visit_leafs(self, visitor, *args, **kw):
         for t in self.svg.findall('.//g[@class="toytree-TipLabels"]/g/text'):
             visitor(self, t, self.parent_map[t], *args, **kw)
 
     def __bytes__(self):
-        kw = dict(encoding='utf8')
-        if sys.version_info >= (3, 8):
-            kw['xml_declaration'] = True
-        return ElementTree.tostring(self.svg, **kw)
+        return ElementTree.tostring(self.svg, encoding='utf8', xml_declaration=True)
 
     def __str__(self):
         return bytes(self).decode('utf8')
 
 
-def render(nwk: typing.Union[Node, Tree],
-           tree_object: typing.Optional[Tree] = None,
-           output: typing.Optional[pathlib.Path] = None,
-           glottolog_mapping: typing.Optional[typing.Dict[str, typing.Tuple[str, str]]] = None,
-           legend: typing.Optional[str] = None,
-           width: typing.Optional[int] = 500,
-           height: typing.Optional[int] = None,
-           styles: typing.Optional[dict] = None,
-           with_glottolog_links: bool = False,
-           labels: typing.Optional[typing.Union[typing.Callable[[Node], str], dict]] = None,
-           leafs: typing.Optional[typing.Union[typing.Callable[[Node], bool], list]] = None,
-           data=None,
-           ) -> typing.Union[pathlib.Path, str]:
+@dataclasses.dataclass
+class TreeData:
+    values: dict[str, WeightedColorsType]
+    parameters: ParameterDictType
+    colormaps: dict[Union[str, None], Colormap]
+
+
+def render(  # pylint: disable=R0913,R0913
+        nwk: Union[Node, Tree],
+        tree_object: Optional[Tree] = None,
+        output: Optional[pathlib.Path] = None,
+        glottolog_mapping: Optional[dict[str, tuple[str, str]]] = None,
+        legend: Optional[str] = None,
+        width: Optional[int] = 500,
+        height: Optional[int] = None,
+        styles: Optional[dict] = None,
+        with_glottolog_links: bool = False,
+        labels: Optional[Union[Callable[[Node], str], dict]] = None,
+        leafs: Optional[Union[Callable[[Node], bool], list]] = None,
+        data: Optional[TreeData] = None,
+) -> Union[pathlib.Path, str]:
+    """Render a tree to SVG."""
     glottolog_mapping = glottolog_mapping or {}
     if isinstance(nwk, Tree):
         tree_object = nwk
@@ -107,7 +119,7 @@ def render(nwk: typing.Union[Node, Tree],
 
     def rename(n):
         if n.name in glottolog_mapping:
-            n.name = "{}--{}".format(n.name, glottolog_mapping[n.name][0])
+            n.name = f"{n.name}--{glottolog_mapping[n.name][0]}"
         if not n.is_leaf:
             n.name = None
 
@@ -128,10 +140,11 @@ def render(nwk: typing.Union[Node, Tree],
 
     def pad(n):
         if n.name and n.is_leaf:
-            n.name = n.name + '#############'  # FIXME: pad to fit longest label
+            # FIXME: pad to fit longest label  # pylint: disable=fixme
+            n.name = n.name + '#############'
     nwk.visit(pad)
 
-    style = dict(
+    style = dict(  # pylint: disable=R1735
         width=width,
         height=height or sum(1 for n in nwk.walk() if n.is_leaf) * (23 if data else 15) + 150,
         node_hover=True,
@@ -145,7 +158,7 @@ def render(nwk: typing.Union[Node, Tree],
         scalebar=bool(getattr(tree_object, 'tree_branch_length_unit', None)) or bool(legend),
     )
     style.update(styles or {})
-    canvas, axes, mark = toytree.tree(nwk.newick + ";", tree_format=1).draw(**style)
+    canvas, axes, _ = toytree.tree(nwk.newick + ";", tree_format=1).draw(**style)
     if legend:
         axes.label.text = legend
     res = SVGTree(toyplot.svg.render(canvas, None))
@@ -173,47 +186,100 @@ def add_glottolog_links(svg, t, _, gcodes):
             se = svg.element('text', t, **copy.copy(t.attrib))
             gname = gcodes[lid][1]
             if gname:
-                se.text = '{} - {} [{}]'.format(lid, gname, gcode)
+                se.text = f'{lid} - {gname} [{gcode}]'
             else:
-                se.text = '{} - [{}]'.format(lid, gcode)
+                se.text = f'{lid} - [{gcode}]'
             se.attrib['fill'] = '#0000ff'
             t.tag = 'a'
             t.attrib = {
-                'href': 'https://glottolog.org/resource/languoid/id/{}'.format(gcode),
+                'href': f'https://glottolog.org/resource/languoid/id/{gcode}',
                 # 'title': 'The glottolog name',
             }
             t.text = None
 
 
-def add_marker(svg, t, parent, data, labels):
+def add_marker(svg, t, parent: ElementTree.Element, data: TreeData, labels: dict[str, str]):
+    """Prepend leaf labels with markers."""
     t.text = t.text.rstrip('#') if t.text else t.text
     if t.text in data.values:
         t.attrib['x'] = str(float(t.attrib['x']) + 15)
 
         g = ElementTree.SubElement(parent, 'g')
-        g.attrib = dict(transform="translate(0,-10)")
+        g.attrib = {'transform': "translate(0,-10)"}
         svg.marker(g, data.values[t.text])
         if t.text in (labels or {}):
             t.text = labels[t.text]
 
 
-def add_legend(svg, data):
-    def shorten(text, width):
-        return textwrap.shorten(str(text), width, placeholder='…')
+@dataclasses.dataclass
+class ParameterLegend:
+    """Data and method to create a legend for a single parameter."""
+    index: int
+    pid: str
+    parameter: Parameter
+    legend: ElementTree.Element
+    svg: SVGTree
 
-    def row(legend, y, weighted_colors, label, **attrs):
-        row_ = svg.element('g', legend, transform="translate(10,{})".format(y))
+    def _row(self, y: int, weighted_colors, label, **attrs) -> int:
+        def _shorten(text, width):
+            return textwrap.shorten(str(text), width, placeholder='…')
+
+        row_ = self.svg.element('g', self.legend, transform=f"translate(10,{y})")
         if weighted_colors:
-            svg.marker(row_, weighted_colors)
-        svg.element(
+            self.svg.marker(row_, weighted_colors)
+        self.svg.element(
             'text', row_,
             x=30 if weighted_colors else 0, y=15,
-            text=shorten(label, 25 if weighted_colors else 30), stroke_width=0, **attrs)
+            text=_shorten(label, 25 if weighted_colors else 30), stroke_width=0, **attrs)
+        return y + 25
 
+    def _continuous_variable_legend(self, y: int, colormap) -> int:
+        min_, max_ = self.parameter.domain
+        row_ = self.svg.element('g', self.legend, transform=f"translate(10,{y})")
+        self.svg.element('text', row_, x=0, y=15, text=str(min_), stroke_width=0)
+        self.svg.element(
+            'text', row_, x=180, y=15, text=str(max_), text_anchor='end', stroke_width=0)
+        y += 25
+        row_ = self.svg.element('g', self.legend, transform=f"translate(10,{y})")
+        for i in range(10):
+            self.svg.element(
+                'rect',
+                row_,
+                x=i * 18,
+                y=0,
+                width='18', height='18',
+                fill=colormap(min_ + i * (max_ - min_) / 10))
+        return y + 25
+
+    def _categorical_variable_legend(
+            self, y: int, pid_with_color: Optional[str], data: Optional[TreeData]) -> int:
+        for v, label in self.parameter.domain.items():
+            weighted_colors = [
+                (1, data.colormaps[self.pid](v) if j == self.index else '#ffffff')
+                for j in range(len(data.parameters))]
+            if pid_with_color == self.pid:
+                weighted_colors = [(1, data.colormaps[self.pid](v))]
+            y = self._row(y, weighted_colors, label)
+        return y
+
+    def add_legend(self, y: int, data: Optional[TreeData], pid_with_color: Optional[str]) -> int:
+        """Add a legend for a single parameter."""
+        if self.index != 0:
+            self.svg.element('line', self.legend, x1=5, y1=y, x2=195, y2=y, stroke='black')
+            y += 3
+        else:
+            y += 5
+        y = self._row(y, None, self.parameter.name, font_weight='bold')
+        if isinstance(self.parameter.domain, tuple):
+            return self._continuous_variable_legend(y, data.colormaps[self.pid])
+        return self._categorical_variable_legend(y, pid_with_color, data)
+
+
+def add_legend(svg: SVGTree, data: Optional[TreeData]):
+    """If data is plotted on the tree, we add a legend describing the parameters."""
     y = 0
     legend = svg.element(
-        'g', svg.svg,
-        transform="translate({},{})".format(svg.width - 20, 45), style="font-size: 12px")
+        'g', svg.svg, transform=f"translate({svg.width - 20},45)", style="font-size: 12px")
     rect = svg.element('rect', legend, x=0, y=0, width='200', height=svg.height, rx=5, fill='white')
     pid_with_color = None
     if any(cm.with_shapes for cm in data.colormaps.values()):
@@ -223,44 +289,9 @@ def add_legend(svg, data):
                 break
 
     for i, (pid, parameter) in enumerate(data.parameters.items()):
-        if i != 0:
-            svg.element('line', legend, x1=5, y1=y, x2=195, y2=y, stroke='black')
-            y += 3
-        else:
-            y += 5
+        pl = ParameterLegend(i, pid, parameter, legend, svg)
+        y = pl.add_legend(y, data, pid_with_color)
 
-        row(legend,
-            y,
-            None,
-            parameter.name,
-            font_weight='bold')
-        y += 25
-        if isinstance(parameter.domain, tuple):
-            min_, max_ = parameter.domain
-            row_ = svg.element('g', legend, transform="translate(10,{})".format(y))
-            svg.element('text', row_, x=0, y=15, text=str(min_), stroke_width=0)
-            svg.element(
-                'text', row_, x=180, y=15, text=str(max_), text_anchor='end', stroke_width=0)
-            y += 25
-            row_ = svg.element('g', legend, transform="translate(10,{})".format(y))
-            for i in range(10):
-                svg.element(
-                    'rect',
-                    row_,
-                    x=i * 18,
-                    y=0,
-                    width='18', height='18',
-                    fill=data.colormaps[pid](min_ + i * (max_ - min_) / 10))
-            y += 25
-        else:
-            for v, label in parameter.domain.items():
-                weighted_colors = [
-                    (1, data.colormaps[pid](v) if j == i else '#ffffff')
-                    for j in range(len(data.parameters))]
-                if pid_with_color == pid:
-                    weighted_colors = [(1, data.colormaps[pid](v))]
-                row(legend, y, weighted_colors, label)
-                y += 25
     rect.attrib['height'] = str(y)
 
     svg.width = svg.width + 220

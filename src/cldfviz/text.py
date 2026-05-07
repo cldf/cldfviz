@@ -1,8 +1,9 @@
 import re
 import html
-import typing
 import pathlib
 import functools
+from typing import Union, Optional, Callable
+from collections.abc import Iterable, Generator
 
 from pycldf import Dataset
 from pycldf.ext.markdown import CLDFMarkdownText
@@ -40,7 +41,7 @@ def get_env(template_dir=None, fallback_template_dir=None):
     return env
 
 
-def iter_templates():
+def iter_templates() -> Generator[tuple[pathlib.Path, str, list[str]], None, None]:
     env = get_env()
     for p in sorted(TEMPLATE_DIR.iterdir(), key=lambda pp: pp.name):
         m = re.match(r"{#(.+?)#}", p.read_text(encoding='utf8'), flags=re.MULTILINE | re.DOTALL)
@@ -50,9 +51,9 @@ def iter_templates():
         yield p, doc, [v for v in vars if v != 'ctx']
 
 
-def pad_ex(obj: typing.Iterable[str],
-           gloss: typing.Iterable[str],
-           escape: typing.Optional[bool] = True):
+def pad_ex(obj: Iterable[str],
+           gloss: Iterable[str],
+           escape: Optional[bool] = True):
     """
     :param escape: Flag signaling whether to html.escape words and glosses.
     """
@@ -70,12 +71,12 @@ def pad_ex(obj: typing.Iterable[str],
     return "  ".join(out_obj).strip(), "  ".join(out_gloss).strip()
 
 
-def render(doc: typing.Union[pathlib.Path, str],
-           cldf_dict: typing.Union[Dataset, typing.Dict[typing.Union[str, None], Dataset]],
-           template_dir: typing.Optional[typing.Union[str, pathlib.Path]] = None,
-           loader: typing.Optional[jinja2.BaseLoader] = None,
-           func_dict: typing.Optional[typing.Dict[str, callable]] = None,
-           escape: typing.Optional[bool] = True) -> str:
+def render(doc: Union[pathlib.Path, str],
+           cldf_dict: Union[Dataset, dict[Union[str, None], Dataset]],
+           template_dir: Optional[Union[str, pathlib.Path]] = None,
+           loader: Optional[jinja2.BaseLoader] = None,
+           func_dict: Optional[dict[str, Callable]] = None,
+           escape: Optional[bool] = True) -> str:
     """
     Render CLDF Markdown using customizable jinja2 templates.
 
@@ -118,7 +119,7 @@ def render(doc: typing.Union[pathlib.Path, str],
     return proc.render()
 
 
-def iter_cldfviz_links(md):
+def iter_cldfviz_links(md) -> Generator[MarkdownImageLink, None, None]:
     for match in MarkdownImageLink.pattern.finditer(md):
         ml = MarkdownImageLink.from_match(match)
         if re.match(r'cldfviz\.(map|tree)', ml.parsed_url.fragment):

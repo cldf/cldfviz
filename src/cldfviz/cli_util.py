@@ -6,11 +6,12 @@ function registers options which are exploited in the `get_*` function.
 """
 import re
 import json
-import typing
 import inspect
 import pathlib
 import argparse
 import webbrowser
+from collections.abc import Iterable
+from typing import Optional, Union, Any
 
 from clldutils.text import split_text_with_context
 from clldutils.clilib import PathType, ParserError
@@ -26,11 +27,18 @@ from cldfviz.colormap import COLORMAPS, Colormap
 from cldfviz.multiparameter import MultiParameter, ParameterType
 
 
-def join_quoted(items: typing.Iterable) -> str:
-    return ', '.join(['"{}"'.format(i) for i in items])
+def join_quoted(items: Iterable) -> str:
+    """
+    join_quoted(['1', 2])
+    '"1", "2"'
+    """
+    return ', '.join([f'"{i}"' for i in items])
 
 
-def add_jinja_template(parser, default):
+def add_jinja_template(parser: argparse.ArgumentParser, default: Any):
+    """
+    Add cli argument to specify a file holding a Jinja2 template.
+    """
     parser.add_argument(
         "--template",
         type=PathType(type='file'),
@@ -41,7 +49,7 @@ def add_jinja_template(parser, default):
     )
 
 
-def add_open(parser):
+def add_open(parser: argparse.ArgumentParser):
     parser.add_argument(
         "--open", action='store_true', default=False,
         help="Open the output file in the browser. (Requires specifying --output as well.)"
@@ -102,7 +110,7 @@ def get_language_filter(args):
     return language_filter
 
 
-def get_filtered_languages(args, ds) -> typing.Union[None, typing.List[str]]:
+def get_filtered_languages(args, ds) -> Union[None, list[str]]:
     language_filter = get_language_filter(args)
     if language_filter:
         res = []
@@ -191,7 +199,12 @@ def add_multiparameter(parser, with_language_filter=False, with_language_propert
         )
 
 
-def get_multiparameter(args, ds: Dataset, glottolog: Glottolog, **ukw):
+def get_multiparameter(
+        args,
+        ds: Dataset,
+        glottolog: Glottolog,
+        **ukw,
+) -> tuple[MultiParameter, dict[Union[str, None], Colormap]]:
     with_language_filters = hasattr(args, 'language_filters')
     with_language_properties = hasattr(args, 'language_properties')
 
@@ -242,7 +255,7 @@ def get_multiparameter(args, ds: Dataset, glottolog: Glottolog, **ukw):
     return data, cms
 
 
-def add_secondary_dataset(parser, opt: str, help: typing.Optional[str] = None):
+def add_secondary_dataset(parser, opt: str, help: Optional[str] = None):
     """
     Some commands access data in multiple CLDF datasets.
 
@@ -292,8 +305,8 @@ def get_secondary_dataset(args, opt: str):
         return discovery.get_dataset(getattr(args, opt), args.download_dir)
 
 
-def get_tree(args, glottolog: typing.Optional[Glottolog] = None) \
-        -> typing.Tuple[newick.Node, typing.Union[None, Tree], typing.Union[None, Dataset]]:
+def get_tree(args, glottolog: Optional[Glottolog] = None) \
+        -> tuple[newick.Node, Union[None, Tree], Union[None, Dataset]]:
     """
     Note: While the `Tree` object which may be returned by this function allows access to the
     Newick string of the tree, the returned `Node` object should be used preferentially. This is

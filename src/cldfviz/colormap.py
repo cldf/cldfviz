@@ -1,7 +1,7 @@
 import json
-import typing
 import itertools
 import collections
+from typing import Union, Optional
 
 from matplotlib import cm
 from matplotlib.colors import Normalize, to_hex, CSS4_COLORS, BASE_COLORS
@@ -10,7 +10,12 @@ from clldutils.color import qualitative_colors, sequential_colors, rgb_as_hex
 
 from cldfviz.multiparameter import ParameterType, Parameter
 
-__all__ = ['COLORMAPS', 'hextriplet', 'Colormap', 'get_shape_and_color', 'weighted_colors']
+__all__ = [
+    'WeightedColorsType',
+    'COLORMAPS', 'hextriplet', 'Colormap', 'get_shape_and_color', 'weighted_colors']
+
+ColorType = Union[list[str], str]
+WeightedColorsType = list[tuple[float, ColorType]]
 COLORMAPS = {
     ParameterType.CATEGORICAL: ['boynton', 'tol', 'base', 'seq'],
     ParameterType.CONTINUOUS: [cm for cm in plt.colormaps() if not cm.endswith('_r')],
@@ -31,7 +36,7 @@ SVG_SHAPE_MAP = {
 }
 
 
-def hextriplet(s):
+def hextriplet(s) -> ColorType:
     """
     Wrap clldutils.color.rgb_as_hex to provide unified error handling.
     """
@@ -51,7 +56,7 @@ def hextriplet(s):
 
 
 class Colormap:
-    def __init__(self, parameter: Parameter, name: typing.Optional[str] = None, novalue=None):
+    def __init__(self, parameter: Parameter, name: Optional[str] = None, novalue=None):
         domain = parameter.domain
         self.explicit_cm = None
         if name and name.startswith('{'):
@@ -133,7 +138,7 @@ def get_shape_and_color(colors_or_shapes):
             return shapes[0], colors[0] if colors else '#000000'
 
 
-def weighted_colors(values, colormaps):
+def weighted_colors(values, colormaps) -> WeightedColorsType:
     colors = []
     for pid, vals in values.items():
         cm = colormaps[pid]
