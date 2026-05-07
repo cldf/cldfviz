@@ -2,15 +2,13 @@ import re
 import html
 import pathlib
 import functools
-from typing import Union, Optional, Callable
+from typing import Union, Optional, Callable, Any
 from collections.abc import Iterable, Generator
 
 from pycldf import Dataset
-from pycldf.ext.markdown import CLDFMarkdownText
+from pycldf.ext.markdown import CLDFMarkdownText, CLDFMarkdownLink
 import jinja2
 import jinja2.meta
-from packaging.version import Version
-import clldutils
 from clldutils.misc import nfilter
 from clldutils.markup import MarkdownLink, MarkdownImageLink
 
@@ -22,7 +20,6 @@ TEMPLATE_DIR = cldfviz.PKG_DIR.joinpath('templates', 'text')
 
 
 def source_markdown(src, with_link=False):
-    with_link = with_link and Version(clldutils.__version__) >= Version('3.21.0')
     return src.text(**{'markdown': True} if with_link else {})
 
 
@@ -119,7 +116,8 @@ def render(doc: Union[pathlib.Path, str],
     return proc.render()
 
 
-def iter_cldfviz_links(md) -> Generator[MarkdownImageLink, None, None]:
+def iter_cldfviz_links(md: str) -> Generator[MarkdownImageLink, None, None]:
+    """Support for finding links to images to be created via cldfviz."""
     for match in MarkdownImageLink.pattern.finditer(md):
         ml = MarkdownImageLink.from_match(match)
         if re.match(r'cldfviz\.(map|tree)', ml.parsed_url.fragment):
@@ -127,28 +125,41 @@ def iter_cldfviz_links(md) -> Generator[MarkdownImageLink, None, None]:
 
 
 class TemplateRenderer(CLDFMarkdownText):
-    def __init__(self, env, func_dict, *args, **kw):
+    """
+    Implements templated rendering of CLDF Markdown.
+    """
+    def __init__(self, env: jinja2.Environment, func_dict: dict[str, Callable], *args, **kw):
         super().__init__(*args, **kw)
         self.env = env
         self.func_dict = func_dict
         self.with_partial_local_reflist = False
         self.cited = None
 
-    def render_template(self, fname_or_component, ctx, index=False, fmt='md'):
+    def render_template(
+            self,
+            fname_or_component: Optional[str],
+            ctx: dict[str, Any],
+            index: bool = False,
+            fmt: str = 'md',
+    ) -> str:
+        """Helper method, implementing templated rendering."""
         # Determine the template to use ...
         tmpl_fname = ctx.pop(
             '__template__',  # ... by looking for an explicit name ...
             # ... and falling back to the "most suitable" one.
-            '{}_{}.{}'.format(fname_or_component, 'index' if index else 'detail', fmt),
+            f"{fname_or_component}_{'index' if index else 'detail'}.{fmt}",
         )
         jinja_template = self.env.get_template(tmpl_fname)
         jinja_template.globals.update(self.func_dict)
         jinja_template.globals.update({"component": fname_or_component})
         return jinja_template.render(**ctx)
 
-    def get_tmpl_context(self, ml):
-        tmpl_context = {k: True if v[0] == '' else v[0] for k, v in ml.parsed_url_query.items()}
+    def get_tmpl_context(self, ml: CLDFMarkdownLink) -> dict[str, Any]:
+        """Create the context for a template."""
+        tmpl_context: dict[str, Any] = {
+            k: True if v[0] == '' else v[0] for k, v in ml.parsed_url_query.items()}
         for k in tmpl_context:
+            # "with_" parameters get boolean values.
             if k.startswith('with_') and (tmpl_context[k] in ['0', 'false', 'False']):
                 tmpl_context[k] = False
         tmpl_context['ctx'] = self.get_object(ml)
@@ -156,41 +167,55 @@ class TemplateRenderer(CLDFMarkdownText):
         tmpl_context['ml_label'] = ml.label
         return tmpl_context
 
-    def render_link(self, ml):
-        ref_link = ml.all and \
-            'cited_only' in ml.parsed_url_query and \
-            ml.component(self.dataset_mapping[ml.prefix]) == 'Source'
+    def render_link(self, cldf_link: CLDFMarkdownLink) -> Union[str, CLDFMarkdownLink]:
+        """Render a link according using templates."""
+        ref_link = all((
+            cldf_link.all,
+            'cited_only' in cldf_link.parsed_url_query,
+            cldf_link.component(self.dataset_mapping[cldf_link.prefix]) == 'Source'))
 
         if self.cited:
             # We're in the second pass!
             if ref_link:
-                ctx = self.get_tmpl_context(ml)
-                ctx['ctx'] = [s for s in self.get_object(ml) if s.id in self.cited]
+                ctx = self.get_tmpl_context(cldf_link)
+                ctx['ctx'] = [s for s in self.get_object(cldf_link) if s.id in self.cited]
                 ctx["with_anchor"] = True
                 return self.render_template('Source', ctx, index=True)
-            return ml  # pragma: no cover
+            return cldf_link  # pragma: no cover
 
         if ref_link:  # So we need a second pass.
             self.with_partial_local_reflist = True
-            return ml
+            return cldf_link
 
         return self.render_template(
-            ml.component(self.dataset_mapping[ml.prefix]) or ml.table_or_fname,
-            self.get_tmpl_context(ml),
-            index=ml.all)
+            cldf_link.component(self.dataset_mapping[cldf_link.prefix]) or cldf_link.table_or_fname,
+            self.get_tmpl_context(cldf_link),
+            index=cldf_link.all)
 
-    def render(self, simple_link_detection=True, markdown_kw=None):
+    def render(
+            self,
+            simple_link_detection: bool = True,
+            markdown_kw: Optional[dict[str, Any]] = None,
+    ) -> str:
         md = super().render(simple_link_detection=simple_link_detection, markdown_kw=markdown_kw)
         if self.with_partial_local_reflist:
             # Second pass!
             # 1. Determine which sources have been referenced:
-            self.cited = set(
-                MarkdownLink.from_match(ml).url.split('-', maxsplit=1)[-1]
-                for ml in MarkdownLink.pattern.finditer(md)
-                if MarkdownLink.from_match(ml).url.startswith('#source-'))
+            self.cited = {
+                ml.url.split('-', maxsplit=1)[-1]
+                for ml in _markdownlink_finditer(md)
+                if ml.url.startswith('#source-')}
 
             # 2. Insert the pruned list of sources:
             self.text = md
             md = super().render(
                 simple_link_detection=simple_link_detection, markdown_kw=markdown_kw)
         return md
+
+
+def _markdownlink_finditer(md):
+    for ml in MarkdownLink.pattern.finditer(md):
+        try:
+            yield MarkdownLink.from_match(ml)
+        except AttributeError:
+            continue
