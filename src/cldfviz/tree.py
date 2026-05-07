@@ -37,6 +37,7 @@ def clean_node_label(s: Union[str, None]) -> Union[str, None]:
 
 @dataclasses.dataclass
 class TreeData:
+    """Data to be plotted against the tree."""
     values: dict[str, WeightedColorsType]
     parameters: ParameterDictType
     colormaps: dict[Union[str, None], Colormap]
@@ -49,7 +50,9 @@ class SVGTree:
         self.parent_map: dict = {c: p for p in svg.iter() for c in p}
 
     @classmethod
-    def from_toyplot(cls, tree_object, nwk, data, width, height, legend, styles):
+    def from_toyplot(  # pylint: disable=R0913,R0917
+           cls, tree_object, nwk: Node, data: TreeData, width, height, legend, styles):
+        """Initialize a SVGTree with the content rendered by toytree."""
         style = dict(  # pylint: disable=R1735
             width=width,
             height=height or sum(1 for n in nwk.walk() if n.is_leaf) * (23 if data else 15) + 150,
@@ -71,28 +74,31 @@ class SVGTree:
 
     @property
     def height(self) -> float:
+        """The height of the SVG doc."""
         return float(self.svg.attrib['height'].replace('px', ''))
 
     @height.setter
     def height(self, val):
         self.svg.attrib['height'] = str(val) + 'px'
-        viewBox = self.svg.attrib['viewBox'].split()
-        viewBox[3] = str(val)
-        self.svg.attrib['viewBox'] = ' '.join(viewBox)
+        view_box = self.svg.attrib['viewBox'].split()
+        view_box[3] = str(val)
+        self.svg.attrib['viewBox'] = ' '.join(view_box)
 
     @property
     def width(self) -> float:
+        """The width of the SVG doc."""
         return float(self.svg.attrib['width'].replace('px', ''))
 
     @width.setter
     def width(self, val):
         self.svg.attrib['width'] = str(val) + 'px'
-        viewBox = self.svg.attrib['viewBox'].split()
-        viewBox[2] = str(val)
-        self.svg.attrib['viewBox'] = ' '.join(viewBox)
+        view_box = self.svg.attrib['viewBox'].split()
+        view_box[2] = str(val)
+        self.svg.attrib['viewBox'] = ' '.join(view_box)
 
     @staticmethod
     def element(tag, parent, text=None, **attrs) -> ElementTree.Element:
+        """Create an SVG element."""
         ee = ElementTree.SubElement(parent, tag)
         ee.attrib = {k.rstrip('_').replace('_', '-'): str(v) for k, v in attrs.items()}
         if text:
@@ -101,6 +107,7 @@ class SVGTree:
 
     @staticmethod
     def marker(parent, weighted_colors):
+        """Add a marker to the SVG doc."""
         res = get_shape_and_color(weighted_colors)
         if res:
             g = ElementTree.SubElement(parent, 'g')
@@ -113,7 +120,8 @@ class SVGTree:
         parent.extend(p.findall('./{http://www.w3.org/2000/svg}path'))
         parent.extend(p.findall('./{http://www.w3.org/2000/svg}circle'))
 
-    def visit_leafs(self, visitor, *args, **kw):
+    def visit_leafs(self, visitor: Callable, *args, **kw):
+        """Apply visitor to all leaf nodes."""
         for t in self.svg.findall('.//g[@class="toytree-TipLabels"]/g/text'):
             visitor(self, t, self.parent_map[t], *args, **kw)
 
@@ -124,7 +132,7 @@ class SVGTree:
         return bytes(self).decode('utf8')
 
     @staticmethod
-    def prepare_nwk(
+    def prepare_nwk(  # pylint: disable=R0913,R0917
             nwk,
             leafs,
             glottolog_mapping: GlottologMappingType,
