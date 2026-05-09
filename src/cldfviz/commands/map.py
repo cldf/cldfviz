@@ -17,6 +17,7 @@ Colors: Colors can be specified as
 - hex-triplets ("#a00", "AA0000")
 - name (see https://www.w3.org/TR/css-color-4/#named-colors)
 """
+import argparse
 import pathlib
 
 from pycldf.cli_util import get_dataset, add_dataset
@@ -29,12 +30,12 @@ from cldfviz.cli_util import (
 from cldfviz.glottolog import Glottolog
 
 FORMATS = {}
-for cls in Map.__subclasses__():
-    for fmt in cls.__formats__:
-        FORMATS[fmt] = cls
+for cls_ in Map.__subclasses__():
+    for fmt in cls_.__formats__:
+        FORMATS[fmt] = cls_
 
 
-def register(parser):
+def register(parser: argparse.ArgumentParser):  # pylint: disable=C0116
     add_testable(parser)
     add_dataset(parser)
     Glottolog.add(parser)
@@ -96,13 +97,13 @@ def register(parser):
     )
     for cls in Map.__subclasses__():
         cls.add_options(
-            parser, help_suffix='(Only for FORMATs {})'.format(join_quoted(cls.__formats__)))
+            parser, help_suffix=f'(Only for FORMATs {join_quoted(cls.__formats__)})')
 
 
-def run(args):
+def run(args: argparse.Namespace):  # pylint: disable=C0116
     ds = get_dataset(args)
     if not args.output.suffix:
-        args.output = args.output.parent / "{}.{}".format(args.output.name, args.format)
+        args.output = args.output.parent / f"{args.output.name}.{args.format}"
     else:
         assert args.output.suffix[1:] == args.format
 
@@ -114,18 +115,18 @@ def run(args):
         args.marker_factory = cls(ds, args, *comps[1:])
 
     try:
-        map = FORMATS[args.format](data.languages.values(), args)
+        map_ = FORMATS[args.format](data.languages.values(), args)
     except ValueError as e:  # pragma: no cover
-        raise ParserError(str(e))
+        raise ParserError(str(e)) from e
 
-    with map as fig:
+    with map_ as fig:
         for lang, values in data.iter_languages():
             fig.api_add_language(lang, values, cms)
 
         if not args.no_legend:
             fig.api_add_legend(data.parameters, cms)
 
-        args.log.info('Writing output to: {}'.format(args.output))
+        args.log.info('Writing output to: %s', args.output)
         args.log.info('For non-html maps this may take a while.')
         if args.test or args.no_open:
             return

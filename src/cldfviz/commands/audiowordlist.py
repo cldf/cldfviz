@@ -7,6 +7,8 @@ Assumes that
   - via a column with propertyUrl "mediaReference" in FormTable or
   - a column with propertyUrl "formReference" in MediaTable.
 """
+import argparse
+
 from clldutils.clilib import PathType
 from clldutils.misc import nfilter
 from pycldf.terms import term_uri
@@ -17,7 +19,7 @@ from cldfviz.media import get_objects_and_media, get_media_url
 from cldfviz.template import render_jinja_template, TEMPLATE_DIR
 
 
-def register(parser):
+def register(parser: argparse.ArgumentParser):  # pylint: disable=C0116
     add_dataset(parser)
     parser.add_argument(
         'concept',
@@ -25,8 +27,8 @@ def register(parser):
              '"Name=hand" or "cldf:id=10", using column names used in ParameterTable or '
              'CLDF properties available in ParameterTable.')
     # parser.add_argument('--mimetype', default=None)
-    mod = __name__.split('.')[-1]
-    add_jinja_template(parser, TEMPLATE_DIR / mod / '{}.html'.format(mod))
+    mod = __name__.rsplit('.', maxsplit=1)[-1]
+    add_jinja_template(parser, TEMPLATE_DIR / mod / f'{mod}.html')
     parser.add_argument(
         '--media-dir',
         help="If media files are available locally (downloaded via pycldf's `cldf downloadmedia` "
@@ -36,7 +38,7 @@ def register(parser):
     add_open(parser)
 
 
-def run(args):
+def run(args: argparse.Namespace):  # pylint: disable=C0116
     ds = get_dataset(args)
 
     # Determine the relevant concept (aka parameter):

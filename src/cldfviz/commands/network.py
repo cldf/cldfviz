@@ -12,6 +12,8 @@ import pathlib
 import functools
 import xml.etree
 import collections
+from collections.abc import Iterable
+from typing import Any
 
 try:
     from networkx import Graph
@@ -20,13 +22,19 @@ except ImportError:  # pragma: no cover
     Graph = None
 
 from pycldf.cli_util import get_dataset, add_dataset
+from pycldf.orm import ParameterNetworkEdge, Parameter
+
+NS = 'http://graphml.graphdrawing.org/xmlns'
+NodeListType = Iterable[tuple[Parameter, dict[str, Any]]]
+EdgeListType = Iterable[tuple[ParameterNetworkEdge, dict[str, Any]]]
 
 
-def string_or_path(s):
+def string_or_path(s) -> str:
+    """If s can be interpreted as file path, return the file content, otherwise s."""
     return pathlib.Path(s).read_text(encoding='utf8') if pathlib.Path(s).exists() else s
 
 
-def register(parser):
+def register(parser):  # pylint: disable=C0116
     add_dataset(parser)
     parser.add_argument(
         '--format',
@@ -64,7 +72,7 @@ def register(parser):
     )
 
 
-def run(args):
+def run(args):  # pylint: disable=C0116
     if Graph is None:  # pragma: no cover
         args.log.error(
             'install cldfviz with network support, running "pip install cldfviz[network]"')
@@ -96,7 +104,7 @@ def run(args):
         for e in edges:
             g.add_edge(e.cldf.sourceParameterReference, e.cldf.targetParameterReference)
         for pid, p in pnodes.items():
-            if args.parameter == p.cldf.name or args.parameter == pid:
+            if args.parameter in (p.cldf.name, pid):
                 nodes = node_connected_component(g, pid)
                 edges = [e for e in edges if e.cldf.sourceParameterReference in nodes]
                 break
@@ -121,11 +129,11 @@ def run(args):
         return attrs, drop
 
     # Compute attributes:
-    eattrs = functools.partial(compute_attrs, eval(args.edge_attributes))
+    eattrs = functools.partial(compute_attrs, eval(args.edge_attributes))  # pylint: disable=W0123
     edges = [(edge, eattrs(edge)) for edge in edges]
-    edges = [(edge, attrs) for edge, (attrs, drop) in edges if not drop]
-    nattrs = functools.partial(compute_attrs, eval(args.node_attributes))
-    nodes = [(node, nattrs(node)[0]) for node in nodes]
+    edges: EdgeListType = [(edge, attrs) for edge, (attrs, drop) in edges if not drop]
+    nattrs = functools.partial(compute_attrs, eval(args.node_attributes))  # pylint: disable=W0123
+    nodes: NodeListType = [(node, nattrs(node)[0]) for node in nodes]
 
     if args.format == 'dot':
         print(dot(nodes, edges))
@@ -135,7 +143,8 @@ def run(args):
         raise ValueError('unsupported format')
 
 
-def dot(nodes, edges):
+def dot(nodes: NodeListType, edges: EdgeListType) -> str:
+    """Write a graph in dot format."""
     def dot_id(v):
         """
         We convert everything to a string, then escape as needed.
@@ -143,91 +152,99 @@ def dot(nodes, edges):
         return '"{}"'.format(str(v).replace('"', r'\"'))
 
     def format_attrs(attrs):
-        pairs = ['"{}"={}'.format(k, dot_id(v)) for k, v in attrs.items() if v is not None]
-        return ' [{}]'.format(';'.join(pairs)) if pairs else ''
+        pairs = [f'"{k}"={dot_id(v)}' for k, v in attrs.items() if v is not None]
+        return ' [{}]'.format(';'.join(pairs)) if pairs else ''  # pylint: disable=C0209
 
     def iter_lines():
         yield 'digraph {'
         for node, attrs in nodes:
             attrs.setdefault('label', node.cldf.name)
-            yield '"{}"{}'.format(node.id, format_attrs(attrs))
+            yield f'"{node.id}"{format_attrs(attrs)}'
 
         for edge, attrs in edges:
             if not edge.cldf.edgeIsDirected:
                 attrs.setdefault('dir', 'none')
-            yield '"{}" -> "{}"{}'.format(
-                edge.cldf.sourceParameterReference,
-                edge.cldf.targetParameterReference,
-                format_attrs(attrs))
+            yield (f'"{edge.cldf.sourceParameterReference}" -> '
+                   f'"{edge.cldf.targetParameterReference}"{format_attrs(attrs)}')
         yield '}'
     return '\n'.join(iter_lines())
 
 
-def graphml(nodes, edges, edgedefault="undirected"):
-    ns = 'http://graphml.graphdrawing.org/xmlns'
+def _qname(lname):
+    return '{' + NS + '}' + lname
 
-    def qname(lname):
-        return '{' + ns + '}' + lname
 
-    def infer_type(values):
-        #  boolean, int, long, float, double, or string.
-        for value in values:
-            if isinstance(value, bool):
-                return 'boolean', lambda s: str(s).lower()
-            if isinstance(value, int):
-                return 'long', lambda s: str(s)
-            if isinstance(value, float):
-                return 'double', lambda s: str(s)
-        return 'string', lambda s: str(s)
+def _infer_type(values):
+    #  boolean, int, long, float, double, or string.
+    for value in values:
+        if isinstance(value, bool):
+            return 'boolean', lambda s: str(s).lower()
+        if isinstance(value, int):
+            return 'long', str
+        if isinstance(value, float):
+            return 'double', str
+    return 'string', str
 
-    def iter_attributes(attrs):
-        if attrs:
-            values = collections.defaultdict(list)
-            for attr in attrs:
-                for k, v in attr.items():
-                    values[k].append(v)
-            for key, vals in values.items():
-                yield key, infer_type(vals)
 
-    def subelement(parent, tag, **attrs):
-        return xml.etree.ElementTree.SubElement(
-            parent, qname(tag), **{qname(k): v for k, v in attrs.items()})
+def _iter_attributes(attrs):
+    if attrs:
+        values = collections.defaultdict(list)
+        for attr in attrs:
+            for k, v in attr.items():
+                values[k].append(v)
+        for key, vals in values.items():
+            yield key, _infer_type(vals)
 
-    def create_key(e, prefix, name, type):
-        id_ = '{}.{}'.format(prefix, name)
-        subelement(e, 'key', **{'id': id_, 'for': 'node', 'attr.name': name, 'attr.type': type})
-        return id_
 
-    root = xml.etree.ElementTree.Element(qname('graphml'))
-    graph = subelement(root, 'graph', id='graph', edgedefault=edgedefault)
-    converters = {}
-    for aname, (atype, conv) in iter_attributes([a for _, a in nodes]):
-        converters[create_key(graph, 'n', aname, atype)] = conv
-    for aname, (atype, conv) in iter_attributes([a for _, a in edges]):
-        converters[create_key(graph, 'e', aname, atype)] = conv
+def _subelement(parent, tag, **attrs):
+    return xml.etree.ElementTree.SubElement(
+        parent, _qname(tag), **{_qname(k): v for k, v in attrs.items()})
 
+
+def _create_key(e, prefix, name, type_):
+    id_ = f'{prefix}.{name}'
+    _subelement(e, 'key', **{'id': id_, 'for': 'node', 'attr.name': name, 'attr.type': type_})
+    return id_
+
+
+def _handle_attrs(attrs, n, prefix, converters):
+    for k, v in attrs.items():
+        key = f'{prefix}.{k}'
+        if v is not None:
+            t = _subelement(n, 'data', key=key)
+            t.text = converters[key](v)
+
+
+def _handle_nodes(nodes, graph, converters):
     for node, attrs in nodes:
-        n = subelement(graph, 'node', id=node.id)
-        for k, v in attrs.items():
-            key = 'n.{}'.format(k)
-            if v is not None:
-                t = subelement(n, 'data', key=key)
-                t.text = converters[key](v)
+        n = _subelement(graph, 'node', id=node.id)
+        _handle_attrs(attrs, n, 'n', converters)
 
+
+def _handle_edges(edges, graph, converters):
     for edge, attrs in edges:
-        n = subelement(graph, 'edge',
-                       source=edge.cldf.sourceParameterReference,
-                       target=edge.cldf.targetParameterReference)
-        for k, v in attrs.items():
-            key = 'e.{}'.format(k)
-            if v is not None:
-                t = subelement(n, 'data', key=key)
-                t.text = converters[key](v)
+        n = _subelement(graph, 'edge',
+                        source=edge.cldf.sourceParameterReference,
+                        target=edge.cldf.targetParameterReference)
+        _handle_attrs(attrs, n, 'e', converters)
 
-    if hasattr(xml.etree.ElementTree, 'indent'):  # new in Python 3.9.
-        xml.etree.ElementTree.indent(root)
+
+def graphml(nodes: NodeListType, edges: EdgeListType, edgedefault: str = "undirected") -> str:
+    """Create a GraphML representation."""
+    root = xml.etree.ElementTree.Element(_qname('graphml'))
+    graph = _subelement(root, 'graph', id='graph', edgedefault=edgedefault)
+    converters = {}
+    for aname, (atype, conv) in _iter_attributes([a for _, a in nodes]):
+        converters[_create_key(graph, 'n', aname, atype)] = conv
+    for aname, (atype, conv) in _iter_attributes([a for _, a in edges]):
+        converters[_create_key(graph, 'e', aname, atype)] = conv
+
+    _handle_nodes(nodes, graph, converters)
+    _handle_edges(edges, graph, converters)
+
+    xml.etree.ElementTree.indent(root)
     return xml.etree.ElementTree.tostring(
         root,
         encoding='utf8',
-        default_namespace='http://graphml.graphdrawing.org/xmlns',
+        default_namespace=NS,
         xml_declaration=True).decode('utf8')

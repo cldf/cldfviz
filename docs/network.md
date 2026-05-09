@@ -123,3 +123,6 @@ $ cldfbench cldfviz.network --node-attributes node.py --edge-attributes edge.py 
 ```
 
 ![](output/partof_neck2.svg)
+
+# FIXME: example of graphml format. Strip "encoding=" from xml declaration, then
+# --format graphml | graphml2gv | dot -Tsvg ...

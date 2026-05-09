@@ -19,21 +19,21 @@ from termcolor import colored
 
 from cldfviz.text import iter_templates, render, iter_cldfviz_links
 from cldfviz.cli_util import add_testable
-from . import map, tree
+from . import map, tree  # pylint: disable=W0622
 
 
-def get_dataset(locator):
+def _get_dataset_spec(locator):
     prefix = None
     if ':' in locator and not locator.startswith('http'):
         prefix, _, locator = locator.partition(':')
         if not DatasetMapping.key_pattern.fullmatch(prefix):
-            raise ParserError('Invalid dataset prefix: {}'.format(prefix))  # pragma: no cover
+            raise ParserError(f'Invalid dataset prefix: {prefix}')  # pragma: no cover
     return prefix, locator
 
 
-def register(parser):
+def register(parser):  # pylint: disable=C0116
     add_testable(parser)
-    parser.add_argument('datasets', type=get_dataset, nargs='+')
+    parser.add_argument('datasets', type=_get_dataset_spec, nargs='+')
     parser.add_argument('-l', '--list', help='list templates', default=False, action='store_true')
     parser.add_argument(
         '--media-id', default=None)
@@ -48,24 +48,23 @@ def register(parser):
         '--no-escape', help='Do not HTML escape content.', action='store_true', default=False)
 
 
-def run(args):
+def run(args):  # pylint: disable=C0116
     dss = {
         prefix: discovery.get_dataset(locator, args.download_dir)
         for prefix, locator in args.datasets}
 
     if args.list:
         print(colored('Available templates:', attrs=['bold', 'underline']) + '\n')
-        for p, doc, vars in iter_templates():
+        for p, doc, vars_ in iter_templates():
             component, _, type_ = p.stem.partition('_')
             if (component == 'Source' and any(ds.sources for ds in dss.values())) or \
                     any(component in ds for ds in dss.values()):
-                print(colored('{} {}'.format(component, type_), attrs=['bold']))
-                print('Usage: ' + colored('[<label>]({}{}#cldf:{})'.format(
-                    component,
-                    '?var1&var2' if vars else '',
-                    '__all__' if type_ == 'index' else '<object-ID>'), color='blue'))
-                if vars:
-                    print('Variables: ' + colored(', '.join(vars), color='blue'))
+                print(colored(f'{component} {type_}', attrs=['bold']))
+                objid = '__all__' if type_ == 'index' else '<object-ID>'
+                text = f"[<label>]({component}{'?var1&var2' if vars_ else ''}#cldf:{objid})"
+                print('Usage: ' + colored(text, color='blue'))
+                if vars_:
+                    print('Variables: ' + colored(', '.join(vars_), color='blue'))
                 if doc:
                     print(doc)
         return
@@ -81,7 +80,6 @@ def run(args):
         for media in MediaTable(dss[prefix]):
             if media.id == mid:
                 assert media.mimetype == 'text/markdown'
-                # FIXME: Also check for conformsTo == CLDF Markdown column?
                 text = media.read()
                 break
 
@@ -89,7 +87,7 @@ def run(args):
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(res, encoding='utf8')
-        args.log.info('{} written'.format(args.output))
+        args.log.info('%s written', args.output)
 
     create_images(
         args,
@@ -110,13 +108,14 @@ def run(args):
 
 
 def create_images(oargs, md, dss, base_dir):
+    """We support images which need to be created via cldfviz commands."""
     for prefix, ds in dss.items():
         for ml in iter_cldfviz_links(md):
             if prefix is None or (ml.parsed_url.fragment.partition('-')[2] == prefix):
                 p = base_dir.joinpath(ml.parsed_url.path)
                 p.parent.mkdir(parents=True, exist_ok=True)
                 args = ['--tree-dataset', ] if 'tree' in ml.parsed_url.fragment else []
-                args.append(str(ds.tablegroup._fname))
+                args.append(str(ds.tablegroup._fname))  # pylint: disable=W0212
                 kw = ml.parsed_url_query
                 kw['output'] = [str(p)]
                 for k, v in kw.items():

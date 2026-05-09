@@ -12,15 +12,15 @@ from cldfviz.media import get_objects_and_media, get_media_url
 from cldfviz.template import render_jinja_template, TEMPLATE_DIR
 
 
-def register(parser):
+def register(parser):  # pylint: disable=C0116
     add_dataset(parser)
     add_language_filter(parser)
-    mod = __name__.split('.')[-1]
-    add_jinja_template(parser, TEMPLATE_DIR / mod / '{}.html'.format(mod))
+    mod = __name__.rsplit('.', maxsplit=1)[-1]
+    add_jinja_template(parser, TEMPLATE_DIR / mod / f'{mod}.html')
     add_open(parser)
 
 
-def run(args):
+def run(args):  # pylint: disable=C0116
     ds = get_dataset(args)
     valid_langs = get_filtered_languages(args, ds)
 
