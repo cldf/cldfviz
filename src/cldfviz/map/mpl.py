@@ -299,7 +299,7 @@ class MapPlot(Map):
         return
 
     def _add_language_plate_carree(
-            self, language: Language, colors: WeightedColorsType, zorder:float):
+            self, language: Language, colors: WeightedColorsType, zorder: float):
         # On the cartesian plane, we can plot pie charts using wedges.
         lon, lat = self._lonlat(language)
         res = get_shape_and_color(colors)

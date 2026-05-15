@@ -51,7 +51,8 @@ class SVGTree:
 
     @classmethod
     def from_toyplot(  # pylint: disable=R0913,R0917
-           cls, tree_object, nwk: Node, data: TreeData, width, height, legend, styles):
+        cls, tree_object, nwk: Node, data: TreeData, width, height, legend, styles
+    ):
         """Initialize a SVGTree with the content rendered by toytree."""
         style = dict(  # pylint: disable=R1735
             width=width,

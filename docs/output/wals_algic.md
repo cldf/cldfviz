@@ -2,9 +2,9 @@
 
 ## Geography
 
-![](wals_algic.jpg#cldfviz.map)
+![](wals_algic.jpg)
 
 ## Classification
 
-![](wals_algic.svg#cldfviz.tree)
+![](wals_algic.svg)
 

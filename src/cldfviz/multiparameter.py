@@ -48,7 +48,7 @@ class Language:
     def _from_object(cls, obj: orm.Language, glottolog: Optional[Glottolog] = None):
         lat = obj.cldf.latitude
         lon = obj.cldf.longitude
-        if lat is None and obj.cldf.glottocode in glottolog:
+        if lat is None and glottolog and obj.cldf.glottocode in glottolog:
             # FIXME:  # pylint: disable=fixme
             # If a language is mapped to multiple glottocodes, we could try to take the
             # midpoint of these as coordinate. (If longitudes have different signs, transform

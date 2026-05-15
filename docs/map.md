@@ -197,7 +197,7 @@ quickly create one. Using the [UNIX shell](https://swcarpentry.github.io/shell-n
 tools of the [csvkit](https://csvkit.readthedocs.io/en/latest/) toolbox, we
 can run
 ```shell
-csvgrep -c Latitude,Glottocode -r".+" wals-2020.3/languages.csv | \
+csvgrep -c Latitude,Glottocode -r".+" wals-2020.3/cldf/languages.csv | \
 csvcut -c ID,Glottocode,Latitude | \
 awk '{if(NR==1){print $0",Parameter_ID"}else{print $0",latitude"}}' | \
 sed 's/ID,Glottocode,Latitude,Parameter_ID/ID,Language_ID,Value,Parameter_ID/g' > values.csv

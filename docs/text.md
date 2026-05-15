@@ -141,7 +141,7 @@ optional arguments:
   [`wals_algic_tmpl.md`](output/wals_algic_tmpl.md) and the [markdown file](output/wals_algic.md)
   created from it running
   ```shell
-  cldfbench cldfviz.text wals-2020.3/ --text-file wals_algic.md
+  cldfbench cldfviz.text wals-2020.3/ --text-file wals_algic_tmpl.md
   ```
 
 

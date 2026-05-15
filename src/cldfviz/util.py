@@ -5,6 +5,7 @@ import argparse
 
 from clldutils.clilib import PathType
 
+
 def add_download_dir(parser: argparse.ArgumentParser):
     """Add an opttion to specify a download dir."""
     try:

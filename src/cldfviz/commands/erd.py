@@ -85,7 +85,7 @@ def run(args):  # pylint: disable=C0116
         out = subprocess.check_output([
             args.java, "-jar", args.schemaspy_jar,
             "-t", "sqlite-xerial",
-            "-db",  tmp / 'db.sqlite',
+            "-db", tmp / 'db.sqlite',
             "-sso", "-s", "public",
             "-dp", tmp,
             "-o", args.sqlite_jar.parent,
