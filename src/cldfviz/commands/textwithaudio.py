@@ -1,5 +1,9 @@
 """
 FIXME: Work in progress
+
+pangloss like functionality. Should work for the DoReCo corpus - or MultiCAST
+
+Convert pangloss corpora to CLDF TextCorpus? https://pangloss.cnrs.fr/
 """
 import argparse
 
@@ -39,3 +43,4 @@ def run(args: argparse.Namespace):  # pylint: disable=C0116
         print(line.cldf.translatedText)
         if media:
             print(media.cldf.downloadUrl.path, line.data['Audio_Start'], line.data['Audio_End'])
+            # DoReCo: start - end -> CLDF standardization required!
