@@ -1,19 +1,30 @@
+"""
+Functionality related to mapping values to colors (or shapes).
+"""
 import json
-import typing
 import itertools
 import collections
+from typing import Union, Optional, Callable
 
 from matplotlib import cm
 from matplotlib.colors import Normalize, to_hex, CSS4_COLORS, BASE_COLORS
 import matplotlib.pyplot as plt
 from clldutils.color import qualitative_colors, sequential_colors, rgb_as_hex
 
-from cldfviz.multiparameter import CONTINUOUS, CATEGORICAL, Parameter
+from cldfviz.multiparameter import ParameterType, Parameter, ValueDictType
 
-__all__ = ['COLORMAPS', 'hextriplet', 'Colormap', 'get_shape_and_color', 'weighted_colors']
+__all__ = [
+    'WeightedColorsType',
+    'COLORMAPS', 'hextriplet', 'Colormap', 'get_shape_and_color', 'weighted_colors']
+
+ValueType = Union[str, None]
+ColorType = Union[tuple[str, str], str]
+CategoricalColormapType = collections.OrderedDict[ValueType, ColorType]
+ColormapType = Callable[[ValueType], ColorType]
+WeightedColorsType = list[tuple[float, ColorType]]
 COLORMAPS = {
-    CATEGORICAL: ['boynton', 'tol', 'base', 'seq'],
-    CONTINUOUS: [cm for cm in plt.colormaps() if not cm.endswith('_r')],
+    ParameterType.CATEGORICAL: ['boynton', 'tol', 'base', 'seq'],
+    ParameterType.CONTINUOUS: [cm for cm in plt.colormaps() if not cm.endswith('_r')],
 }
 SHAPES = {
     'triangle_down',
@@ -31,12 +42,12 @@ SVG_SHAPE_MAP = {
 }
 
 
-def hextriplet(s):
+def hextriplet(s: Union[str, tuple[str, str], list[str]]) -> ColorType:
     """
     Wrap clldutils.color.rgb_as_hex to provide unified error handling.
     """
-    if isinstance(s, list) and s[0] in SHAPES:
-        return [s[0], hextriplet(s[1])]
+    if isinstance(s, (list, tuple)) and s[0] in SHAPES:
+        return s[0], hextriplet(s[1])
     if s in SHAPES:
         # A bit of a hack: We allow a handful of shape names as "color" spec as well.
         return s
@@ -47,82 +58,103 @@ def hextriplet(s):
     try:
         return rgb_as_hex(s)
     except (AssertionError, ValueError) as e:
-        raise ValueError('Invalid color spec: "{}" ({})'.format(s, str(e)))
+        raise ValueError(f'Invalid color spec: "{s}" ({str(e)})') from e
+
+
+def _get_explicit_cm(
+        name: Optional[str],
+        parameter: Parameter,
+        novalue: Optional[str],
+) -> Union[None, CategoricalColormapType]:
+    if (not name) or (not name.startswith('{')):
+        return None
+    if isinstance(parameter.domain, tuple):
+        raise ValueError('Explicit color maps are only supported for categorical parameters')
+    res = collections.OrderedDict()
+    raw = json.loads(name, object_pairs_hook=collections.OrderedDict)
+    if novalue:
+        raw.setdefault('None', novalue)
+    label_to_code = {v: k for k, v in parameter.domain.items()}
+    for v, c in raw.items():
+        if v in parameter.value_to_code:
+            v = parameter.value_to_code[v]
+        elif v in parameter.value_to_code.values():
+            pass  # pragma: no cover
+        elif v in label_to_code:
+            v = label_to_code[v]  # pragma: no cover
+        else:
+            raise ValueError(
+                f'Colormap value "{v}" not in domain '
+                f'{sorted(set(parameter.value_to_code.values()))}')
+        res[v] = hextriplet(c)
+    vals = set(parameter.value_to_code.values())
+    if len(vals) > len(res):
+        raise ValueError(f'Colormap {dict(raw)} does not cover all values {vals}!')
+
+    # reorder the domain of the parameter (and prune it to valid values):
+    parameter.domain = collections.OrderedDict(
+        (c, l) for c, l in sorted(
+            [i for i in parameter.domain.items() if i[0] in res],
+            key=lambda i: list(res.keys()).index(i[0]))
+    )
+    return res
 
 
 class Colormap:
-    def __init__(self, parameter: Parameter, name: typing.Optional[str] = None, novalue=None):
+    """
+    An instantiated Colormap is a callable conforming to ColormapType.
+    """
+    def __init__(self, parameter: Parameter, name: Optional[str] = None, novalue=None):
         domain = parameter.domain
-        self.explicit_cm = None
-        if name and name.startswith('{'):
-            if isinstance(parameter.domain, tuple):
-                raise ValueError(
-                    'Explicit color maps are only supported for categorical parameters')
-            self.explicit_cm = collections.OrderedDict()
-            raw = json.loads(name, object_pairs_hook=collections.OrderedDict)
-            if novalue:
-                raw.setdefault('None', novalue)
-            label_to_code = {v: k for k, v in parameter.domain.items()}
-            for v, c in raw.items():
-                if v in parameter.value_to_code:
-                    v = parameter.value_to_code[v]
-                elif v in parameter.value_to_code.values():
-                    pass  # pragma: no cover
-                elif v in label_to_code:
-                    v = label_to_code[v]  # pragma: no cover
-                else:
-                    raise ValueError('Colormap value "{}" not in domain {}'.format(
-                        v, sorted(set(parameter.value_to_code.values()))))
-                self.explicit_cm[v] = hextriplet(c)
-            vals = set(parameter.value_to_code.values())
-            if len(vals) > len(self.explicit_cm):
-                raise ValueError('Colormap {} does not cover all values {}!'.format(
-                    dict(raw), vals))
+        self.explicit_cm: Optional[CategoricalColormapType] = _get_explicit_cm(
+            name, parameter, novalue)
+        if self.explicit_cm:
             name = None
-            # reorder the domain of the parameter (and prune it to valid values):
-            parameter.domain = collections.OrderedDict(
-                (c, l) for c, l in sorted(
-                    [i for i in parameter.domain.items() if i[0] in self.explicit_cm],
-                    key=lambda i: list(self.explicit_cm.keys()).index(i[0]))
-            )
-        self.novalue = hextriplet(novalue) if novalue else None
-        self._cm = getattr(cm, name or 'yyy', cm.jet)
+
+        self.novalue: Optional[ColorType] = hextriplet(novalue) if novalue else None
+        self._cm = getattr(cm, name or 'yyy', cm.jet)  # pylint: disable=E1101
 
         if isinstance(domain, tuple):
             assert not self.explicit_cm
             # Initialize matplotlib colormap and normalizer:
             norm = Normalize(domain[0], domain[1])
-            self.cm = lambda v: to_hex(self._cm(norm(float(v))))
+            self.cm: ColormapType = lambda v: to_hex(self._cm(norm(float(v))))
         else:
             if self.explicit_cm:
-                self.cm = lambda v: self.explicit_cm[v]
+                self.cm: ColormapType = lambda v: self.explicit_cm[v]
             else:
                 if name == 'seq':
                     colors = sequential_colors(len(domain))
                 else:
                     colors = qualitative_colors(len(domain), set=name)
-                self.cm = lambda v: dict(zip(domain, colors))[v]
+                self.cm: ColormapType = lambda v: dict(zip(domain, colors))[v]
 
     @property
-    def with_shapes(self):
-        return self.explicit_cm and any(
+    def with_shapes(self) -> bool:
+        """Whether the colormap specifies shapes (and not (only) colors)."""
+        return bool(self.explicit_cm) and any(
             c in SHAPES if isinstance(c, str) else c[0] in SHAPES for c in self.explicit_cm.values()
         )
 
     def scalar_mappable(self):
+        """Somewhat obscure details required by matplotlib."""
         return cm.ScalarMappable(norm=None, cmap=self._cm)
 
-    def __call__(self, value):
+    def __call__(self, value: ValueType) -> ColorType:
         if value is None:
             return self.novalue
         return self.cm(value)
 
 
-def get_shape_and_color(colors_or_shapes):
+ColormapDictType = dict[str, Colormap]
+
+
+def get_shape_and_color(colors_or_shapes: WeightedColorsType) -> Union[None, tuple[str, str]]:
+    """Support for the special case of shapes and colors combined."""
     if 1 <= len(colors_or_shapes) <= 2:
         shapes, colors = [], []
         for _, c in colors_or_shapes:
-            if isinstance(c, list):
+            if isinstance(c, (tuple, list)):
                 shapes.append(c[0])
                 colors.append(c[1])
             else:
@@ -131,15 +163,20 @@ def get_shape_and_color(colors_or_shapes):
             if len(shapes) > 1:
                 raise ValueError('Only one shape can be specified for a marker')
             return shapes[0], colors[0] if colors else '#000000'
+    return None
 
 
-def weighted_colors(values, colormaps):
+def weighted_colors(values: ValueDictType, colormaps: dict[str, Colormap]) -> WeightedColorsType:
+    """
+    Compute colors and weights for the values of a single language for a set of parameters,
+    suitable for creating pie charts.
+    """
     colors = []
     for pid, vals in values.items():
-        cm = colormaps[pid]
+        cm_ = colormaps[pid]
         total = sum(1 if vv.weight is None else vv.weight for vv in vals)
         for code, vvs in itertools.groupby(sorted(vals, key=lambda vv: vv.v), lambda vv: vv.v):
             colors.append((
                 sum(1 if vv.weight is None else vv.weight for vv in vvs) / total / len(values),
-                cm(code)))
+                cm_(code)))
     return colors

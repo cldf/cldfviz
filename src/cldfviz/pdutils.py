@@ -2,8 +2,8 @@
 Utilities to bridge CLDF and pandas objects.
 """
 import types
-import typing
 import collections
+from collections.abc import Iterable
 
 try:
     import pandas as pd
@@ -14,6 +14,7 @@ __all__ = ['df_from_dicts']
 
 
 class DF:
+    """Simple converter to turn dicts into a DataFrame."""
     def __init__(self):
         self.df = None
         self.acc = collections.defaultdict(list)
@@ -21,7 +22,8 @@ class DF:
     def __enter__(self):
         return self
 
-    def add(self, item):
+    def add(self, item: dict):
+        """Add a dict"""
         if self.df is None:
             self.df = pd.DataFrame(columns=list(item))
         for k, v in item.items():
@@ -32,7 +34,7 @@ class DF:
             self.df[k] = v
 
 
-def df_from_dicts(dicts: typing.Iterable[dict]) -> pd.DataFrame:
+def df_from_dicts(dicts: Iterable[dict]) -> pd.DataFrame:
     """
     Combines "rows" given as `dict`s into a pandas DataFrame.
     """

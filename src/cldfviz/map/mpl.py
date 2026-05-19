@@ -2,10 +2,14 @@
 Map plotting with matplotlib and cartopy
 """
 import json
+import argparse
+import pathlib
 import textwrap
 import warnings
+import dataclasses
+from typing import Optional, Any, Callable
+from collections.abc import Generator, Iterable
 
-import attr
 import numpy as np
 import cartopy.feature
 import cartopy.crs
@@ -14,7 +18,9 @@ from matplotlib.patches import Wedge, Rectangle, Circle
 from matplotlib.legend_handler import HandlerPatch
 from PIL import Image
 
-from cldfviz.colormap import get_shape_and_color, weighted_colors
+from cldfviz.colormap import (
+    get_shape_and_color, weighted_colors, ColormapDictType, WeightedColorsType)
+from cldfviz.multiparameter import ParameterDictType, Language, ValueDictType
 from .base import Map, PACIFIC_CENTERED
 
 SHAPE_MAP = {
@@ -26,14 +32,16 @@ SHAPE_MAP = {
 }
 
 
-def iter_subclasses(cls):
+def iter_subclasses(cls: type) -> Generator[type, None, None]:
+    """Used to list all available projections."""
     for cls_ in cls.__subclasses__():
         yield cls_
         yield from iter_subclasses(cls_)
 
 
 class HandleWedge(HandlerPatch):
-    def create_artists(
+    """Patch handler for mpl."""
+    def create_artists(  # pylint: disable=R0913,R0917
             self,
             legend,
             orig_handle,
@@ -51,13 +59,14 @@ class HandleWedge(HandlerPatch):
         return [p]
 
 
-@attr.s
+@dataclasses.dataclass
 class MPLMarkerSpec:
-    marker_kw = attr.ib(default=attr.Factory(dict))
-    text = attr.ib(default=None)
-    text_offset_x = attr.ib(default=None)
-    text_offset_y = attr.ib(default=None)
-    text_kw = attr.ib(default=attr.Factory(dict))
+    """Custom spec for matplotlib markers."""
+    marker_kw: dict[str, Any] = dataclasses.field(default_factory=dict)
+    text: Optional[str] = None
+    text_offset_x: Optional[int] = None
+    text_offset_y: Optional[int] = None
+    text_kw: dict[str, Any] = dataclasses.field(default_factory=dict)
 
 
 class MapPlot(Map):
@@ -67,7 +76,7 @@ class MapPlot(Map):
     __formats__ = ['jpg', 'png', 'pdf', 'svg']
     __marker_class__ = MPLMarkerSpec
 
-    def __init__(self, languages, args):
+    def __init__(self, languages: Iterable[Language], args: argparse.Namespace):
         Map.__init__(self, languages, args)
         lats = [k.lat for k in languages if k.lat is not None]
         lons = [k.lon for k in languages if k.lon is not None]
@@ -116,32 +125,33 @@ class MapPlot(Map):
         # So 1 px = self.scaling_factor * 1°
         return self
 
+    def _savefig(self, path: pathlib.Path):
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=UserWarning, module='cartopy.mpl.style')
+            plt.savefig(str(path), bbox_inches="tight")
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.args.title:
             plt.title(self.args.title)
-        format = self.args.output.suffix.replace('.', '').lower()
-        if format == 'jpg':
-            mplfname = self.args.output.parent / '{}.png'.format(self.args.output.stem)
-            with warnings.catch_warnings():
-                warnings.filterwarnings('ignore', category=UserWarning, module='cartopy.mpl.style')
-                plt.savefig(str(mplfname), bbox_inches="tight")
+        format_ = self.args.output.suffix.replace('.', '').lower()
+        if format_ == 'jpg':
+            mplfname = self.args.output.parent / f'{self.args.output.stem}.png'
+            self._savefig(mplfname)
             img = Image.open(str(mplfname)).convert('RGB')
             img.save(str(self.args.output), optimize=True, quality=95)
             mplfname.unlink()
         else:
-            with warnings.catch_warnings():
-                warnings.filterwarnings('ignore', category=UserWarning, module='cartopy.mpl.style')
-                plt.savefig(str(self.args.output), bbox_inches="tight")
+            self._savefig(self.args.output)
 
         plt.close()
 
     @staticmethod
     def add_options(parser, help_suffix):
+        """Register format-specific map options."""
         for direction in ['left', 'right', 'top', 'bottom']:
             parser.add_argument(
-                '--padding-{}'.format(direction),
-                help="{} padding of the map in degrees. {}".format(
-                    direction.capitalize(), help_suffix),
+                f'--padding-{direction}',
+                help=f"{direction.capitalize()} padding of the map in degrees. {help_suffix}",
                 type=int,
                 default=1,
             )
@@ -152,29 +162,28 @@ class MapPlot(Map):
         )
         parser.add_argument(
             '--width',
-            help="Width of the figure in inches. {}".format(help_suffix),
+            help=f"Width of the figure in inches. {help_suffix}",
             type=float,
             default=6.4,
         )
         parser.add_argument(
             '--height',
-            help="Height of the figure in inches. {}".format(help_suffix),
+            help=f"Height of the figure in inches. {help_suffix}",
             type=float,
             default=4.8,
         )
         parser.add_argument(
             '--dpi',
-            help="Pixel density of the figure. {}".format(help_suffix),
+            help=f"Pixel density of the figure. {help_suffix}",
             type=float,
             default=100.0,
         )
         parser.add_argument(
             '--projection',
-            help="Map projection. For details, see "
-                 "https://scitools.org.uk/cartopy/docs/latest/crs/projections.html "
-                 "Note that not all options work for all projections; e.g. --language-labels "
-                 "will only work with PlateCarree, the default projection."
-                 "{}".format(help_suffix),
+            help=f"Map projection. For details, see "
+                 f"https://scitools.org.uk/cartopy/docs/latest/crs/projections.html "
+                 f"Note that not all options work for all projections; e.g. --language-labels "
+                 f"will only work with PlateCarree, the default projection. {help_suffix}",
             choices=[
                 c.__name__ for c in iter_subclasses(cartopy.crs.Projection)
                 if c.__module__ == 'cartopy.crs' and not c.__name__.startswith('_')],
@@ -182,33 +191,33 @@ class MapPlot(Map):
         )
         parser.add_argument(
             '--with-ocean',
-            help="Render the oceans in the same color as other bodies of water. Since cartopy's "
-                 "OCEAN polygon is somewhat broken, this may result in broken SVG output. Thus, we "
-                 "don't include this by default. {}".format(help_suffix),
+            help=f"Render the oceans in the same color as other bodies of water. Since cartopy's "
+                 f"OCEAN polygon is somewhat broken, this may result in broken SVG output. Thus, "
+                 f"we don't include this by default. {help_suffix}",
             action="store_true",
             default=False,
         )
         parser.add_argument(
             '--with-stock-img',
-            help="Add a map underlay (using cartopy's `stock_img` method). {}".format(help_suffix),
+            help=f"Add a map underlay (using cartopy's `stock_img` method). {help_suffix}",
             action="store_true",
             default=False,
         )
         parser.add_argument(
             '--no-borders',
-            help="Do not add country borders to the map. {}".format(help_suffix),
+            help=f"Do not add country borders to the map. {help_suffix}",
             action="store_true",
             default=False,
         )
         parser.add_argument(
             '--zorder',
             help="Determine zorder of individual markers by color.",
-            type=lambda s: json.loads(s),
+            type=json.loads,
             action="store",
             default={},
         )
 
-    def _lonlat(self, language):
+    def _lonlat(self, language: Language) -> tuple[float, float]:
         lat, lon = language.lat, language.lon
         if self.central_longitude:
             lon = lon - self.central_longitude
@@ -216,7 +225,11 @@ class MapPlot(Map):
                 lon += 360
         return lon, lat
 
-    def pie_markers(self, colors):
+    def pie_markers(
+            self,
+            colors: WeightedColorsType,
+    ) -> Generator[tuple[str, np.ndarray], None, None]:
+        """Yield (color, coordinate) pairs, suitable to draw wedges."""
         if len(colors) == 1:
             # Draw a full circle
             x = np.cos(np.linspace(0, 2 * np.pi, 30)).tolist()
@@ -234,70 +247,61 @@ class MapPlot(Map):
             yield color, np.column_stack([x, y])
             start += ratio
 
-    def add_language(self, language, values, colormaps, spec=None):
-        # add zorder by using a point-system that penalizes missing data
-        # according to user-defined weights
-        if self.args.zorder:
-            zorders = []
-            for val in values.values():
-                zorders += [self.args.zorder.get(val[0].v.split('-')[-1], 5)]
-            zorder = sum(zorders)
-        else:
-            zorder = 5 * len(values)
+    def _add_language_with_spec(self, language: Language, spec: MPLMarkerSpec):
+        marker_kw = dict(  # pylint: disable=R1735
+            color='white',
+            markersize=self.args.markersize,
+            zorder=20,
+            marker='o',
+            markeredgecolor='black',
+            linewidth=1,
+            transform=cartopy.crs.Geodetic(),
+        )
+        marker_kw.update(spec.marker_kw)
+        self.ax.plot(language.lon, language.lat, **marker_kw)
+        if spec.text:
+            text_kw = {'zorder': 20, 'fontsize': 'small'}
+            text_kw.update(spec.text_kw)
+            self.ax.text(
+                language.lon + (spec.text_offset_x or 0),
+                language.lat + (spec.text_offset_y or 0),
+                spec.text,
+                **text_kw)
 
-        if spec:
-            marker_kw = dict(
-                color='white',
+    def _add_language_non_plate_carree(
+            self, language: Language, colors: WeightedColorsType, zorder: float):
+        res = get_shape_and_color(colors)
+        if res:
+            self.ax.plot(
+                language.lon, language.lat,
+                color=res[1],
                 markersize=self.args.markersize,
-                zorder=20,
-                marker='o',
+                zorder=zorder,
+                marker=SHAPE_MAP[res[0]],
                 markeredgecolor='black',
                 linewidth=1,
                 transform=cartopy.crs.Geodetic(),
             )
-            marker_kw.update(spec.marker_kw)
-            self.ax.plot(language.lon, language.lat, **marker_kw)
-            if spec.text:
-                text_kw = dict(zorder=20, fontsize='small')
-                text_kw.update(spec.text_kw)
-                self.ax.text(
-                    language.lon + (spec.text_offset_x or 0),
-                    language.lat + (spec.text_offset_y or 0),
-                    spec.text,
-                    **text_kw)
             return
+
+        # Use scatter to create pie-markers suitable for the projection.
+        for color, marker in self.pie_markers(colors):
+            self.ax.scatter(
+                [language.lon], [language.lat],
+                marker=marker,
+                s=[self.args.markersize * 10],
+                transform=cartopy.crs.Geodetic(),
+                # linewidth=1,
+                # edgecolor='black',
+                zorder=zorder,
+                facecolor=(color, 0.7),
+            )
+        return
+
+    def _add_language_plate_carree(
+            self, language: Language, colors: WeightedColorsType, zorder: float):
+        # On the cartesian plane, we can plot pie charts using wedges.
         lon, lat = self._lonlat(language)
-        colors = weighted_colors(values, colormaps)
-
-        if self.args.projection != 'PlateCarree':
-            res = get_shape_and_color(colors)
-            if res:
-                self.ax.plot(
-                    language.lon, language.lat,
-                    color=res[1],
-                    markersize=self.args.markersize,
-                    zorder=zorder,
-                    marker=SHAPE_MAP[res[0]],
-                    markeredgecolor='black',
-                    linewidth=1,
-                    transform=cartopy.crs.Geodetic(),
-                )
-                return
-
-            # Use scatter to create pie-markers suitable for the projection.
-            for color, marker in self.pie_markers(colors):
-                self.ax.scatter(
-                    [language.lon], [language.lat],
-                    marker=marker,
-                    s=[self.args.markersize * 10],
-                    transform=cartopy.crs.Geodetic(),
-                    #linewidth=1,
-                    #edgecolor='black',
-                    zorder=zorder,
-                    facecolor=(color, 0.7),
-                )
-            return
-
         res = get_shape_and_color(colors)
         if res:
             self.ax.plot(
@@ -314,7 +318,7 @@ class MapPlot(Map):
             for ratio, color in colors:
                 angle = 360.0 * ratio
                 self.ax.add_patch(Wedge(
-                    [lon, lat],
+                    (lon, lat),
                     self.args.markersize * self.scaling_factor / 2.0,
                     s,
                     s + angle,
@@ -338,49 +342,68 @@ class MapPlot(Map):
                 zorder=zorder + 10,
                 fontsize='small')
 
-    def add_legend(self, parameters, colormaps):
-        def wrapped_label(s):
-            return '\n'.join(textwrap.wrap(s, width=20))
+    def add_language(
+            self,
+            language: Language,
+            values: ValueDictType,
+            colormaps: ColormapDictType,
+            spec: Optional[MPLMarkerSpec] = None,
+    ):
+        """Add a language to the plot."""
+        if spec:
+            return self._add_language_with_spec(language, spec)
 
-        with_shapes = False
-        if 1 <= len(parameters) <= 2:
-            for pid, parameter in parameters.items():
-                if not isinstance(parameter.domain, tuple):
-                    for v, label in parameter.domain.items():
-                        if colormaps[pid](v) in SHAPE_MAP:
-                            with_shapes = True
-                            break
+        zorder = 5 * len(values)
+        if self.args.zorder:
+            # Add zorder by using a point-system that penalizes missing data according to
+            # user-defined weights.
+            zorders = []
+            for val in values.values():
+                zorders += [self.args.zorder.get(val[0].v.split('-')[-1], 5)]
+            zorder = sum(zorders)
 
-        if with_shapes:
-            handles = []
-            for pid, parameter in parameters.items():
-                handles.append(
-                    Rectangle(
-                        (0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0,
-                        label=wrapped_label(parameter.name)))
-                for v, label in parameter.domain.items():
-                    color = colormaps[pid](v)
-                    handles.append(
-                        plt.Line2D(
-                            [], [],
-                            marker=SHAPE_MAP[color] if color in SHAPE_MAP else 'o',
-                            color='#000000' if color in SHAPE_MAP else color,
-                            linewidth=0,#1,
-                            linestyle='',
-                            label=wrapped_label(label))
-                    )
-            self.ax.legend(
-                bbox_to_anchor=(1, 1),
-                handles=handles,
-                loc='upper left',
-            )
-            return
+        colors = weighted_colors(values, colormaps)
+        if self.args.projection != 'PlateCarree':
+            return self._add_language_non_plate_carree(language, colors, zorder)
 
-        handles = []
+        return self._add_language_plate_carree(language, colors, zorder)
+
+    @staticmethod
+    def _iter_legend_handles_with_shapes(
+            parameters: ParameterDictType,
+            colormaps: ColormapDictType,
+            wrapped_label: Callable[[str], str],
+    ) -> Generator[Any, None, None]:
+        for pid, parameter in parameters.items():
+            yield Rectangle(
+                (0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0,
+                label=wrapped_label(parameter.name))
+            for v, label in parameter.domain.items():
+                color = colormaps[pid](v)
+                if isinstance(color, tuple):
+                    shape, color = color
+                else:
+                    shape = None
+                    if color in SHAPE_MAP:
+                        shape, color = color, shape
+                yield plt.Line2D(
+                    [], [],
+                    marker=SHAPE_MAP[shape] if shape else 'o',
+                    color='#000000' if color is None else color,
+                    linewidth=0,  # 1,
+                    linestyle='',
+                    label=wrapped_label(label))
+
+    def _iter_legend_handles(
+            self,
+            parameters: ParameterDictType,
+            colormaps: ColormapDictType,
+            wrapped_label: Callable[[str], str],
+    ) -> Generator[Any, None, None]:
         s, angle = 0, 360.0 / len(parameters)
         for pid, parameter in parameters.items():
-            handles.append(Wedge(
-                [-100, -100],
+            yield Wedge(
+                (-100, -100),
                 self.args.markersize,
                 s,
                 s + angle,
@@ -388,7 +411,7 @@ class MapPlot(Map):
                 edgecolor="white",
                 label=wrapped_label(parameter.name),
                 zorder=20
-            ))
+            )
             if isinstance(parameter.domain, tuple):
                 cbar = plt.colorbar(
                     colormaps[pid].scalar_mappable(),
@@ -405,8 +428,8 @@ class MapPlot(Map):
                     str(round(parameter.domain[1], 2))])
             else:
                 for v, label in parameter.domain.items():
-                    handles.append(Wedge(
-                        [-100, -100],
+                    yield Wedge(
+                        (-100, -100),
                         self.args.markersize,
                         s,
                         s + angle,
@@ -414,10 +437,29 @@ class MapPlot(Map):
                         edgecolor="white",
                         label=wrapped_label(label),
                         zorder=20
-                    ))
+                    )
             s += angle
-        self.ax.legend(
-            bbox_to_anchor=(1, 1),
-            handles=handles,
-            loc='upper left',
-            handler_map={Wedge: HandleWedge()})
+
+    def add_legend(self, parameters: ParameterDictType, colormaps: ColormapDictType):
+        """Add a legend to the plot."""
+        def wrapped_label(s):
+            """Wrap it."""
+            return '\n'.join(textwrap.wrap(s, width=20))
+
+        with_shapes = False
+        if 1 <= len(parameters) <= 2:
+            for pid, parameter in parameters.items():
+                if not isinstance(parameter.domain, tuple):
+                    for v, _ in parameter.domain.items():
+                        if colormaps[pid](v) in SHAPE_MAP:
+                            with_shapes = True
+                            break
+
+        if with_shapes:
+            handles = self._iter_legend_handles_with_shapes(parameters, colormaps, wrapped_label)
+            kw = {}
+        else:
+            handles = self._iter_legend_handles(parameters, colormaps, wrapped_label)
+            kw = {'handler_map': {Wedge: HandleWedge()}}
+
+        self.ax.legend(bbox_to_anchor=(1, 1), handles=list(handles), loc='upper left', **kw)

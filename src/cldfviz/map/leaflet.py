@@ -1,17 +1,25 @@
+"""
+An HTML map implementation.
+"""
 import html
 import json
 import string
+import zipfile
+import dataclasses
+from typing import Optional, Any
+from collections.abc import Generator
 
-import attr
 from clldutils import svg
 from clldutils.html import HTML
 from clldutils.clilib import PathType
 from clldutils import jsonlib
 
-from cldfviz.colormap import get_shape_and_color, weighted_colors, SVG_SHAPE_MAP as SHAPE_MAP
-from .base import Map, PACIFIC_CENTERED
-from cldfviz.template import TEMPLATE_DIR
 import cldfviz
+from cldfviz.template import TEMPLATE_DIR
+from cldfviz.multiparameter import Language, ValueDictType, ParameterDictType
+from cldfviz.colormap import (
+    get_shape_and_color, weighted_colors, SVG_SHAPE_MAP as SHAPE_MAP, ColormapDictType)
+from .base import Map, PACIFIC_CENTERED
 
 BASE_LAYERS = {
     'OpenStreetMap': (
@@ -61,18 +69,20 @@ BASE_LAYERS = {
 GEOJSON_LAYERS = {p.name.split('.')[0]: p for p in TEMPLATE_DIR.joinpath('map').glob('*.geojson*')}
 
 
-@attr.s
+@dataclasses.dataclass
 class LeafletMarkerSpec:
-    icon = attr.ib(default=svg.data_url(svg.icon('c000')))
-    name = attr.ib(default=None)
-    values = attr.ib(default=None)
-    tooltip = attr.ib(default=None)
-    tooltip_class = attr.ib(default=None)
-    markersize = attr.ib(default=None)
-    css = attr.ib(default=None)
+    """Customizable features of Leaflet map markers."""
+    icon: str = svg.data_url(svg.icon('c000'))
+    name: Optional[str] = None
+    values: Optional[Any] = None
+    tooltip: Optional[str] = None
+    tooltip_class: Optional[str] = None
+    markersize: Optional[int] = None
+    css: Optional[str] = None
 
 
 class MapLeaflet(Map):
+    """HTML map implementation based on Leaflet."""
     __formats__ = ['html']
     __marker_class__ = LeafletMarkerSpec
 
@@ -87,21 +97,21 @@ class MapLeaflet(Map):
         parser.add_argument(
             '--base-layer',
             default='OpenStreetMap',
-            help="Tile layer for Leaflet maps. {}".format(help_suffix),
+            help=f"Tile layer for Leaflet maps. {help_suffix}",
             choices=list(BASE_LAYERS),
         )
         parser.add_argument(
             '--with-layers',
             default=False,
             action='store_true',
-            help='Create clickable Leaflet layers for each parameter value. {}'.format(help_suffix),
+            help=f'Create clickable Leaflet layers for each parameter value. {help_suffix}',
         )
         parser.add_argument(
             '--with-layers-for-combinations',
             default=False,
             action='store_true',
-            help='Create clickable Leaflet layers for each combination of parameter values. '
-                 '{}'.format(help_suffix),
+            help=f'Create clickable Leaflet layers for each combination of parameter values. '
+                 f'{help_suffix}',
         )
         parser.add_argument(
             '--value-template',
@@ -112,8 +122,8 @@ class MapLeaflet(Map):
             '--overlay-geojson',
             type=PathType(type='file', must_exist=False),
             default=None,
-            help='Path to the GeoJSON file containing a FeatureCollection to overlay on the map. '
-                 'Note: You may also chose from {}.'.format(list(GEOJSON_LAYERS.keys()))
+            help=f'Path to the GeoJSON file containing a FeatureCollection to overlay on the map. '
+                 f'Note: You may also chose from {list(GEOJSON_LAYERS.keys())}.'
         )
         parser.add_argument(
             '--overlay-options',
@@ -144,7 +154,13 @@ class MapLeaflet(Map):
             return svg.icon(SHAPE_MAP[res[0]] + res[1].replace('#', ''))
         return svg.pie([c[0] for c in colors], [c[1] for c in colors], stroke_circle=True)
 
-    def add_language(self, language, values, colormaps, spec=None):
+    def add_language(
+            self,
+            language: Language,
+            values: ValueDictType,
+            colormaps: ColormapDictType,
+            spec: Optional[LeafletMarkerSpec] = None):
+        """Add a language to the map."""
         icon = self._icon(weighted_colors(values, colormaps))
         props = {
             "name": language.name,
@@ -160,7 +176,7 @@ class MapLeaflet(Map):
             if spec.css:
                 self.css.add(spec.css)
             props.update(
-                {k: v for k, v in attr.asdict(spec).items() if v is not None and k != 'css'})
+                {k: v for k, v in dataclasses.asdict(spec).items() if v is not None and k != 'css'})
         self.features.append({
             # A language as GeoJSON point with svg marker icon
             "geometry": {"coordinates": self._lonlat(language), "type": "Point"},
@@ -169,21 +185,24 @@ class MapLeaflet(Map):
             "type": "Feature"
         })
 
-    def add_legend(self, parameters, colormaps):
+    def _iter_legend_row(
+            self,
+            parameters: ParameterDictType,
+            colormaps: ColormapDictType,
+    ) -> Generator[HTML.tr, None, None]:
         def marker(colors):
             return HTML.img(
                 src=svg.data_url(self._icon(colors)),
-                width="{}".format(min([20, self.args.markersize * 2])))
+                width=f"{min([20, self.args.markersize * 2])}")
 
-        trs = []
         for i, (pid, parameter) in enumerate(parameters.items()):
             if i != 0:
-                trs.append(HTML.tr(HTML.th(HTML.hr(), colspan='2')))
-            trs.append(HTML.tr(
+                yield HTML.tr(HTML.th(HTML.hr(), colspan='2'))
+            yield HTML.tr(
                 HTML.th(
                     marker(['#000000' if j == i else '#ffffff' for j in range(len(parameters))])),
                 HTML.th(parameter.name, style="text-align: left;")
-            ))
+            )
             if isinstance(parameter.domain, tuple):
                 # Create an HTML color bar for a continuous variable, as table with two rows and
                 # 11 columns.
@@ -197,37 +216,39 @@ class MapLeaflet(Map):
                         tds_label.append(HTML.td(str(round(max_, 2)), style="text-align: right;"))
                     else:
                         tds_label.append(HTML.td(' '))
+                    val = min_ + j * (max_ - min_) / 10
                     tds_color.append(HTML.td(
                         ' ',
-                        style='height: 20px; width: 1em; background-color: {};'.format(
-                            colormaps[pid](min_ + j * (max_ - min_) / 10))))
-                trs.append(HTML.tr(HTML.td(HTML.table(
+                        style=f'height: 20px; width: 1em; background-color: {colormaps[pid](val)};'
+                    ))
+                yield HTML.tr(HTML.td(HTML.table(
                     HTML.tr(*tds_label),
                     HTML.tr(*tds_color)
-                ), colspan='2')))
+                ), colspan='2'))
             else:
                 for v, label in parameter.domain.items():
-                    trs.append(HTML.tr(
+                    yield HTML.tr(
                         HTML.td(marker([
                             colormaps[pid](v) if j == i else '#ffffff'
                             for j in range(len(parameters))])),
                         HTML.td(str(label))
-                    ))
-        self.legend = HTML.table(*trs, **{'class': 'legend'})
+                    )
+
+    def add_legend(self, parameters: ParameterDictType, colormaps: ColormapDictType):
+        self.legend = HTML.table(
+            *list(self._iter_legend_row(parameters, colormaps)), **{'class': 'legend'})
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """write files"""
-        import zipfile
-
-        overlay_geojson, overlay_options = dict(features=[]), '{}'
+        overlay_geojson, overlay_options = {'features': []}, '{}'
         if self.args.overlay_geojson:
             if str(self.args.overlay_geojson) in GEOJSON_LAYERS:  # cast PathType() to str!
                 self.args.overlay_options = \
-                    TEMPLATE_DIR / 'map' / '{}.js'.format(self.args.overlay_geojson)
+                    TEMPLATE_DIR / 'map' / f'{self.args.overlay_geojson}.js'
                 self.args.overlay_geojson = GEOJSON_LAYERS[str(self.args.overlay_geojson)]
             if zipfile.is_zipfile(self.args.overlay_geojson):
-                zip = zipfile.ZipFile(self.args.overlay_geojson)
-                overlay_geojson = json.loads(zip.read(zip.namelist()[0]).decode('utf8'))
+                with zipfile.ZipFile(self.args.overlay_geojson) as zip_:
+                    overlay_geojson = json.loads(zip_.read(zip_.namelist()[0]).decode('utf8'))
             else:
                 overlay_geojson = jsonlib.load(self.args.overlay_geojson)  # pragma: no cover
             if self.args.overlay_options:

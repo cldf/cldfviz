@@ -12,22 +12,22 @@ from cldfviz.media import get_objects_and_media, get_media_url
 from cldfviz.template import render_jinja_template, TEMPLATE_DIR
 
 
-def register(parser):
+def register(parser):  # pylint: disable=C0116
     add_dataset(parser)
     add_language_filter(parser)
-    mod = __name__.split('.')[-1]
-    add_jinja_template(parser, TEMPLATE_DIR / mod / '{}.html'.format(mod))
+    mod = __name__.rsplit('.', maxsplit=1)[-1]
+    add_jinja_template(parser, TEMPLATE_DIR / mod / f'{mod}.html')
     add_open(parser)
 
 
-def run(args):
+def run(args):  # pylint: disable=C0116
     ds = get_dataset(args)
     valid_langs = get_filtered_languages(args, ds)
 
     examples = []
     for example, media in get_objects_and_media(
             ds, 'ExampleTable', 'exampleReference',
-            filter=lambda e: (valid_langs is None) or e.cldf.languageReference in valid_langs):
+            filter_=lambda e: (valid_langs is None) or e.cldf.languageReference in valid_langs):
         examples.append((
             example,
             nfilter(get_media_url(f) for f in media if f.mimetype.type == 'audio')))

@@ -1,24 +1,24 @@
 """
+FIXME: Work in progress
 
+pangloss like functionality. Should work for the DoReCo corpus - or MultiCAST
+
+Convert pangloss corpora to CLDF TextCorpus? https://pangloss.cnrs.fr/
 """
+import argparse
+
 from pycldf.cli_util import add_dataset, get_dataset
-from pycldf import orm
-from clldutils.misc import nfilter
 
-from cldfviz.cli_util import (
-    add_open, write_output, add_jinja_template, add_language_filter, get_filtered_languages,
-)
-from cldfviz.media import get_objects_and_media, get_media_url
-from cldfviz.template import render_jinja_template, TEMPLATE_DIR
+from cldfviz.cli_util import add_open
 
 
-def register(parser):
+def register(parser: argparse.ArgumentParser):  # pylint: disable=C0116
     add_dataset(parser)
     parser.add_argument('text')
     add_open(parser)
 
 
-def run(args):
+def run(args: argparse.Namespace):  # pylint: disable=C0116
     ds = get_dataset(args)
 
     for text in ds.objects('ContributionTable'):
@@ -43,3 +43,4 @@ def run(args):
         print(line.cldf.translatedText)
         if media:
             print(media.cldf.downloadUrl.path, line.data['Audio_Start'], line.data['Audio_End'])
+            # DoReCo: start - end -> CLDF standardization required!

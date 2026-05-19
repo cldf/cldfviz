@@ -357,10 +357,14 @@ def test_map_misc(tmp_path, capsys, ds_arg, md_path_factory, MetadataFreeStructu
     out, _ = capsys.readouterr()
     assert 'ERROR' in out
 
+    run(ds_arg, '--test --parameters C --colormaps \'{"0":["circle","red"],"1":"diamond","2":"square"}\'')
+
     if WITH_CARTOPY:
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 'ignore', category=DeprecationWarning, module='cartopy.crs')
+            run(ds_arg, '--format jpg --output ' + str(
+                tmp_path) + '/test.jpg --test --parameters C --colormaps \'{"0":["circle","red"],"1":"diamond","2":"square"}\'')
             # For JPG, there's a slightly different code path.
             run(ds_arg, '--format jpg --parameters C --output {}'.format(tmp_path / 'test.jpg'))
 

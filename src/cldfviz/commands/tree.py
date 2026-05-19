@@ -1,7 +1,7 @@
 """
 Plots a phylogeny as SVG.
 """
-import types
+import argparse
 import pathlib
 
 from cldfviz.cli_util import (
@@ -11,10 +11,10 @@ from cldfviz.cli_util import (
 )
 from cldfviz.glottolog import Glottolog
 from cldfviz.colormap import weighted_colors
-from cldfviz.tree import render
+from cldfviz.tree import render, TreeData
 
 
-def register(parser):
+def register(parser: argparse.ArgumentParser):  # pylint: disable=C0116
     add_testable(parser)
     add_tree(parser)
     add_language_filter(parser)
@@ -51,7 +51,7 @@ def register(parser):
     add_open(parser)
 
 
-def run(args):
+def run(args: argparse.Namespace):  # pylint: disable=C0116
     cldf = get_secondary_dataset(args, 'data_dataset')
     nwk, tree, treeds = get_tree(args, glottolog=Glottolog.from_args(args))
 
@@ -63,18 +63,7 @@ def run(args):
     if args.parameters:
         mp, cms = get_multiparameter(args, cldf, None)
         values = {lang.id: weighted_colors(val, cms) for lang, val in mp.iter_languages()}
-        data = types.SimpleNamespace(values=values, parameters=mp.parameters, colormaps=cms)
-
-    if args.title:
-        legend = args.title
-    else:
-        legend = tree.name if tree else ''
-        if treeds:
-            dcol = treeds.get(('TreeTable', 'description'))
-            if dcol:
-                legend += '{}{}'.format(' - ' if legend else '', tree.row[dcol.name])
-        if tree and tree.tree_branch_length_unit:
-            legend += ' with branches in {}'.format(tree.tree_branch_length_unit)
+        data = TreeData(values=values, parameters=mp.parameters, colormaps=cms)
 
     glangs = {}
     if args.glottolog and args.glottolog_links:  # pragma: no cover
@@ -98,28 +87,14 @@ def run(args):
         # Re-key the values so that they can be picked up when adding markers to the tree.
         data.values = {lid2tree[lid]: vals for lid, vals in data.values.items() if lid2tree[lid]}
 
-    labels = {}
-    if args.name_as_label:
-        if cldf:
-            # If we have data, we assume that the tree nodes should get data language names.
-            for lid, tid in lid2tree.items():
-                labels[tid] = lid2name[lid]
-        elif treeds:
-            # If we have a tree from a tree dataset, "name-as-label" refers to language names in
-            # this dataset.
-            labels = {
-                r['id']: r['name']
-                for r in treeds.iter_rows('LanguageTable', 'id', 'name')
-            }
-
-    kw = dict(
-        legend=legend,
+    kw = dict(  # pylint: disable=R1735
+        legend=_get_legend(args, tree, treeds),
         width=args.width,
         height=args.height,
-        styles=eval(args.styles),
+        styles=eval(args.styles),  # pylint: disable=W0123
         with_glottolog_links=args.glottolog_links,
         data=data,
-        labels=labels or None,
+        labels=_get_labels(args, cldf, treeds, lid2tree, lid2name),
     )
     if treeds:
         kw.update(
@@ -130,3 +105,29 @@ def run(args):
             leafs=[lg.id for lg in treeds.objects('LanguageTable') if lf(lg)] if lf else None,
         )
     write_output(args, render(nwk, **kw))
+
+
+def _get_labels(args, cldf, treeds, lid2tree, lid2name):
+    if args.name_as_label:
+        if cldf:
+            # If we have data, we assume that the tree nodes should get data language names.
+            return {tid: lid2name[lid] for lid, tid in lid2tree.items()}
+        if treeds:
+            # If we have a tree from a tree dataset, "name-as-label" refers to language names in
+            # this dataset.
+            return {r['id']: r['name'] for r in treeds.iter_rows('LanguageTable', 'id', 'name')}
+    return None
+
+
+def _get_legend(args: argparse.Namespace, tree, treeds) -> str:
+    if args.title:
+        return args.title
+
+    legend = tree.name if tree else ''
+    if treeds:
+        dcol = treeds.get(('TreeTable', 'description'))
+        if dcol:
+            legend += f"{' - ' if legend else ''}{tree.row[dcol.name]}"
+    if tree and tree.tree_branch_length_unit:
+        legend += f' with branches in {tree.tree_branch_length_unit}'
+    return legend

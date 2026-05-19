@@ -1,9 +1,9 @@
 """
 Visualize a dataset's data model as entity-relationship diagram of the corresponding CLDF SQL.
 """
-import shlex
 import shutil
 import pathlib
+import argparse
 import tempfile
 import subprocess
 
@@ -15,8 +15,8 @@ from clldutils.path import ensure_cmd
 from cldfviz.cli_util import add_testable, add_open, write_output
 
 
-def download_file(url, target):
-    with requests.get('https://github.com/' + url, stream=True) as r:
+def _download_file(url: str, target: pathlib.Path) -> pathlib.Path:
+    with requests.get('https://github.com/' + url, stream=True, timeout=600) as r:
         r.raise_for_status()
         with target.open('wb') as f:
             for chunk in r.iter_content(chunk_size=8192):
@@ -24,12 +24,12 @@ def download_file(url, target):
     return target
 
 
-def copy_file(dest, target):
+def _copy_file(dest: pathlib.Path, target: pathlib.Path) -> pathlib.Path:
     shutil.copy(dest, target)
     return target
 
 
-def register(parser):
+def register(parser: argparse.ArgumentParser):  # pylint: disable=C0116
     add_testable(parser)
     parser.add_argument('dataset_locator')
     parser.add_argument(
@@ -62,7 +62,7 @@ def register(parser):
     add_open(parser)
 
 
-def run(args):
+def run(args):  # pylint: disable=C0116
     with tempfile.TemporaryDirectory() as tmp:
         tmp = pathlib.Path(tmp)
         for url, target in [
@@ -73,28 +73,28 @@ def run(args):
         ]:
             attrib = target.replace('.', '_')
             if not getattr(args, attrib):
-                setattr(args, attrib, download_file(url, tmp / target))
+                setattr(args, attrib, _download_file(url, tmp / target))
             else:
-                setattr(args, attrib, copy_file(getattr(args, attrib), tmp / target))
+                setattr(args, attrib, _copy_file(getattr(args, attrib), tmp / target))
         if args.db:
-            copy_file(args.db, tmp / 'db.sqlite')  # pragma: no cover
+            _copy_file(args.db, tmp / 'db.sqlite')  # pragma: no cover
         else:
             get_database(args.dataset_locator, download_dir=tmp, fname=tmp / 'db.sqlite')
 
         # Note: This exact way of calling java must be kept to keep tests working.
-        out = subprocess.check_output(shlex.split(
-            "{} -jar {} -t sqlite-xerial -db {} -sso -s public -dp {} -o {} -cat % -vizjs".format(
-                args.java,
-                args.schemaspy_jar,
-                tmp / 'db.sqlite',
-                tmp,
-                args.sqlite_jar.parent,
-            )),
-        )
+        out = subprocess.check_output([
+            args.java, "-jar", args.schemaspy_jar,
+            "-t", "sqlite-xerial",
+            "-db", tmp / 'db.sqlite',
+            "-sso", "-s", "public",
+            "-dp", tmp,
+            "-o", args.sqlite_jar.parent,
+            "-cat", "%", "-vizjs"
+        ])
         for line in out.decode('utf8').split('\n'):  # pragma: no cover
             args.log.debug(line)
         res = tmp\
-            .joinpath('diagrams', 'summary', 'relationships.real.{}'.format(args.format))\
+            .joinpath('diagrams', 'summary', f'relationships.real.{args.format}')\
             .read_text(encoding='utf8')
 
     write_output(args, res)
