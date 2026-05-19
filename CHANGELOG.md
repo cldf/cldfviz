@@ -1,10 +1,12 @@
 # Changes
 
 
-## Unreleased
+## [v2.0.0] - 2026-05-19
 
-Implemented experimental functionality allowing colored shapes as markers on HTML maps for
-single parameters.
+- Dropped compat with py3.8.
+- Compat with pycldf 2.x
+- Implemented experimental functionality allowing colored shapes as markers on HTML maps for
+  single parameters.
 
 
 ## [v1.3.0] - 2024-09-25
